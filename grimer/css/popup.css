@@ -1,0 +1,52 @@
+/* (A) WRAPPER */
+#pop-up {
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 999;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.2);
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+#pop-up.open {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* (B) BOX */
+#pop-box {
+  position: relative;
+  max-width: 70%;
+  background: #fff;
+  margin: 50vh auto 0 auto;
+  transform: translateY(-50%);
+}
+
+/* (C) TITLE */
+#pop-title {
+  padding: 5px;
+  margin: 0;
+  background: #868b8e;
+  color: #fff;
+}
+
+/* (D) TEXT */
+#pop-text {
+  border: 2px solid #868b8e;
+  padding: 10px;
+  margin: 0;
+  background: #fff;
+  color: #555;
+}
+
+/* (E) CLOSE BUTTON */
+#pop-close {
+  position: absolute;
+  top: 0; right: 5px;
+  padding: 2px;
+  color: #fff;
+  font-size: 32px;
+  cursor: pointer;
+}
