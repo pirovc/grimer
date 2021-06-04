@@ -14,7 +14,9 @@ Online examples of reports generated with GRIMER: https://pirovc.github.io/grime
 git clone https://github.com/pirovc/grimer.git
 cd grimer
 conda env create -f env.yaml
+conda activate grimer # source activate grimer
 python setup.py install --record files.txt # Uninstall: xargs rm -rf < files.txt
+grimer -h
 ```
 ***Soon GRIMER will be available as a package in BioConda.***
 
