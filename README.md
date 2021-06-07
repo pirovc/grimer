@@ -2,7 +2,7 @@
 
 ![GRIMER](grimer/img/logo.png)
 
-GRIMER automates analysis, runs tools and generates plots and report them into a portable and offline dashboard integrating annotation, taxonomy and metadata to analyse microbiome studies and detect contamination.
+GRIMER automates analysis and reports an offline and interactive dashboard integrating annotation, taxonomy and metadata to analyse microbiome studies and detect contamination.
 
 ## Examples
 
