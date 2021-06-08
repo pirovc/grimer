@@ -31,7 +31,7 @@ def main():
 
     default_rank_name = "default"
 
-    version = "1.0.0-alpha0"
+    version = "1.0.0-alpha1"
     parser = argparse.ArgumentParser(description='grimer')
     parser.add_argument('-i', '--input-file', required=True, type=str, help="Main input table with counts (Observation table, Count table, Contingency Tables, ...) or .biom file. By default rows contain observations and columns contain samples (use --tranpose if your file is reversed). First column and first row are used as headers.")
     parser.add_argument('-c', '--config', required=True, type=str, help="Configuration file")

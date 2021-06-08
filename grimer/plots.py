@@ -418,6 +418,7 @@ More details can be found in the [DECONTAM Introduction guide](https://benjjneb.
             "pvalue_input": pvalue_input, 
             "help_button": help_button(title="DECONTAM", text=help_text, align="start")}
 
+
 def plot_mgnify(cds_p_mgnify):
     mgnify_fig = figure(height=150, width=300,
                         tools="save,wheel_zoom,reset")
@@ -439,16 +440,17 @@ def plot_mgnify(cds_p_mgnify):
         factors.extend(lineages)
         palette.extend(make_color_palette(len(lineages)))
 
-    # Custom hover to follow mouse
+    # Add custom tooltip to show percentage (based on angle)
     mgnify_fig.add_tools(HoverTool(
         tooltips=[("Biome", "@lineage"),
-                  ("studies", "@count")],
+                  ("Studies", "@count"),
+                  ("Percentage", "@angle{custom}%")],
         mode="mouse",
-        point_policy="follow_mouse"
+        point_policy="follow_mouse",
+        formatters={"@angle": CustomJSHover(code="return ((value/6.2831853071795)*100).toFixed(2);")}
     ))
 
     #mgnify_fig.text(0, 1, text=["No data"], text_baseline="middle", text_align="center")
-
     mgnify_fig.wedge(x=0, y=1, radius=0.5,
                      start_angle=cumsum('angle', include_zero=True),
                      end_angle=cumsum('angle'),
