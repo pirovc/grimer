@@ -38,7 +38,7 @@ def main():
     parser.add_argument('-m', '--metadata', type=str, help="Input metadata file in simple tabular format. Sample identifiers will be matched with ones provided by --input-table. QIIME 2 metadata format is also accepted, with categorical and numerical fields.")
     parser.add_argument('-t', '--tax', type=str, default=None, help="Define taxonomy to use. By default, do not use any taxonomy.", choices=["ncbi", "gtdb", "silva", "greengenes", "ott"])
     parser.add_argument('-b', '--tax-files', nargs="*", type=str, default=None, help="Taxonomy files. If not provided, will automatically be downloaded.")
-    
+    parser.add_argument('-z', '--replace-zeros', type=str, default="1000", help="INT (add 'smallest count'/INT to every raw count), FLOAT (add FLOAT to every raw count). Default: 1000")
     parser.add_argument('-r', '--ranks', nargs="*", default=[default_rank_name], type=str, help="Taxonomic ranks to generate visualizations. Use '" + default_rank_name + "' to use entries from the table directly. Default: " + default_rank_name)
     parser.add_argument('-l', '--title', type=str, default="", help="Title to display on the header of the report.")
     parser.add_argument('-o', '--output-html', type=str, default="output.html", help="File to output report. Default: output.html")
@@ -62,7 +62,6 @@ def main():
 
     heatmap_group = parser.add_argument_group('Heatmap and clustering options')
     heatmap_group.add_argument('-a', '--transformation', type=str, default="log", help="none (counts), norm (percentage), log (log10), clr (centre log ratio). Default: log")
-    heatmap_group.add_argument('-z', '--replace-zeros', type=str, default="1000", help="INT (add 'smallest count'/INT to every raw count), FLOAT (add FLOAT to every raw count). Default: 1000")
     heatmap_group.add_argument('-e', '--metadata-cols', type=int, default=5, help="How many metadata cols to show on the heatmap. Higher values makes plot slower to navigate.")
     heatmap_group.add_argument('--optimal-ordering', default=False, action='store_true', help="Activate optimal_ordering on linkage, takes longer for large number of samples.")
     heatmap_group.add_argument('--show-zeros', default=False, action='store_true', help="Do not skip zeros on heatmap. File will be bigger and iteraction with heatmap slower.")
@@ -121,7 +120,6 @@ def main():
         args.transpose = True
 
     table_df, total, unassigned = parse_input_table(args.input_file, args.unassigned_header, args.transpose, args.min_frequency, args.max_frequency, args.min_count, args.max_count)
-
     if args.level_separator:
         ranked_tables, lineage = parse_multi_table(table_df, args.ranks, tax, args.level_separator, args.obs_replace)
     else:
@@ -133,19 +131,18 @@ def main():
 
     table = Table(table_df.index, total, unassigned)
     table.lineage = lineage
-    for r, t in ranked_tables.items():
-        if t.empty:
-            print_log("Skipping rank without valid entries (" + r + ")")
-        else:
-            table.add_rank(r, t)
-
-    print_log("")
     print_log("Samples: " + str(len(table.samples)))
     print_log("Observations: ")
-    
-    for rank in table.ranks():
-        print_log(" - " + rank + ": " + str(len(table.observations(rank))))
+    for r, t in ranked_tables.items():
+        print_log(" " + r + ":")
+        if t.empty:
+            print_log("Skipping without valid entries")
+        else:
+            # Trim table for empty zeros rows/cols
+            table.add_rank(r, trim_table(t))
+            print_log("  " + str(len(table.observations(r))) + " observations")
 
+    print_log("")
     print_log("Total assigned (sum): " + str(table.total.sum()))
     print_log("Total unassigned (sum): " + str(table.unassigned.sum()))
     print_log("")
@@ -402,8 +399,15 @@ def main():
                                 os.path.join(script_dir, "js", "popup.js"): "script",
                                 os.path.join(script_dir, "css", "popup.css"): "style"})
 
+    if args.full_offline:
+        mode = "inline"  # configure to provide entire Bokeh JS and CSS inline
+    elif _debug:
+        mode = "absolute-dev"  # non-minimized - configure to load from the installed Bokeh library static directory
+    else:
+        mode = "cdn"  # configure to load Bokeh JS and CSS from https://cdn.bokeh.org
+
     # setup output file and JS mode
-    output_file(args.output_html, title="GRIMER" if not args.title else "GRIMER - " + args.title, mode="inline" if args.full_offline else "cdn")
+    output_file(args.output_html, title="GRIMER" if not args.title else "GRIMER - " + args.title, mode=mode)
     save(final_layout, template=template)
     print_log("File: " + args.output_html)
     file_size_bytes = os.path.getsize(args.output_html)

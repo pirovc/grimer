@@ -573,6 +573,7 @@ def link_obstable_filter(ele, cds_p_obstable, active_ranks):
             if (name_multichoice.value.length > 0 ){
                 var found = false;
                 for(let r = 0; r < active_ranks.length; r++){
+                    // Compare all names on multichoice (array) against cell
                     if (name_multichoice.value.indexOf(cds_p_obstable.data["tax|"+active_ranks[r]][i]) >= 0){
                         found = true;
                         break;
@@ -582,10 +583,14 @@ def link_obstable_filter(ele, cds_p_obstable, active_ranks):
                     continue;
                 }
             }
-            indices.push(i)
+            indices.push(i);
         }
+        console.log(cds_p_obstable);
+        console.log(widgets_filter);
         widgets_filter.indices = indices;
         cds_p_obstable.change.emit();
+        console.log(cds_p_obstable);
+        console.log(widgets_filter);
     ''')
     ele["obstable"]["wid"]["frequency_spinner"].js_on_change('value', filter_callback)
     ele["obstable"]["wid"]["counts_perc_avg_spinner"].js_on_change('value', filter_callback)
@@ -616,6 +621,7 @@ def link_correlation_widgets(ele, cds_p_correlation):
                   pval_spinner=ele["correlation"]["wid"]["pval_spinner"],
                   cds_p_correlation=cds_p_correlation),
         code='''
+        console.log("filter_callback");
         const indices = [];
         for (var i = 0; i < cds_p_correlation.data["index"].length; i++) {
             if (cds_p_correlation.data["pval_corr"][i] > pval_spinner.value) continue;

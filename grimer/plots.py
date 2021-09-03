@@ -278,6 +278,7 @@ def plot_obstable(cds_p_obstable, ranks, contaminant_names, control_names):
     for rank in ranks:
         rank_filter = GroupFilter(column_name='col|rank', group=rank)
         cds_view = CDSView(source=cds_p_obstable, filters=[rank_filter, widgets_filter])
+
         table_cols = []
         table_cols.append(TableColumn(field="col|name", title="Name"))
         table_cols.append(TableColumn(field="col|frequency_perc", title="Frequency", default_sort="descending", formatter=NumberFormatter(format="0.00%")))
@@ -320,7 +321,7 @@ def plot_obstable_widgets(dict_d_taxname, max_count_rank):
     # Create unique list of names with taxids for filtering. map to str and set to get unique
     unique_dict_d_taxname_tuples = set(zip(dict_d_taxname.keys(), map(str, dict_d_taxname.values())))
     name_multichoice = MultiChoice(title="Obs. name or identifier", options=list(unique_dict_d_taxname_tuples), sizing_mode="fixed", width=250, height=100)
-    
+
     help_text = """
 Summary of observations among all samples. If taxonomy is provided, panels will show different taxonomic ranks. 
 

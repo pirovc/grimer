@@ -60,7 +60,7 @@ def parse_input_table(input_file, unassigned_header, transpose, min_frequency, m
 
     print_log("")
     print_log("- Filtering table")
-    table_df = filter_input_table(table_df, total, min_frequency, max_frequency, min_count, max_count)
+    table_df = trim_table(filter_input_table(table_df, total, min_frequency, max_frequency, min_count, max_count))
 
     # Filter based on the table
     unassigned = unassigned.reindex(table_df.index)
@@ -109,6 +109,10 @@ def filter_input_table(table_df, total, min_frequency, max_frequency, min_count,
             table_df = table_df.loc[:, table_df_freq <= max_frequency]
         print_log(str(int(cnt - table_df.shape[1])) + " observations removed with --max-frequency " + str(max_frequency))
 
+    return table_df
+
+
+def trim_table(table_df):
     # Check for cols/rows with sum zero
     zero_rows = table_df.sum(axis=1) == 0
     if any(zero_rows):
@@ -163,9 +167,9 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
                 else:
                     updated_nodes = update_tax_nodes(rank_nodes, tax)
 
-                # Add nan to convert empty ranks
-                updated_nodes[np.nan] = tax.undefined_node
-                ranks_df[r] = ranks_df[r].map(lambda t: updated_nodes[t] if updated_nodes[t] else t)
+                # Add nan to keep missing ranks (different than tax.undefined_node [None] which will keep the name)
+                updated_nodes[np.nan] = np.nan
+                ranks_df[r] = ranks_df[r].map(lambda t: updated_nodes[t] if updated_nodes[t] != np.nan else t)
                 del updated_nodes[np.nan]
 
                 unmatched_nodes += list(updated_nodes.values()).count(tax.undefined_node)
@@ -182,7 +186,7 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
                 print_log(str(len(invalid)) + " observations removed with invalid lineage at " + r)
                 # Set to NaN to keep shape of ranks_df
                 ranks_df.loc[ranks_df[r].isin(invalid), r] = np.nan
-   
+
     ranked_tables = {}
     for i, r in parsed_ranks.items():
         # ranks_df and table_df.T have the same shape
@@ -265,6 +269,11 @@ def fdrcorrection_bh(pvals):
 
 
 def transform_table(df, total_counts, transformation, replace_zero_value):
+    # Special case clr with one observation (result in zeros)
+    if transformation == "clr" and df.shape[1] == 1:
+        print_log("WARNING: using log instead of clr with one observation")
+        transformation = "log"
+
     if transformation == "log":
         transformed_df = (df + replace_zero_value).apply(np.log10)
     elif transformation == "clr":
@@ -412,6 +421,7 @@ def run_hclustering(table, linkage_methods, linkage_metrics, transformation, rep
     dendro = {}
 
     for rank in table.ranks():
+
         # Get .values of transform, numpy array
         matrix = transform_table(table.data[rank], table.total, transformation, replace_zero_value).values
 

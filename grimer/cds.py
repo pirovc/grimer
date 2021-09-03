@@ -109,19 +109,14 @@ def generate_cds_obstable(table, tax, contaminants, references, controls, contro
                 freq_perc_control = control_table.gt(0).sum(axis=0) / control_table.shape[0]
                 df_rank["col|" + desc] = table.observations(rank).map(freq_perc_control).fillna(0).to_list()
 
-        # # Add col for each rank with parent taxid if exists, linking entries in their lineage for filtering and plotting
-
         # Add col for each rank with parent taxid if exists, linking entries in their lineage for filtering and plotting
-        
         for other_rank in table.ranks():
-            
             if table.ranks().index(other_rank) > table.ranks().index(rank):
                 df_rank["tax|" + other_rank] = ""
             elif other_rank != rank:
                 df_rank["tax|" + other_rank] = table.observations(rank).map(lambda txid: table.get_lineage(txid, rank, other_rank)).fillna("")
             else:
                 df_rank["tax|" + other_rank] = df_rank.index
-
         # Sort values by frequency to show on table
         df_rank.sort_values(by="col|frequency_perc", ascending=False, inplace=True)
 
@@ -407,10 +402,18 @@ def generate_cds_correlation(table, top_obs_corr):
             top_taxids = sorted(table.observations(rank))
             matrix = table.data[rank]
 
+        matrix.to_csv(rank + "_top.tsv", sep="\t", header=True, index=True)
+
         # No correlation with just one observation
         if len(matrix.columns) >= 2:
 
             rho, pval = stats.spearmanr(matrix)
+
+            #from grimer.prop import get_prop_matrix, rho
+            #from skbio.stats.composition import clr
+
+            #rho = get_prop_matrix(transform_table(matrix, 0, "", 0.000001).values, rho, clr)
+            #print(rho)
 
             if len(matrix.columns) == 2:
                 # If there are only 2 observations, return in a float
