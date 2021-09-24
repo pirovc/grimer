@@ -508,30 +508,32 @@ def parse_sources(cfg, tax, ranks):
     references = {}
     for desc, sf in cfg["sources"]["contaminants"].items():
         contaminants[desc] = Source(file=sf)
-
-        # Update taxids / get taxid from name
         if tax:
+            # Update taxids / get taxid from name
             contaminants[desc].update_taxids(update_tax_nodes(contaminants[desc].ids, tax))
-            ids = contaminants[desc].ids
-
-            # lineage of all children nodes
-            for i in ids:
+            for i in list(contaminants[desc].ids.keys()):
+                # lineage of all children nodes (without itself)
                 for lin in map(lambda txid: tax.lineage(txid, root_node=i), tax.leaves(i)):
-                    contaminants[desc].update_lineage(lin)
-                    contaminants[desc].update_refs({i: l for l in lin})
+                    for l in lin[1:]:
+                        contaminants[desc].add_child(l, i)
+                # lineage of all parent nodes (without itself)
+                for l in tax.lineage(i)[:-1]:
+                    contaminants[desc].add_parent(l, i)
 
     for desc, sf in cfg["sources"]["references"].items():
         references[desc] = Source(file=sf)
         # Update lineage and refs based on given taxonomy
         if tax:
+            # Update taxids / get taxid from name
             references[desc].update_taxids(update_tax_nodes(references[desc].ids, tax))
-            ids = references[desc].ids
-
-            # lineage of all children nodes
-            for i in ids:
+            for i in list(references[desc].ids.keys()):
+                # lineage of all children nodes (without itself)
                 for lin in map(lambda txid: tax.lineage(txid, root_node=i), tax.leaves(i)):
-                    references[desc].update_lineage(lin)
-                    references[desc].update_refs({i: l for l in lin})
+                    for l in lin[1:]:
+                        references[desc].add_child(l, i)
+                # lineage of all parent nodes (without itself)
+                for l in tax.lineage(i)[:-1]:
+                    references[desc].add_parent(l, i)
 
     return contaminants, references
 

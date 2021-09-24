@@ -420,6 +420,40 @@ More details can be found in the [DECONTAM Introduction guide](https://benjjneb.
             "help_button": help_button(title="DECONTAM", text=help_text, align="start")}
 
 
+def plot_contaminants(table, cds_p_contaminants):
+    contaminants_fig = figure(x_range=table.ranks(), height=150, width=300,
+                              tools="save,wheel_zoom,reset")
+
+    contaminants_filter = IndexFilter(indices=[])
+    cds_view_contaminants = CDSView(source=cds_p_contaminants, filters=[contaminants_filter])
+
+    fixed_bar_options = ["direct", "child", "parent"]
+    palette = ["blue", "red", "black"]
+    contaminants_fig.vbar_stack(fixed_bar_options,
+                                x="rank",
+                                width=1,
+                                source=cds_p_contaminants,
+                                view=cds_view_contaminants,
+                                color=palette,
+                                line_color=None,  # to avoid printing zeros
+                                fill_alpha=[1, 0.3, 0.3])
+
+    return contaminants_fig, contaminants_filter
+
+
+def plot_contaminants_widgets():
+    pvalue_text = Paragraph(text="P-value")
+    pvalue_input = TextInput(value="", width=180, align='end')
+
+    help_text = """
+contaminants explained
+"""
+
+    return {"pvalue_text": pvalue_text,
+            "pvalue_input": pvalue_input, 
+            "help_button": help_button(title="Common Contaminants", text=help_text, align="start")}
+
+
 def plot_mgnify(cds_p_mgnify):
     mgnify_fig = figure(height=150, width=300,
                         tools="save,wheel_zoom,reset")

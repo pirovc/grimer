@@ -220,6 +220,8 @@ def main():
     ############ _d_ : data -> auxiliar containers to be used/shared among plots
     ############               usually by copying and/or transforming values into a _p_ container
 
+    cds_p_contaminants = generate_cds_plot_contaminants(table, tax, contaminants)
+
     # _p_
     # df: index (unique observations), col|...,  tax|..., aux|ref
     # this cds an exeption and contains data to plot (col|) and auxiliary data (tax|)
@@ -281,6 +283,10 @@ def main():
     # infopanel
     ele["infopanel"] = {}
     ele["infopanel"]["textarea"] = plot_infopanel()
+
+    # contaminants
+    ele["contaminants"] = {}
+    ele["contaminants"]["fig"], ele["contaminants"]["filter"] = plot_contaminants(table, cds_p_contaminants)
 
     # mgnify
     ele["mgnify"] = {}
@@ -355,6 +361,7 @@ def main():
                              cds_p_decontam,
                              cds_p_decontam_models,
                              cds_d_decontam,
+                             cds_p_contaminants,
                              table.ranks(),
                              min_obs_perc,
                              max_total_count,

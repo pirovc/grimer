@@ -10,6 +10,7 @@ def link_obstable_samplebars(ele,
                              cds_p_decontam,
                              cds_p_decontam_models,
                              cds_d_decontam,
+                             cds_p_contaminants,
                              active_ranks,
                              min_obs_perc,
                              max_total_count,
@@ -316,7 +317,36 @@ def link_obstable_samplebars(ele,
         cds_p_mgnify.change.emit();
         ''')
 
-    obstable_callbacks = [plot_obs_callback, change_text_legend_obs_callback, sort_groupby_callback, load_infopanel]
+    contaminants_callback = CustomJS(
+        args=dict(contaminants_fig=ele["contaminants"]["fig"],
+                  contaminants_filter=ele["contaminants"]["filter"],
+                  cds_p_obstable=cds_p_obstable,
+                  cds_p_contaminants=cds_p_contaminants,
+                  active_ranks=active_ranks),
+        code='''
+        console.log("contaminants_callback");
+        // selected row
+        const row = cds_p_obstable.selected.indices[0];
+        const indices = [];
+        if (row!=undefined){
+            for(let i = 0; i < cds_p_contaminants.length; i++){
+                // for each rank
+                for(let r = 0; r < active_ranks.length; r++){
+                    // get taxid of the rank
+                    let rank_obs = cds_p_obstable.data["tax|"+active_ranks[r]][row];
+                    if(cds_p_contaminants.data["obs"][i]==rank_obs &&
+                       cds_p_contaminants.data["cont"][i]=="CC Bacteria"){
+                        indices.push(i);
+                    }
+                }
+            }
+        }
+        console.log(indices);
+        contaminants_filter.indices = indices;
+        cds_p_contaminants.change.emit();
+        ''')
+
+    obstable_callbacks = [plot_obs_callback, change_text_legend_obs_callback, sort_groupby_callback, load_infopanel, contaminants_callback]
     if cds_p_decontam:
         obstable_callbacks.append(decontam_callback)
     if cds_p_mgnify:

@@ -19,6 +19,7 @@ def make_layout(ele, version, logo_path, title):
                              width=top_panel_width_sides)
 
     info_tabs = [Panel(child=ele["infopanel"]["textarea"], title="Info")]
+    info_tabs.append(Panel(child=column(ele["contaminants"]["fig"]), title="CC"))
 
     if ele["mgnify"]["fig"]:
         info_tabs.append(Panel(child=column(ele["mgnify"]["fig"], row(ele["mgnify"]["wid"]["biome_spinner"], ele["mgnify"]["wid"]["help_button"])), title="MGNify"))
