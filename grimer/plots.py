@@ -15,14 +15,23 @@ def plot_samplebars(cds_p_samplebars, max_total_count, ranks):
                             y_range=Range1d(start=0, end=max_total_count),
                             plot_height=400,
                             sizing_mode="stretch_width",
-                            tools="box_zoom,reset,save,hover",
-                            tooltips=[("Sample", "@index"), ("Value", "@$name")])
+                            tools="box_zoom,reset,save")
+
+    samplebars_fig.add_tools(HoverTool(
+        tooltips=[
+            ("Sample", "@index"),
+            ("Value", "@$name")
+        ],
+        mode="mouse",
+        point_policy="follow_mouse",
+    ))
 
     fixed_bar_options = ["selected", "others", "unassigned"]
     vbar_ren = samplebars_fig.vbar_stack(["bar|" + f for f in fixed_bar_options],
                                          x="aux|factors",
                                          width=1,
                                          source=cds_p_samplebars,
+                                         line_color=None,  # to avoid printing small border for zeros
                                          color=make_color_palette(len(fixed_bar_options)))
 
     # Second y-axis to plot observations
@@ -114,6 +123,7 @@ def plot_obsbars(cds_p_obsbars, dict_d_topobs, ranks, top_obs_bars, dict_d_taxna
     vbar_ren = obsbars_fig.vbar_stack(bars, x="factors",
                                       source=cds_p_obsbars,
                                       width=1,
+                                      #line_color=None,  # to avoid printing small border for zeros
                                       #color=make_color_palette(top_obs_bars, linear=True) + ("#868b8e", "#eeede7"))
                                       color=make_color_palette(top_obs_bars) + ("#868b8e", "#eeede7"))
 
@@ -420,37 +430,59 @@ More details can be found in the [DECONTAM Introduction guide](https://benjjneb.
             "help_button": help_button(title="DECONTAM", text=help_text, align="start")}
 
 
-def plot_contaminants(table, cds_p_contaminants):
+def plot_contaminants(table, cds_p_contaminants, dict_d_taxname):
     contaminants_fig = figure(x_range=table.ranks(), height=150, width=300,
-                              tools="save,wheel_zoom,reset")
+                              tools="save,reset")
+
+    # Need to pass dict_d_taxname inside a one column data
+    taxid_name_custom = CustomJSHover(
+        args=dict(dict_d_taxname=ColumnDataSource(dict(dict_d_taxname=[dict_d_taxname]))),
+        code="return dict_d_taxname.data.dict_d_taxname[0][value]; // value holds the @taxid"
+    )
+    # Add custom tooltip for heatmap (taxid->name)
+    contaminants_fig.add_tools(HoverTool(
+        tooltips=[
+            ('Observation', '@obs{custom}'),
+            ('# reported (directly)', '@direct'),
+            ('  as children', '@child'),
+            ('  as parent', '@parent'),
+        ],
+        mode="mouse",
+        point_policy="follow_mouse",
+        formatters={"@obs": taxid_name_custom}
+    ))
 
     contaminants_filter = IndexFilter(indices=[])
     cds_view_contaminants = CDSView(source=cds_p_contaminants, filters=[contaminants_filter])
 
     fixed_bar_options = ["direct", "child", "parent"]
-    palette = ["blue", "red", "black"]
+    palette = ["red", "orange", "black"]
     contaminants_fig.vbar_stack(fixed_bar_options,
                                 x="rank",
                                 width=1,
                                 source=cds_p_contaminants,
                                 view=cds_view_contaminants,
                                 color=palette,
-                                line_color=None,  # to avoid printing zeros
+                                line_color=None,  # to avoid printing small border for zeros
                                 fill_alpha=[1, 0.3, 0.3])
+
+    contaminants_fig.xaxis.major_label_orientation = "vertical"
+    contaminants_fig.xgrid.grid_line_color = None
+    contaminants_fig.xaxis.minor_tick_line_color = None
+    contaminants_fig.yaxis.minor_tick_line_color = None
+    contaminants_fig.xaxis.major_tick_line_color = None
+    contaminants_fig.yaxis.major_tick_line_color = None
+    contaminants_fig.yaxis.axis_label = "# reported"
 
     return contaminants_fig, contaminants_filter
 
 
-def plot_contaminants_widgets():
-    pvalue_text = Paragraph(text="P-value")
-    pvalue_input = TextInput(value="", width=180, align='end')
-
+def plot_contaminants_widgets(contaminants):
+    contaminant_select = Select(value=list(contaminants.keys())[0], width=200, options=list(contaminants.keys()))
     help_text = """
 contaminants explained
 """
-
-    return {"pvalue_text": pvalue_text,
-            "pvalue_input": pvalue_input, 
+    return {"contaminant_select": contaminant_select,
             "help_button": help_button(title="Common Contaminants", text=help_text, align="start")}
 
 

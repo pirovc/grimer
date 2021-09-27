@@ -320,6 +320,7 @@ def link_obstable_samplebars(ele,
     contaminants_callback = CustomJS(
         args=dict(contaminants_fig=ele["contaminants"]["fig"],
                   contaminants_filter=ele["contaminants"]["filter"],
+                  contaminant_select=ele["contaminants"]["wid"]["contaminant_select"],
                   cds_p_obstable=cds_p_obstable,
                   cds_p_contaminants=cds_p_contaminants,
                   active_ranks=active_ranks),
@@ -334,14 +335,12 @@ def link_obstable_samplebars(ele,
                 for(let r = 0; r < active_ranks.length; r++){
                     // get taxid of the rank
                     let rank_obs = cds_p_obstable.data["tax|"+active_ranks[r]][row];
-                    if(cds_p_contaminants.data["obs"][i]==rank_obs &&
-                       cds_p_contaminants.data["cont"][i]=="CC Bacteria"){
+                    if(cds_p_contaminants.data["obs"][i]==rank_obs && cds_p_contaminants.data["cont"][i]==contaminant_select.value){
                         indices.push(i);
                     }
                 }
             }
         }
-        console.log(indices);
         contaminants_filter.indices = indices;
         cds_p_contaminants.change.emit();
         ''')
@@ -361,7 +360,7 @@ def link_obstable_samplebars(ele,
     ele["samplebars"]["wid"]["y1_select"].js_on_change('value', bar_select_callback, change_y_counts_label_callback, sort_groupby_callback)
     ele["samplebars"]["wid"]["y2_select"].js_on_change('value', plot_obs_callback, change_y_obs_label_callback, sort_groupby_callback)
     ele["mgnify"]["wid"]["biome_spinner"].js_on_change('value', mgnify_callback)
-
+    ele["contaminants"]["wid"]["contaminant_select"].js_on_change('value', contaminants_callback)
 
 def link_heatmap_widgets(ele,
                          cds_d_samples,

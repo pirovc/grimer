@@ -22,7 +22,9 @@ def generate_dict_taxname(tax, taxids):
 
 
 def generate_cds_plot_contaminants(table, tax, contaminants):
-
+    # Stacked list of contaminants for each observation
+    # index -> observations (repeated)
+    # columns -> "rank", "cont", "direct", "child", "parent"
     clist = []
     for rank in table.ranks():
         for obs in table.observations(rank):
@@ -34,6 +36,9 @@ def generate_cds_plot_contaminants(table, tax, contaminants):
                     clist.append([obs, rank, desc, direct, child, parent])
 
     df_contaminants = pd.DataFrame(clist, columns=["obs", "rank", "cont", "direct", "child", "parent"])
+    df_contaminants.set_index('obs', inplace=True)
+
+    df_contaminants.sort_values(by="cont", ascending=False, inplace=True)
 
     print_df(df_contaminants, "df_contaminants -> cds_p_contaminants")
     return ColumnDataSource(df_contaminants)
@@ -52,14 +57,13 @@ def generate_cds_annotations(table, contaminants, references, controls, decontam
             df_rank["decontam"] = decontam.get_contaminants(rank, df_rank.index)
 
         for desc, ref in references.items():
-            df_rank[desc] = table.observations(rank).isin(ref.lineage())
-
+            df_rank[desc] = table.observations(rank).map(lambda x: ref.get_refs_count(x, direct=True)) >= 1
         for desc, cont in contaminants.items():
-            df_rank[desc] = table.observations(rank).isin(cont.lineage())
+            df_rank[desc] = table.observations(rank).map(lambda x: cont.get_refs_count(x, direct=True)) >= 1
 
         if controls:
             for desc, ctrl in controls.items():
-                df_rank[desc] = table.observations(rank).isin(ctrl.lineage)
+                df_rank[desc] = table.observations(rank).map(lambda x: ctrl.get_refs_count(x, direct=True)) >= 1
 
         df_rank = pd.DataFrame(df_rank.stack(), columns=["val"]).reset_index(1)
         df_rank.rename(columns={"level_1": "annot"}, inplace=True)
@@ -192,7 +196,7 @@ def generate_cds_samples(table, references, contaminants, controls, decontam):
     for sources in source_list:
         for desc, src in sources:
             for rank in table.ranks():
-                idx = table.observations(rank).isin(src.lineage())
+                idx = table.observations(rank).map(lambda x: src.get_refs_count(x, direct=True)) >= 1
                 df_samples["cnt|" + rank + "|" + desc] = table.data[rank][table.observations(rank)[idx]].sum(axis=1)
 
     if decontam:
@@ -200,6 +204,9 @@ def generate_cds_samples(table, references, contaminants, controls, decontam):
         for rank in table.ranks():
             idx = table.observations(rank).isin(contaminants)
             df_samples["cnt|" + rank + "|decontam"] = table.data[rank][table.observations(rank)[idx]].sum(axis=1)
+
+    # fill NaN with zero so bars do not "dissapear" when plotting
+    df_samples.fillna(0, inplace=True)
 
     print_df(df_samples, "df_samples -> cds_d_samples")
     return ColumnDataSource(df_samples)
@@ -280,6 +287,9 @@ def generate_cds_sampleobs(table):
     df_sampleobs = pd.DataFrame(index=table.samples)
     for rank in table.ranks():
         df_sampleobs = pd.concat([df_sampleobs, table.data[rank]], axis=1)
+
+    # fill NaN with zero so bars do not "dissapear" when plotting
+    df_sampleobs.fillna(0, inplace=True)
     print_df(df_sampleobs, "df_sampleobs -> cds_d_sampleobs")
     return ColumnDataSource(df_sampleobs)
 

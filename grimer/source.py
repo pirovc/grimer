@@ -71,6 +71,3 @@ class Source:
 
     def get_refs_count(self, i, direct: bool=False, children: bool=False, parents: bool=False):
         return len(self.get_refs_desc(i, direct, children, parents))
-
-    def lineage(self):
-        return set(list(self.ids.keys()) + list(self.children.keys()) + list(self.parents.keys()))

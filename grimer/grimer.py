@@ -220,7 +220,6 @@ def main():
     ############ _d_ : data -> auxiliar containers to be used/shared among plots
     ############               usually by copying and/or transforming values into a _p_ container
 
-    cds_p_contaminants = generate_cds_plot_contaminants(table, tax, contaminants)
 
     # _p_
     # df: index (unique observations), col|...,  tax|..., aux|ref
@@ -228,6 +227,8 @@ def main():
     cds_p_obstable = generate_cds_obstable(table, tax, contaminants, references, controls, control_samples, decontam)
     # df: index (unique sample-ids), aux|..., bar|..., tax|...
     cds_p_samplebars = generate_cds_bars(table)
+    # stacked:      
+    cds_p_contaminants = generate_cds_plot_contaminants(table, tax, contaminants)
     # matrix: index (unique sample-ids), concentrations, controls, counts
     cds_p_decontam = generate_cds_plot_decontam(decontam) if decontam else None
     # {x: [min,max], y_cont: [None,None], y_noncont: [None,None]}
@@ -286,7 +287,8 @@ def main():
 
     # contaminants
     ele["contaminants"] = {}
-    ele["contaminants"]["fig"], ele["contaminants"]["filter"] = plot_contaminants(table, cds_p_contaminants)
+    ele["contaminants"]["fig"], ele["contaminants"]["filter"] = plot_contaminants(table, cds_p_contaminants, dict_d_taxname)
+    ele["contaminants"]["wid"] = plot_contaminants_widgets(contaminants)
 
     # mgnify
     ele["mgnify"] = {}
