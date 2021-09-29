@@ -21,10 +21,10 @@ def generate_dict_taxname(tax, taxids):
     return id_name
 
 
-def generate_cds_plot_contaminants(table, tax, references):
-    # Stacked list of contaminants for each observation
+def generate_cds_plot_references(table, tax, references):
+    # Stacked list of references, accounting for its lineage matches
     # index -> observations (repeated)
-    # columns -> "rank", "annot", "direct", "child", "parent"
+    # columns -> "rank", "ref", "direct", "child", "parent"
     clist = []
     for rank in table.ranks():
         for obs in table.observations(rank):
@@ -35,11 +35,11 @@ def generate_cds_plot_contaminants(table, tax, references):
                 if direct + child + parent > 0:
                     clist.append([obs, rank, desc, direct, child, parent])
 
-    df_contaminants = pd.DataFrame(clist, columns=["obs", "rank", "annot", "direct", "child", "parent"])
-    df_contaminants.set_index('obs', inplace=True)
+    df_references = pd.DataFrame(clist, columns=["obs", "rank", "ref", "direct", "child", "parent"])
+    df_references.set_index('obs', inplace=True)
 
-    print_df(df_contaminants, "df_contaminants -> cds_p_contaminants")
-    return ColumnDataSource(df_contaminants)
+    print_df(df_references, "df_references -> cds_p_references")
+    return ColumnDataSource(df_references)
 
 def generate_cds_annotations(table, references, controls, decontam):
     # Stacked matrix of true annotations (omit false)

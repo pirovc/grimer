@@ -10,7 +10,7 @@ def link_obstable_samplebars(ele,
                              cds_p_decontam,
                              cds_p_decontam_models,
                              cds_d_decontam,
-                             cds_p_contaminants,
+                             cds_p_references,
                              active_ranks,
                              min_obs_perc,
                              max_total_count,
@@ -317,37 +317,37 @@ def link_obstable_samplebars(ele,
         cds_p_mgnify.change.emit();
         ''')
 
-    contaminants_callback = CustomJS(
-        args=dict(contaminants_fig=ele["contaminants"]["fig"],
-                  contaminants_filter=ele["contaminants"]["filter"],
-                  contaminant_select=ele["contaminants"]["wid"]["contaminant_select"],
+    references_callback = CustomJS(
+        args=dict(references_fig=ele["references"]["fig"],
+                  references_filter=ele["references"]["filter"],
+                  references_select=ele["references"]["wid"]["references_select"],
                   cds_p_obstable=cds_p_obstable,
-                  cds_p_contaminants=cds_p_contaminants,
+                  cds_p_references=cds_p_references,
                   active_ranks=active_ranks),
         code='''
-        console.log("contaminants_callback");
+        console.log("references_callback");
         // selected row
         const row = cds_p_obstable.selected.indices[0];
         const indices = [];
         if (row!=undefined){
-            for(let i = 0; i < cds_p_contaminants.length; i++){
+            for(let i = 0; i < cds_p_references.length; i++){
                 // for each rank
                 for(let r = 0; r < active_ranks.length; r++){
                     // get taxid of the rank
                     let rank_obs = cds_p_obstable.data["tax|"+active_ranks[r]][row];
-                    if(cds_p_contaminants.data["obs"][i]==rank_obs &&
-                       cds_p_contaminants.data["rank"][i]==active_ranks[r] &&
-                       cds_p_contaminants.data["annot"][i]==contaminant_select.value){
+                    if(cds_p_references.data["obs"][i]==rank_obs &&
+                       cds_p_references.data["rank"][i]==active_ranks[r] &&
+                       cds_p_references.data["ref"][i]==references_select.value){
                         indices.push(i);
                     }
                 }
             }
         }
-        contaminants_filter.indices = indices;
-        cds_p_contaminants.change.emit();
+        references_filter.indices = indices;
+        cds_p_references.change.emit();
         ''')
 
-    obstable_callbacks = [plot_obs_callback, change_text_legend_obs_callback, sort_groupby_callback, load_infopanel, contaminants_callback]
+    obstable_callbacks = [plot_obs_callback, change_text_legend_obs_callback, sort_groupby_callback, load_infopanel, references_callback]
     if cds_p_decontam:
         obstable_callbacks.append(decontam_callback)
     if cds_p_mgnify:
@@ -362,7 +362,7 @@ def link_obstable_samplebars(ele,
     ele["samplebars"]["wid"]["y1_select"].js_on_change('value', bar_select_callback, change_y_counts_label_callback, sort_groupby_callback)
     ele["samplebars"]["wid"]["y2_select"].js_on_change('value', plot_obs_callback, change_y_obs_label_callback, sort_groupby_callback)
     ele["mgnify"]["wid"]["biome_spinner"].js_on_change('value', mgnify_callback)
-    ele["contaminants"]["wid"]["contaminant_select"].js_on_change('value', contaminants_callback)
+    ele["references"]["wid"]["references_select"].js_on_change('value', references_callback)
 
 def link_heatmap_widgets(ele,
                          cds_d_samples,

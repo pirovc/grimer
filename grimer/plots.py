@@ -277,7 +277,7 @@ Raw counts (#) can be normalized (%). Observation counts (#) can be normalized (
             "help_button": help_button(title="Sample bars", text=help_text)}
 
 
-def plot_obstable(cds_p_obstable, ranks, contaminant_names, control_names):
+def plot_obstable(cds_p_obstable, ranks, reference_names, control_names):
     # General filter for widgets
     widgets_filter = IndexFilter()
 
@@ -297,8 +297,8 @@ def plot_obstable(cds_p_obstable, ranks, contaminant_names, control_names):
         for ctrl_name in control_names:
             table_cols.append(TableColumn(field="col|" + ctrl_name, title="(F) " + ctrl_name, default_sort="descending", formatter=NumberFormatter(format="0.00%")))
 
-        for cont_name in contaminant_names:
-            table_cols.append(TableColumn(field="col|" + cont_name, title=cont_name, default_sort="descending"))
+        for ref_name in reference_names:
+            table_cols.append(TableColumn(field="col|" + ref_name, title=ref_name, default_sort="descending"))
 
         if "col|decontam" in cds_p_obstable.data:
             table_cols.append(TableColumn(field="col|decontam", title="DECONTAM", default_sort="descending"))
@@ -428,8 +428,8 @@ More details can be found in the [DECONTAM Introduction guide](https://benjjneb.
             "help_button": help_button(title="DECONTAM", text=help_text, align="start")}
 
 
-def plot_contaminants(table, cds_p_contaminants, dict_d_taxname):
-    contaminants_fig = figure(x_range=table.ranks(), height=150, width=300,
+def plot_references(table, cds_p_references, dict_d_taxname):
+    references_fig = figure(x_range=table.ranks(), height=150, width=300,
                               tools="save,reset")
 
     # Need to pass dict_d_taxname inside a one column data
@@ -438,7 +438,7 @@ def plot_contaminants(table, cds_p_contaminants, dict_d_taxname):
         code="return dict_d_taxname.data.dict_d_taxname[0][value]; // value holds the @taxid"
     )
     # Add custom tooltip for heatmap (taxid->name)
-    contaminants_fig.add_tools(HoverTool(
+    references_fig.add_tools(HoverTool(
         tooltips=[
             ('Observation', '@obs{custom}'),
             ('# reported (directly)', '@direct'),
@@ -450,38 +450,38 @@ def plot_contaminants(table, cds_p_contaminants, dict_d_taxname):
         formatters={"@obs": taxid_name_custom}
     ))
 
-    contaminants_filter = IndexFilter(indices=[])
-    cds_view_contaminants = CDSView(source=cds_p_contaminants, filters=[contaminants_filter])
+    references_filter = IndexFilter(indices=[])
+    cds_view_references = CDSView(source=cds_p_references, filters=[references_filter])
 
     fixed_bar_options = ["direct", "child", "parent"]
     palette = ["red", "orange", "black"]
-    contaminants_fig.vbar_stack(fixed_bar_options,
-                                x="rank",
-                                width=1,
-                                source=cds_p_contaminants,
-                                view=cds_view_contaminants,
-                                color=palette,
-                                line_color=None,  # to avoid printing small border for zeros
-                                fill_alpha=[1, 0.3, 0.3])
+    references_fig.vbar_stack(fixed_bar_options,
+                              x="rank",
+                              width=1,
+                              source=cds_p_references,
+                              view=cds_view_references,
+                              color=palette,
+                              line_color=None,  # to avoid printing small border for zeros
+                              fill_alpha=[1, 0.3, 0.3])
 
-    contaminants_fig.xaxis.major_label_orientation = "vertical"
-    contaminants_fig.xgrid.grid_line_color = None
-    contaminants_fig.xaxis.minor_tick_line_color = None
-    contaminants_fig.yaxis.minor_tick_line_color = None
-    contaminants_fig.xaxis.major_tick_line_color = None
-    contaminants_fig.yaxis.major_tick_line_color = None
-    contaminants_fig.yaxis.axis_label = "# reported"
+    references_fig.xaxis.major_label_orientation = "vertical"
+    references_fig.xgrid.grid_line_color = None
+    references_fig.xaxis.minor_tick_line_color = None
+    references_fig.yaxis.minor_tick_line_color = None
+    references_fig.xaxis.major_tick_line_color = None
+    references_fig.yaxis.major_tick_line_color = None
+    references_fig.yaxis.axis_label = "# reported"
 
-    return contaminants_fig, contaminants_filter
+    return references_fig, references_filter
 
 
-def plot_contaminants_widgets(references):
-    contaminant_select = Select(value=list(references.keys())[0], width=200, options=list(references.keys()))
+def plot_references_widgets(references):
+    references_select = Select(value=list(references.keys())[0], width=200, options=list(references.keys()))
     help_text = """
-contaminants explained
+references explained
 """
-    return {"contaminant_select": contaminant_select,
-            "help_button": help_button(title="Common Contaminants", text=help_text, align="start")}
+    return {"references_select": references_select,
+            "help_button": help_button(title="References", text=help_text, align="start")}
 
 
 def plot_mgnify(cds_p_mgnify):

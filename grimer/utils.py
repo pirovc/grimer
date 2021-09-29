@@ -508,23 +508,23 @@ def include_scripts(scripts):
 
 
 def parse_references(cfg, tax, ranks):
-    annotations = {}
+    references = {}
 
-    for desc, sf in cfg["annotations"].items():
-        annotations[desc] = Source(file=sf)
+    for desc, sf in cfg["references"].items():
+        references[desc] = Source(file=sf)
         if tax:
             # Update taxids / get taxid from name
-            annotations[desc].update_taxids(update_tax_nodes(annotations[desc].ids, tax))
-            for i in list(annotations[desc].ids.keys()):
+            references[desc].update_taxids(update_tax_nodes(references[desc].ids, tax))
+            for i in list(references[desc].ids.keys()):
                 # lineage of all children nodes (without itself)
                 for lin in map(lambda txid: tax.lineage(txid, root_node=i), tax.leaves(i)):
                     for l in lin[1:]:
-                        annotations[desc].add_child(l, i)
+                        references[desc].add_child(l, i)
                 # lineage of all parent nodes (without itself)
                 for l in tax.lineage(i)[:-1]:
-                    annotations[desc].add_parent(l, i)
+                    references[desc].add_parent(l, i)
 
-    return annotations
+    return references
 
 
 def parse_controls(cfg, table):

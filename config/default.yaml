@@ -1,4 +1,4 @@
-annotations:
+references:
   "Contaminants": "files/contaminants.yml"
   "Human-related": "files/human-related.yml" 
 

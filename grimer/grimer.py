@@ -176,7 +176,7 @@ def main():
         metadata = None
 
     # Sources of contamination/references/controls
-    print_log("- Parsing sources (contamination/references/controls)")
+    print_log("- Parsing references and controls")
     references = {}
     if args.tax == "ncbi":
         references = parse_references(cfg, tax, table.ranks())
@@ -227,7 +227,7 @@ def main():
     # df: index (unique sample-ids), aux|..., bar|..., tax|...
     cds_p_samplebars = generate_cds_bars(table)
     # stacked:      
-    cds_p_contaminants = generate_cds_plot_contaminants(table, tax, references)
+    cds_p_references = generate_cds_plot_references(table, tax, references)
     # matrix: index (unique sample-ids), concentrations, controls, counts
     cds_p_decontam = generate_cds_plot_decontam(decontam) if decontam else None
     # {x: [min,max], y_cont: [None,None], y_noncont: [None,None]}
@@ -284,10 +284,10 @@ def main():
     ele["infopanel"] = {}
     ele["infopanel"]["textarea"] = plot_infopanel()
 
-    # contaminants
-    ele["contaminants"] = {}
-    ele["contaminants"]["fig"], ele["contaminants"]["filter"] = plot_contaminants(table, cds_p_contaminants, dict_d_taxname)
-    ele["contaminants"]["wid"] = plot_contaminants_widgets(references)
+    # references
+    ele["references"] = {}
+    ele["references"]["fig"], ele["references"]["filter"] = plot_references(table, cds_p_references, dict_d_taxname)
+    ele["references"]["wid"] = plot_references_widgets(references)
 
     # mgnify
     ele["mgnify"] = {}
@@ -362,7 +362,7 @@ def main():
                              cds_p_decontam,
                              cds_p_decontam_models,
                              cds_d_decontam,
-                             cds_p_contaminants,
+                             cds_p_references,
                              table.ranks(),
                              min_obs_perc,
                              max_total_count,
