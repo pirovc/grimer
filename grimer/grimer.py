@@ -177,12 +177,11 @@ def main():
 
     # Sources of contamination/references/controls
     print_log("- Parsing sources (contamination/references/controls)")
+    references = {}
     if args.tax == "ncbi":
-        contaminants, references = parse_sources(cfg, tax, table.ranks())
-    else:
-        contaminants, references = [{}, {}]
+        references = parse_references(cfg, tax, table.ranks())
 
-    controls, control_samples = parse_controls(cfg, tax, table)
+    controls, control_samples = parse_controls(cfg, table)
     print_log("")
 
     # Run and load decontam results
@@ -224,11 +223,11 @@ def main():
     # _p_
     # df: index (unique observations), col|...,  tax|..., aux|ref
     # this cds an exeption and contains data to plot (col|) and auxiliary data (tax|)
-    cds_p_obstable = generate_cds_obstable(table, tax, contaminants, references, controls, control_samples, decontam)
+    cds_p_obstable = generate_cds_obstable(table, tax, references, controls, control_samples, decontam)
     # df: index (unique sample-ids), aux|..., bar|..., tax|...
     cds_p_samplebars = generate_cds_bars(table)
     # stacked:      
-    cds_p_contaminants = generate_cds_plot_contaminants(table, tax, contaminants)
+    cds_p_contaminants = generate_cds_plot_contaminants(table, tax, references)
     # matrix: index (unique sample-ids), concentrations, controls, counts
     cds_p_decontam = generate_cds_plot_decontam(decontam) if decontam else None
     # {x: [min,max], y_cont: [None,None], y_noncont: [None,None]}
@@ -240,7 +239,7 @@ def main():
     # matrix: index (unique sample-ids), md0, md1, ..., md(max_metadata_cols) -> (metadata field, metadata values)
     cds_p_metadata = generate_cds_plot_metadata(metadata, max_metadata_cols) if metadata else None
     # stacked: index (repeated observations), rank, annot
-    cds_p_annotations = generate_cds_annotations(table, contaminants, references, controls, decontam)
+    cds_p_annotations = generate_cds_annotations(table, references, controls, decontam)
     # empty matrix {"x": [], "y": [], "c": []}
     cds_p_dendro_x, cds_p_dendro_y = generate_cds_plot_dendro() if not args.skip_dendrogram else [None, None]
     # stacked: index (repeated observations), other observation, rank, rho, pval, pval_corr
@@ -252,7 +251,7 @@ def main():
     # matrix: index (unique sample-ids), columns (unique observations) -> raw counts
     cds_d_sampleobs = generate_cds_sampleobs(table)
     # df: index (unique sample-ids), aux|..., cnt|...,
-    cds_d_samples = generate_cds_samples(table, references, contaminants, controls, decontam)
+    cds_d_samples = generate_cds_samples(table, references, controls, decontam)
     # matrix: index (unique sample-ids) x columns (metadata fields) -> metadata values
     cds_d_metadata = generate_cds_metadata(metadata) if metadata else None
     # {taxid: (contam_y1, contam_y2, non_contam_y, pval)}
@@ -268,7 +267,7 @@ def main():
     # {rank: [taxid1,taxid2, ..., taxid(top_obs_bars)]}
     dict_d_topobs = generate_dict_topobs(table, args.top_obs_bars)
     # {taxid: {source: {desc: [refs]}}
-    dict_d_refs = generate_dict_refs(table, contaminants, references)
+    dict_d_refs = generate_dict_refs(table, references)
 
     ############ PLOT ELEMENTS (Figures, Widgets, ...)
     ############ "fig": main figure
@@ -278,7 +277,7 @@ def main():
 
     # obstable
     ele["obstable"] = {}
-    ele["obstable"]["fig"], ele["obstable"]["widgets_filter"] = plot_obstable(cds_p_obstable, table.ranks(), contaminants.keys(), controls.keys())
+    ele["obstable"]["fig"], ele["obstable"]["widgets_filter"] = plot_obstable(cds_p_obstable, table.ranks(), references.keys(), controls.keys())
     ele["obstable"]["wid"] = plot_obstable_widgets(dict_d_taxname, max(cds_p_obstable.data["col|total_counts"]))
 
     # infopanel
@@ -288,7 +287,7 @@ def main():
     # contaminants
     ele["contaminants"] = {}
     ele["contaminants"]["fig"], ele["contaminants"]["filter"] = plot_contaminants(table, cds_p_contaminants, dict_d_taxname)
-    ele["contaminants"]["wid"] = plot_contaminants_widgets(contaminants)
+    ele["contaminants"]["wid"] = plot_contaminants_widgets(references)
 
     # mgnify
     ele["mgnify"] = {}
@@ -310,13 +309,13 @@ def main():
     # samplebars
     ele["samplebars"] = {}
     ele["samplebars"]["fig"], ele["samplebars"]["legend_obs"], ele["samplebars"]["legend_bars"] = plot_samplebars(cds_p_samplebars, max_total_count, table.ranks())
-    ele["samplebars"]["wid"] = plot_samplebars_widgets(table.ranks(), metadata, list(contaminants.keys()), list(references.keys()), list(controls.keys()), decontam)
+    ele["samplebars"]["wid"] = plot_samplebars_widgets(table.ranks(), metadata, list(references.keys()), list(controls.keys()), decontam)
 
     # heatmap
     tools_heatmap = "hover,save,box_zoom,reset,crosshair,box_select"
     ele["heatmap"] = {}
     ele["heatmap"]["fig"] = plot_heatmap(table, cds_p_heatmap, tools_heatmap, args.transformation, dict_d_taxname)
-    ele["heatmap"]["wid"] = plot_heatmap_widgets(table.ranks(), args.linkage_methods, args.linkage_metrics, list(contaminants.keys()), list(references.keys()), list(controls.keys()), metadata, decontam)
+    ele["heatmap"]["wid"] = plot_heatmap_widgets(table.ranks(), args.linkage_methods, args.linkage_metrics, list(references.keys()), list(controls.keys()), metadata, decontam)
 
     # metadata (heatmap)
     ele["metadata"] = {}

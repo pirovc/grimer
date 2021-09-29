@@ -11,7 +11,7 @@ class Source:
             self.parse(file)
         elif ids:
             for i in ids:
-                self.add(i)
+                self.add(i, "", "")
 
     def __repr__(self):
         args = ['{}={}'.format(k, repr(v)) for (k, v) in vars(self).items()]

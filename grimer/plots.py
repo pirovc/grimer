@@ -221,12 +221,11 @@ Samples can be grouped and sorted. When sorting by numeric metadata, labels will
             "help_button": help_button(title="Observation bars", text=help_text)}
 
 
-def plot_samplebars_widgets(ranks, metadata, contaminant_names, reference_names, control_names, decontam):
+def plot_samplebars_widgets(ranks, metadata, reference_names, control_names, decontam):
     annotbar_rank_select = Select(title="Annotate bars at rank:", value=ranks[0], options=[r for r in ranks])
 
     annotbar_options = {}
     annotbar_options["Default"] = ["assigned"]
-    annotbar_options["Contaminant"] = [c for c in contaminant_names]
     annotbar_options["References"] = [r for r in reference_names]
     annotbar_options["Controls"] = [c for c in control_names]
     if decontam:
@@ -301,7 +300,6 @@ def plot_obstable(cds_p_obstable, ranks, contaminant_names, control_names):
         for cont_name in contaminant_names:
             table_cols.append(TableColumn(field="col|" + cont_name, title=cont_name, default_sort="descending"))
 
-        table_cols.append(TableColumn(field="col|references", title="References", default_sort="descending"))
         if "col|decontam" in cds_p_obstable.data:
             table_cols.append(TableColumn(field="col|decontam", title="DECONTAM", default_sort="descending"))
 
@@ -477,8 +475,8 @@ def plot_contaminants(table, cds_p_contaminants, dict_d_taxname):
     return contaminants_fig, contaminants_filter
 
 
-def plot_contaminants_widgets(contaminants):
-    contaminant_select = Select(value=list(contaminants.keys())[0], width=200, options=list(contaminants.keys()))
+def plot_contaminants_widgets(references):
+    contaminant_select = Select(value=list(references.keys())[0], width=200, options=list(references.keys()))
     help_text = """
 contaminants explained
 """
@@ -612,14 +610,13 @@ def plot_heatmap(table, cds_p_heatmap, tools_heatmap, transformation, dict_d_tax
     return heatmap
 
 
-def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, contaminant_names, reference_names, controls_names, metadata, decontam):
+def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, reference_names, controls_names, metadata, decontam):
 
     rank_select = Select(title="Taxonomic rank:", value=ranks[0], options=ranks)
 
     x_sort_options = {}
     x_sort_options["Clustering Metric"] = [("metric|" + lm, lm) for lm in linkage_metrics]
     x_sort_options["Default order"] = [("none", "none"), ("counts", "counts"), ("observations", "observations")]
-    x_sort_options["Sort by Contaminants"] = [("annot|" + c, c) for c in contaminant_names]
     x_sort_options["Sort by References"] = [("annot|" + r, r) for r in reference_names]
     if controls_names:
         x_sort_options["Sort by Controls"] = [("annot|" + c, c) for c in controls_names]

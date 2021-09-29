@@ -1,31 +1,31 @@
-# GRIMER Sources
+# GRIMER References and aux. files
 
-## File formats
-
-Contaminant and reference sources can be provided to grimer in two formats:
+## Reference file format
 
 1) File with a list (one per line) of taxonomic identifiers or taxonomic names
 
-2) Formatted .yml file:
+or
 
-	Description/Group 1:
-	  Description/Group 2:
-	     url: ""
-	     ids: []
+2) Formatted `.yml` file:
+
+    "General Description":
+      "Specific description":
+        url: "www.website.com?id={}" 
+        ids: [1,2,3]
 
 The url can be a link to the entries listed on the id. Use the `{}` as a placeholder for the id. Example: `https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id={}`
 
 The files should be provided in the main configuration file for grimer as follows:
 
-	sources:
-	  contaminants:
-	    "CUSTOM CONTAMINANTS 1": "file.txt"
-	    "LAB CONT": "another_file.yml"
-	  references:
-	    "Human gut": "listofnames.txt"
-	    "XYZ": "another.yaml"
+    references:
+      "Contaminants": "files/contaminants.yml"
+      "Human-related": "files/human-related.yml" 
+      "CUSTOM CONTAMINANTS": "file.txt"
+      "LAB RELATED BACTERIA": "another_file.yml"
 
-## Contaminants
+### contaminants.yml
+
+Last update: 2021-04-01
 
  | Organism group | Genus | Species |
  |----------------|-------|---------|
@@ -49,20 +49,28 @@ The files should be provided in the main configuration file for grimer as follow
  | Viruses | 0 | 301 | 2019 Asplund, M. et al. |
  | Total (unique) | 201 | 625 | |
 
-## References
+### human-related.yml
+
+BacDive and eHOMD dump date: 2021-04-13
 
 ```bash
 scripts/bacdive_download.py
 scripts/ehomd_download.py
 ```
 
-BacDive and eHOMD dump date: 2021-04-13
+## MGnify
 
-## MGNify
+The downloaded MGnify database file should be provided in the main configuration file for grimer as follows:
+
+    external:
+      mgnify: "files/mgnify.tsv"
+
+## mgnify.tsv
+
+MGnify dump date: 2021-04-08 (latest study accession MGYS00005724)
 
 ```bash
 seq -f "MGYS%08g" 256 5724 | xargs -P 24 -I {} scripts/mgnify_download.py {} mgnify_dump_20210408/ > mgnify_dump_20210408.log 2>|1 |
 
-scripts/mgnify_extract.py -f mgnify_dump_20210408 -t 10 -o taxa_counts_top10.tsv
+scripts/mgnify_extract.py -f mgnify_dump_20210408 -t 10 -o files/mgnify.tsv
 ```
-MGnify dump date 2021-04-08 (latest study accession MGYS00005724)

@@ -21,29 +21,27 @@ def generate_dict_taxname(tax, taxids):
     return id_name
 
 
-def generate_cds_plot_contaminants(table, tax, contaminants):
+def generate_cds_plot_contaminants(table, tax, references):
     # Stacked list of contaminants for each observation
     # index -> observations (repeated)
-    # columns -> "rank", "cont", "direct", "child", "parent"
+    # columns -> "rank", "annot", "direct", "child", "parent"
     clist = []
     for rank in table.ranks():
         for obs in table.observations(rank):
-            for desc, cont in contaminants.items():
-                direct = cont.get_refs_count(obs, direct=True)
-                child = cont.get_refs_count(obs, children=True)
-                parent = cont.get_refs_count(obs, parents=True)
+            for desc, ref in references.items():
+                direct = ref.get_refs_count(obs, direct=True)
+                child = ref.get_refs_count(obs, children=True)
+                parent = ref.get_refs_count(obs, parents=True)
                 if direct + child + parent > 0:
                     clist.append([obs, rank, desc, direct, child, parent])
 
-    df_contaminants = pd.DataFrame(clist, columns=["obs", "rank", "cont", "direct", "child", "parent"])
+    df_contaminants = pd.DataFrame(clist, columns=["obs", "rank", "annot", "direct", "child", "parent"])
     df_contaminants.set_index('obs', inplace=True)
-
-    df_contaminants.sort_values(by="cont", ascending=False, inplace=True)
 
     print_df(df_contaminants, "df_contaminants -> cds_p_contaminants")
     return ColumnDataSource(df_contaminants)
 
-def generate_cds_annotations(table, contaminants, references, controls, decontam):
+def generate_cds_annotations(table, references, controls, decontam):
     # Stacked matrix of true annotations (omit false)
     # index -> taxids
     # columns -> rank, annot
@@ -58,8 +56,6 @@ def generate_cds_annotations(table, contaminants, references, controls, decontam
 
         for desc, ref in references.items():
             df_rank[desc] = table.observations(rank).map(lambda x: ref.get_refs_count(x, direct=True)) >= 1
-        for desc, cont in contaminants.items():
-            df_rank[desc] = table.observations(rank).map(lambda x: cont.get_refs_count(x, direct=True)) >= 1
 
         if controls:
             for desc, ctrl in controls.items():
@@ -80,7 +76,7 @@ def generate_cds_annotations(table, contaminants, references, controls, decontam
     return ColumnDataSource(df_annotations)
 
 
-def generate_cds_obstable(table, tax, contaminants, references, controls, control_samples, decontam):
+def generate_cds_obstable(table, tax, references, controls, control_samples, decontam):
     # index unique taxids
     # col|...  values to plot to columns in the datatable
     # tax|...  auxiliary lineage of taxa entries
@@ -107,20 +103,9 @@ def generate_cds_obstable(table, tax, contaminants, references, controls, contro
         if decontam:
             df_rank["col|decontam"] = decontam.get_contaminants(rank, df_rank.index)
 
-        # Add a single column, concatenating ("|") references sources
-        df_rank["col|references"] = ""
+        # Add a column for each Annotation source
         for desc, ref in references.items():
-            # Check if taxids are in the lineage of the reference
-            bool_ref = table.observations(rank).isin(ref.ids)
-            df_rank["col|references"] = df_rank["col|references"] + np.where(bool_ref, desc + " | ", "")
-
-        # Add a column for each Contaminant source
-        for desc, cont in contaminants.items():
-            #print(table.observations(rank).isin(cont.ids))
-            #print(table.observations(rank).isin(cont.lineage))
-
-            df_rank["col|" + desc] = table.observations(rank).map(lambda x: cont.get_refs_count(x, direct=True)).to_list()
-            #df_rank["col|" + desc] = table.observations(rank).isin(cont.ids)
+            df_rank["col|" + desc] = table.observations(rank).map(lambda x: ref.get_refs_count(x, direct=True)).to_list()
 
         # Add a column for each Control source
         if controls:
@@ -170,7 +155,7 @@ def generate_cds_bars(table):
     return ColumnDataSource(df_bars)
 
 
-def generate_cds_samples(table, references, contaminants, controls, decontam):
+def generate_cds_samples(table, references, controls, decontam):
     # index unique sample-ids
     # aux| auxiliary values (not plotted)
     # cnt| count values to be copied/traansformed to bars
@@ -189,7 +174,7 @@ def generate_cds_samples(table, references, contaminants, controls, decontam):
         df_samples["cnt|" + rank + "|assigned"] = table.data[rank].sum(axis=1)
 
     # Add counts specific to sources
-    source_list = [references.items(), contaminants.items()]
+    source_list = [references.items()]
     if controls:
         source_list.append(controls.items())
 
@@ -385,7 +370,7 @@ def generate_dict_topobs(table, top_obs_bars):
     return dict_top_taxa
 
 
-def generate_dict_refs(table, contaminants, references):
+def generate_dict_refs(table, references):
     # dict with information about sources and references
     # references can be repeated among descriptions, sources and taxids
     # {taxid: {source: {desc: [refs]}}
@@ -396,18 +381,17 @@ def generate_dict_refs(table, contaminants, references):
         used_ids.update(table.observations(rank))
 
     for i in used_ids:
-        for source in [contaminants.items(), references.items()]:
-            for sname, s in source:
-                for ref, descs in s.get_refs_desc(i, direct=True).items():
-                    for desc in descs:
-                        # Only add items if they have a reference to it
-                        if i not in d_refs:
-                            d_refs[i] = {}
-                        if sname not in d_refs[i]:
-                            d_refs[i][sname] = {}
-                        if desc not in d_refs[i][sname]:
-                            d_refs[i][sname][desc] = []
-                        d_refs[i][sname][desc].append(ref)
+        for sname, s in references.items():
+            for ref, descs in s.get_refs_desc(i, direct=True).items():
+                for desc in descs:
+                    # Only add items if they have a reference to it
+                    if i not in d_refs:
+                        d_refs[i] = {}
+                    if sname not in d_refs[i]:
+                        d_refs[i][sname] = {}
+                    if desc not in d_refs[i][sname]:
+                        d_refs[i][sname][desc] = []
+                    d_refs[i][sname][desc].append(ref)
 
     print_df(d_refs, "d_refs -> dict_d_refs")
     return d_refs

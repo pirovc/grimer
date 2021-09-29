@@ -335,7 +335,9 @@ def link_obstable_samplebars(ele,
                 for(let r = 0; r < active_ranks.length; r++){
                     // get taxid of the rank
                     let rank_obs = cds_p_obstable.data["tax|"+active_ranks[r]][row];
-                    if(cds_p_contaminants.data["obs"][i]==rank_obs && cds_p_contaminants.data["cont"][i]==contaminant_select.value){
+                    if(cds_p_contaminants.data["obs"][i]==rank_obs &&
+                       cds_p_contaminants.data["rank"][i]==active_ranks[r] &&
+                       cds_p_contaminants.data["annot"][i]==contaminant_select.value){
                         indices.push(i);
                     }
                 }

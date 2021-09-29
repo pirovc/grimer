@@ -44,13 +44,17 @@ def parse_input_table(input_file, unassigned_header, transpose, min_frequency, m
     total = table_df.sum(axis=1)
 
     # unique unassigned/unclassified for table
+    # Separate unassigned counts column from main data frame
     unassigned = pd.Series(0, index=table_df.index)
     if unassigned_header:
         for header in unassigned_header:
             if header in table_df.columns:
-                # Separate unassigned counts column from main data frame
-                # Sum in case there are several equally named headers
-                unassigned = unassigned + table_df[header].sum(axis=1)
+                if isinstance(table_df[header], pd.DataFrame):
+                    # Sum in case there are several equally named headers
+                    unassigned += table_df[header].sum(axis=1)
+                else:
+                    # return a pd.Series
+                    unassigned += table_df[header]
                 table_df.drop(columns=header, inplace=True)
             else:
                 print_log("'" + header + "' header not found")
@@ -503,60 +507,44 @@ def include_scripts(scripts):
     return template
 
 
-def parse_sources(cfg, tax, ranks):
-    contaminants = {}
-    references = {}
-    for desc, sf in cfg["sources"]["contaminants"].items():
-        contaminants[desc] = Source(file=sf)
+def parse_references(cfg, tax, ranks):
+    annotations = {}
+
+    for desc, sf in cfg["annotations"].items():
+        annotations[desc] = Source(file=sf)
         if tax:
             # Update taxids / get taxid from name
-            contaminants[desc].update_taxids(update_tax_nodes(contaminants[desc].ids, tax))
-            for i in list(contaminants[desc].ids.keys()):
+            annotations[desc].update_taxids(update_tax_nodes(annotations[desc].ids, tax))
+            for i in list(annotations[desc].ids.keys()):
                 # lineage of all children nodes (without itself)
                 for lin in map(lambda txid: tax.lineage(txid, root_node=i), tax.leaves(i)):
                     for l in lin[1:]:
-                        contaminants[desc].add_child(l, i)
+                        annotations[desc].add_child(l, i)
                 # lineage of all parent nodes (without itself)
                 for l in tax.lineage(i)[:-1]:
-                    contaminants[desc].add_parent(l, i)
+                    annotations[desc].add_parent(l, i)
 
-    for desc, sf in cfg["sources"]["references"].items():
-        references[desc] = Source(file=sf)
-        # Update lineage and refs based on given taxonomy
-        if tax:
-            # Update taxids / get taxid from name
-            references[desc].update_taxids(update_tax_nodes(references[desc].ids, tax))
-            for i in list(references[desc].ids.keys()):
-                # lineage of all children nodes (without itself)
-                for lin in map(lambda txid: tax.lineage(txid, root_node=i), tax.leaves(i)):
-                    for l in lin[1:]:
-                        references[desc].add_child(l, i)
-                # lineage of all parent nodes (without itself)
-                for l in tax.lineage(i)[:-1]:
-                    references[desc].add_parent(l, i)
-
-    return contaminants, references
+    return annotations
 
 
-def parse_controls(cfg, tax, table):
+def parse_controls(cfg, table):
     controls = {}
     control_samples = {}
 
-    if "samples" in cfg:
-        if "controls" in cfg["samples"]:
-            for desc, cf in cfg["samples"]["controls"].items():
-                with open(cf, "r") as file:
-                    samples = file.read().splitlines()
-                    control_table = table.get_subtable(table.ranks()[-1], samples=samples)
-                    controls[desc] = Source(ids=control_table.columns.to_list())
-                    control_samples[desc] = control_table.index.to_list()
+    if "controls" in cfg:
+        for desc, cf in cfg["controls"].items():
+            with open(cf, "r") as file:
+                samples = file.read().splitlines()
+                obs = set()
+                valid_samples = set()
+                for rank in table.ranks():
+                    # Retrieve sub-table for every rank and add to the source
+                    control_table = table.get_subtable(rank, samples=samples)
+                    obs.update(control_table.columns.to_list())
+                    valid_samples.update(control_table.index.to_list())
 
-                    if tax:
-                        ids = controls[desc].ids
-                        # lineage of all children nodes
-                        for i in ids:
-                            for lin in map(lambda txid: tax.lineage(txid, root_node=i), tax.leaves(i)):
-                                controls[desc].update_lineage(lin)
+                controls[desc] = Source(ids=obs)
+                control_samples[desc] = list(valid_samples)
 
     return controls, control_samples
 
