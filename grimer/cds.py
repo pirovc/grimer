@@ -24,18 +24,17 @@ def generate_dict_taxname(tax, taxids):
 def generate_cds_plot_references(table, tax, references):
     # Stacked list of references, accounting for lineage matches
     # index -> observations (repeated)
-    # columns -> "rank", "ref", "direct", "child", "parent"
+    # columns -> "rank", "ref", "direct", "parent"
     clist = []
     for rank in table.ranks():
         for obs in table.observations(rank):
             for desc, ref in references.items():
                 direct = ref.get_refs_count(obs, direct=True)
-                child = ref.get_refs_count(obs, children=True)
                 parent = ref.get_refs_count(obs, parents=True)
-                if direct + child + parent > 0:
-                    clist.append([obs, rank, desc, direct, child, parent])
+                if direct + parent > 0:
+                    clist.append([obs, rank, desc, direct, parent])
 
-    df_references = pd.DataFrame(clist, columns=["obs", "rank", "ref", "direct", "child", "parent"])
+    df_references = pd.DataFrame(clist, columns=["obs", "rank", "ref", "direct", "parent"])
     df_references.set_index('obs', inplace=True)
 
     print_df(df_references, "df_references -> cds_p_references")

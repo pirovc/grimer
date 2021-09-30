@@ -4,7 +4,6 @@ import yaml
 class Reference:
     def __init__(self, file: str=None, ids: list=[]):
         self.ids = {}  # {refid: {ref1: set(desc1, desc2,...), ref2: set(desc3,...)}}
-        self.children = {}  # {child_id: set(refids)}
         self.parents = {}  # {parent_id: set(refids)}
 
         if file is not None:
@@ -25,11 +24,6 @@ class Reference:
                 self.ids[i][ref] = set()
             if desc is not None:
                 self.ids[i][ref].add(desc)
-
-    def add_child(self, child, refid):
-        if child not in self.children:
-            self.children[child] = set()
-        self.children[child].add(refid)
 
     def add_parent(self, parent, refid):
         if parent not in self.parents:
@@ -57,17 +51,14 @@ class Reference:
                 self.ids[upd_node].update(self.ids[node])
                 self.ids.discard(node)
 
-    def get_refs_desc(self, i, direct: bool=False, children: bool=False, parents: bool=False):
+    def get_refs_desc(self, i, direct: bool=False, parents: bool=False):
         refs_desc = {}
         if direct and i in self.ids:
             refs_desc.update(self.ids[i])
-        if children and i in self.children:
-            for refid in self.children[i]:
-                refs_desc.update(self.ids[refid])
         if parents and i in self.parents:
             for refid in self.parents[i]:
                 refs_desc.update(self.ids[refid])
         return refs_desc
 
-    def get_refs_count(self, i, direct: bool=False, children: bool=False, parents: bool=False):
-        return len(self.get_refs_desc(i, direct, children, parents))
+    def get_refs_count(self, i, direct: bool=False, parents: bool=False):
+        return len(self.get_refs_desc(i, direct, parents))

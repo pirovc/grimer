@@ -228,7 +228,7 @@ def main():
     cds_p_obstable = generate_cds_obstable(table, tax, references, controls, control_samples, decontam)
     # df: index (unique sample-ids), aux|..., bar|..., tax|...
     cds_p_samplebars = generate_cds_bars(table)
-    # stacked: index (repeated observations), rank, ref, direct, child, parent
+    # stacked: index (repeated observations), rank, ref, direct, parent
     cds_p_references = generate_cds_plot_references(table, tax, references)
     # matrix: index (unique sample-ids), concentrations, controls, counts
     cds_p_decontam = generate_cds_plot_decontam(decontam) if decontam else None

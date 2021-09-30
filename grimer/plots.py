@@ -447,7 +447,6 @@ def plot_references(sizes, table, cds_p_references, dict_d_taxname):
         tooltips=[
             ('Observation', '@obs{custom}'),
             ('# reported (directly)', '@direct'),
-            ('as child', '@child'),
             ('as parent', '@parent'),
         ],
         mode="mouse",
@@ -460,8 +459,8 @@ def plot_references(sizes, table, cds_p_references, dict_d_taxname):
 
     references_fig.add_layout(Legend(), 'above')
 
-    fixed_bar_options = ["direct", "child", "parent"]
-    palette = ["red", "orange", "black"]
+    fixed_bar_options = ["direct", "parent"]
+    palette = ["red", "black"]
     references_fig.vbar_stack(fixed_bar_options,
                               x="rank",
                               width=1,
@@ -469,7 +468,7 @@ def plot_references(sizes, table, cds_p_references, dict_d_taxname):
                               view=cds_view_references,
                               color=palette,
                               line_color=None,  # to avoid printing small border for zeros
-                              fill_alpha=[1, 0.3, 0.3],
+                              fill_alpha=[1, 0.3],
                               legend_label=fixed_bar_options)
 
     references_fig.y_range.start = 0
@@ -498,8 +497,6 @@ def plot_references_widgets(sizes, references):
 Plot of number of occurences of provided references for each observation and its lineage.
 
 **direct** counts represent direct matches with reference identifiers
-
-**child** counts accounts for the number of times a related parent on the lineage of the selected observation node was reported among references
 
 **parent** counts accounts for the number of times related children (not necessarily reported) on the lineage of the selected observation node was reported among references
 """
