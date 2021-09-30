@@ -152,12 +152,10 @@ def main():
         replace_zero_value = table_df[table_df.gt(0)].min().min() / int(args.replace_zeros)
     except:
         replace_zero_value = float(args.replace_zeros)
-
-    # Do not allow value 1 using log
     if replace_zero_value == 1 and args.transformation == "log":
-        replace_zero_value = 0.999999
+        replace_zero_value = 0.999999  # Do not allow value 1 using log
 
-    # Parse Metadata
+    # Metadata
     max_metadata_cols = args.metadata_cols
     if args.metadata:
         print_log("- Parsing metadata")
@@ -175,14 +173,19 @@ def main():
     else:
         metadata = None
 
-    # Sources of contamination/references/controls
-    print_log("- Parsing references and controls")
+    # References (only possible with ncbi identifiers)
     references = {}
-    if args.tax == "ncbi":
+    if "references" in cfg and args.tax == "ncbi":
+        print_log("- Parsing references")
         references = parse_references(cfg, tax, table.ranks())
+        print_log("")
 
-    controls, control_samples = parse_controls(cfg, table)
-    print_log("")
+    controls, control_samples = [{}, {}]
+    if "controls" in cfg:
+        print_log("- Parsing controls")
+        # Controls
+        controls, control_samples = parse_controls(cfg, table)
+        print_log("")
 
     # Run and load decontam results
     if args.decontam:
@@ -219,14 +222,13 @@ def main():
     ############ _d_ : data -> auxiliar containers to be used/shared among plots
     ############               usually by copying and/or transforming values into a _p_ container
 
-
     # _p_
     # df: index (unique observations), col|...,  tax|..., aux|ref
     # this cds an exeption and contains data to plot (col|) and auxiliary data (tax|)
     cds_p_obstable = generate_cds_obstable(table, tax, references, controls, control_samples, decontam)
     # df: index (unique sample-ids), aux|..., bar|..., tax|...
     cds_p_samplebars = generate_cds_bars(table)
-    # stacked:      
+    # stacked: index (repeated observations), rank, ref, direct, child, parent
     cds_p_references = generate_cds_plot_references(table, tax, references)
     # matrix: index (unique sample-ids), concentrations, controls, counts
     cds_p_decontam = generate_cds_plot_decontam(decontam) if decontam else None
@@ -273,12 +275,18 @@ def main():
     ############ "fig": main figure
     ############ "wid": widgets
 
+    # Layout and plot sizes
+    sizes = {}
+    sizes["overview_top_panel_height"] = 300
+    sizes["overview_top_panel_width_left"] = 250
+    sizes["overview_top_panel_width_right"] = 500
+
     ele = {}
 
     # obstable
     ele["obstable"] = {}
-    ele["obstable"]["fig"], ele["obstable"]["widgets_filter"] = plot_obstable(cds_p_obstable, table.ranks(), references.keys(), controls.keys())
-    ele["obstable"]["wid"] = plot_obstable_widgets(dict_d_taxname, max(cds_p_obstable.data["col|total_counts"]))
+    ele["obstable"]["fig"], ele["obstable"]["widgets_filter"] = plot_obstable(sizes, cds_p_obstable, table.ranks(), references.keys(), controls.keys())
+    ele["obstable"]["wid"] = plot_obstable_widgets(sizes, dict_d_taxname, max(cds_p_obstable.data["col|total_counts"]))
 
     # infopanel
     ele["infopanel"] = {}
@@ -286,13 +294,13 @@ def main():
 
     # references
     ele["references"] = {}
-    ele["references"]["fig"], ele["references"]["filter"] = plot_references(table, cds_p_references, dict_d_taxname)
-    ele["references"]["wid"] = plot_references_widgets(references)
+    ele["references"]["fig"], ele["references"]["filter"] = plot_references(sizes, table, cds_p_references, dict_d_taxname)
+    ele["references"]["wid"] = plot_references_widgets(sizes, references)
 
     # mgnify
     ele["mgnify"] = {}
     if cds_p_mgnify:
-        ele["mgnify"]["fig"], ele["mgnify"]["filter"] = plot_mgnify(cds_p_mgnify)
+        ele["mgnify"]["fig"], ele["mgnify"]["filter"] = plot_mgnify(sizes, cds_p_mgnify)
     else:
         ele["mgnify"]["fig"], ele["mgnify"]["filter"] = None, None
     ele["mgnify"]["wid"] = plot_mgnify_widgets()
@@ -301,7 +309,7 @@ def main():
     ele["decontam"] = {}
     ele["decontam"]["wid"] = {}
     if decontam:
-        ele["decontam"]["fig"] = plot_decontam(cds_p_decontam, cds_p_decontam_models, min_obs_perc)
+        ele["decontam"]["fig"] = plot_decontam(sizes, cds_p_decontam, cds_p_decontam_models, min_obs_perc)
     else:
         ele["decontam"]["fig"] = None
     ele["decontam"]["wid"] = plot_decontam_widgets()
@@ -401,7 +409,7 @@ def main():
     script_dir, _ = os.path.split(__file__)
     logo_path = os.path.join(script_dir, "img", "logo.png")
 
-    final_layout = make_layout(ele, version, logo_path, args.title)
+    final_layout = make_layout(ele, sizes, version, logo_path, args.title)
 
     template = include_scripts({os.path.join(script_dir, "js", "func.js"): "script",
                                 os.path.join(script_dir, "js", "popup.js"): "script",

@@ -11,7 +11,7 @@ from collections import OrderedDict
 #Internal
 from grimer.decontam import Decontam
 from grimer.plots import make_color_palette
-from grimer.source import Source
+from grimer.reference import Reference
 
 #biom
 from biom import parse_table as parse_table_biom
@@ -511,7 +511,7 @@ def parse_references(cfg, tax, ranks):
     references = {}
 
     for desc, sf in cfg["references"].items():
-        references[desc] = Source(file=sf)
+        references[desc] = Reference(file=sf)
         if tax:
             # Update taxids / get taxid from name
             references[desc].update_taxids(update_tax_nodes(references[desc].ids, tax))
@@ -531,22 +531,23 @@ def parse_controls(cfg, table):
     controls = {}
     control_samples = {}
 
-    if "controls" in cfg:
-        for desc, cf in cfg["controls"].items():
-            with open(cf, "r") as file:
-                samples = file.read().splitlines()
-                obs = set()
-                valid_samples = set()
-                for rank in table.ranks():
-                    # Retrieve sub-table for every rank and add to the source
-                    control_table = table.get_subtable(rank, samples=samples)
-                    obs.update(control_table.columns.to_list())
-                    valid_samples.update(control_table.index.to_list())
+    for desc, cf in cfg["controls"].items():
+        with open(cf, "r") as file:
+            samples = file.read().splitlines()
+            obs = set()
+            valid_samples = set()
+            for rank in table.ranks():
+                # Retrieve sub-table for every rank
+                control_table = table.get_subtable(rank, samples=samples)
+                obs.update(control_table.columns.to_list())
+                valid_samples.update(control_table.index.to_list())
 
-                controls[desc] = Source(ids=obs)
-                control_samples[desc] = list(valid_samples)
+            # Add control observations as a reference
+            controls[desc] = Reference(ids=obs)
+            control_samples[desc] = list(valid_samples)
 
     return controls, control_samples
+
 
 def run_cmd(cmd, print_stderr: bool=False, exit_on_error: bool=True):
     errcode = 0

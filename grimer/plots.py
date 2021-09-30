@@ -10,7 +10,7 @@ from bokeh.transform import cumsum, factor_cmap
 
 def plot_samplebars(cds_p_samplebars, max_total_count, ranks):
     # Bar plots has 3 main stacks: selection, others, unassigned
-    # stacks can be annotated with sources
+    # stacks can be annotated with references and controls
     samplebars_fig = figure(x_range=FactorRange(factors=cds_p_samplebars.data["aux|factors"]),
                             y_range=Range1d(start=0, end=max_total_count),
                             plot_height=400,
@@ -264,7 +264,7 @@ Samples (x-axis) can be grouped and sorted.
 
 Bars can be annotated by taxonomic rank. The annotation will show the proportion of counts matching the selected annotation.
 
-Raw counts (#) can be normalized (%). Observation counts (#) can be normalized (%) or log transformed (log10(#)) for better visualization.
+Raw counts and observations (#) can be normalized (%) and/or log transformed (log10) for better visualization.
     """
 
     return {"y1_select": y1_select,
@@ -277,7 +277,7 @@ Raw counts (#) can be normalized (%). Observation counts (#) can be normalized (
             "help_button": help_button(title="Sample bars", text=help_text)}
 
 
-def plot_obstable(cds_p_obstable, ranks, reference_names, control_names):
+def plot_obstable(sizes, cds_p_obstable, ranks, reference_names, control_names):
     # General filter for widgets
     widgets_filter = IndexFilter()
 
@@ -303,7 +303,7 @@ def plot_obstable(cds_p_obstable, ranks, reference_names, control_names):
         if "col|decontam" in cds_p_obstable.data:
             table_cols.append(TableColumn(field="col|decontam", title="DECONTAM", default_sort="descending"))
 
-        datatable = DataTable(height=200,
+        datatable = DataTable(height=sizes["overview_top_panel_height"],
                               sizing_mode="stretch_width",
                               index_position=None,
                               autosize_mode="fit_viewport",
@@ -321,39 +321,42 @@ def plot_obstable(cds_p_obstable, ranks, reference_names, control_names):
     return obstable, widgets_filter
 
 
-def plot_obstable_widgets(dict_d_taxname, max_count_rank):
+def plot_obstable_widgets(sizes, dict_d_taxname, max_count_rank):
     # Filtering options
-    frequency_spinner = Spinner(title="Frequency", low=0, high=100, value=0, step=1, width=100, height=50)
-    counts_perc_avg_spinner = Spinner(title="Avg. counts/sample", low=0, high=100, value=0, step=0.1, width=100, height=50)
-    total_counts_spinner = Spinner(title="Total counts", low=1, high=max_count_rank, step=1, value=1, width=100, height=50)
+    spinner_width = sizes["overview_top_panel_width_left"] - 20
+    frequency_spinner = Spinner(title="Frequency", low=0, high=100, value=0, step=1, width=spinner_width, height=50)
+    counts_perc_avg_spinner = Spinner(title="Avg. counts/sample", low=0, high=100, value=0, step=0.1, width=spinner_width, height=50)
+    total_counts_spinner = Spinner(title="Total counts", low=1, high=max_count_rank, step=1, value=1, width=spinner_width, height=50)
     # Create unique list of names with taxids for filtering. map to str and set to get unique
     unique_dict_d_taxname_tuples = set(zip(dict_d_taxname.keys(), map(str, dict_d_taxname.values())))
-    name_multichoice = MultiChoice(title="Obs. name or identifier", options=list(unique_dict_d_taxname_tuples), sizing_mode="fixed", width=250, height=100)
+    name_multichoice = MultiChoice(title="Obs. name or id",
+                                   options=list(unique_dict_d_taxname_tuples),
+                                   sizing_mode="fixed",
+                                   width=sizes["overview_top_panel_width_left"] - 20, height=60)
 
     help_text = """
-Summary of observations among all samples. If taxonomy is provided, panels will show different taxonomic ranks. 
+Summary of observations among all samples. If taxonomy is provided, panels will show different taxonomic ranks.
 
-Clicking on the entries will load further information of the observation in the other plots/panels. 
+Clicking on the entries will load further information of the observation in the other plots/panels.
 
 The table contain the following fixed columns:
 
 - **Name**: Taxonomic or given observation name
-- **Frequency**: How often the observation is occurring among all samples 
+- **Frequency**: How often the observation is occurring among all samples
 - **Avg. counts/sample**: Averge percentage of the observation among all samples
 - **Total counts**: Sum of counts of this observation in all samples
 - **(F) Controls**: (F)requency for controls: how often the observation is occurring in the given control samples
-- **CC Bacteria, CC Viruses, ...**: How many times the observation was reported as a Common Contaminant
-- **References**: In which reference sets this observation occurs
-- **DECONTAM**: Contamination results from DECONTAM method
+- **References**:  How many times the observation was reported in the references
+- **DECONTAM**: Final contamination output from DECONTAM method
 
-Widgets can filter entries of the table. "Obs. name or identifier" filters the lineage of the entries, if taxonomy is provided. With that is possible to, for example, filter a certain genus and the table will show only children species.
+Widgets can filter entries of the table. "Obs. name or id" filters the lineage of the entries, if taxonomy is provided. With that is possible to, for example, filter a certain genus and the table will show only children species.
     """
 
     return {"frequency_spinner": frequency_spinner,
             "counts_perc_avg_spinner": counts_perc_avg_spinner,
             "total_counts_spinner": total_counts_spinner,
             "name_multichoice": name_multichoice,
-            "help_button": help_button(title="Observation table", text=help_text)}
+            "help_button": help_button(title="Observation table", text=help_text, align="start")}
 
 
 def plot_infopanel():
@@ -362,10 +365,11 @@ def plot_infopanel():
                          disabled=False)
 
 
-def plot_decontam(cds_p_decontam, cds_p_decontam_lines, min_obs_perc):
+def plot_decontam(sizes, cds_p_decontam, cds_p_decontam_lines, min_obs_perc):
     decontam_fig = figure(x_axis_type="log",
                           y_axis_type="log",
-                          height=170, width=300,
+                          height=sizes["overview_top_panel_height"] - 50,
+                          width=sizes["overview_top_panel_width_right"],
                           sizing_mode="stretch_width",
                           tools="save")
 
@@ -398,14 +402,13 @@ def plot_decontam(cds_p_decontam, cds_p_decontam_lines, min_obs_perc):
     decontam_fig.line(x="x",
                       y="y_noncont",
                       source=cds_p_decontam_lines,
-                      color="black", line_dash="dashed")
+                      color="black",
+                      line_dash="dashed")
 
     decontam_fig.xaxis.axis_label = 'DNA Concentration/Total counts'
     decontam_fig.yaxis.axis_label = 'obs. counts'
     decontam_fig.y_range.start = min_obs_perc
     decontam_fig.y_range.end = 1
-
-
 
     return decontam_fig
 
@@ -428,9 +431,11 @@ More details can be found in the [DECONTAM Introduction guide](https://benjjneb.
             "help_button": help_button(title="DECONTAM", text=help_text, align="start")}
 
 
-def plot_references(table, cds_p_references, dict_d_taxname):
-    references_fig = figure(x_range=table.ranks(), height=150, width=300,
-                              tools="save,reset")
+def plot_references(sizes, table, cds_p_references, dict_d_taxname):
+    references_fig = figure(x_range=table.ranks(),
+                            height=sizes["overview_top_panel_height"] - 50,
+                            width=sizes["overview_top_panel_width_right"],
+                            tools="save,reset")
 
     # Need to pass dict_d_taxname inside a one column data
     taxid_name_custom = CustomJSHover(
@@ -442,8 +447,8 @@ def plot_references(table, cds_p_references, dict_d_taxname):
         tooltips=[
             ('Observation', '@obs{custom}'),
             ('# reported (directly)', '@direct'),
-            ('  as children', '@child'),
-            ('  as parent', '@parent'),
+            ('as child', '@child'),
+            ('as parent', '@parent'),
         ],
         mode="mouse",
         point_policy="follow_mouse",
@@ -452,6 +457,8 @@ def plot_references(table, cds_p_references, dict_d_taxname):
 
     references_filter = IndexFilter(indices=[])
     cds_view_references = CDSView(source=cds_p_references, filters=[references_filter])
+
+    references_fig.add_layout(Legend(), 'above')
 
     fixed_bar_options = ["direct", "child", "parent"]
     palette = ["red", "orange", "black"]
@@ -462,7 +469,10 @@ def plot_references(table, cds_p_references, dict_d_taxname):
                               view=cds_view_references,
                               color=palette,
                               line_color=None,  # to avoid printing small border for zeros
-                              fill_alpha=[1, 0.3, 0.3])
+                              fill_alpha=[1, 0.3, 0.3],
+                              legend_label=fixed_bar_options)
+
+    references_fig.y_range.start = 0
 
     references_fig.xaxis.major_label_orientation = "vertical"
     references_fig.xgrid.grid_line_color = None
@@ -472,20 +482,35 @@ def plot_references(table, cds_p_references, dict_d_taxname):
     references_fig.yaxis.major_tick_line_color = None
     references_fig.yaxis.axis_label = "# reported"
 
+    references_fig.legend.margin = 0
+    references_fig.legend.border_line_width = 0
+    references_fig.legend.spacing = 0
+    references_fig.legend.padding = 0
+    references_fig.legend.orientation = "horizontal"
+    references_fig.legend.location = "bottom_right"
+
     return references_fig, references_filter
 
 
-def plot_references_widgets(references):
-    references_select = Select(value=list(references.keys())[0], width=200, options=list(references.keys()))
+def plot_references_widgets(sizes, references):
+    references_select = Select(value=list(references.keys())[0], width=sizes["overview_top_panel_width_right"] - 70, options=list(references.keys()))
     help_text = """
-references explained
+Plot of number of occurences of provided references for each observation and its lineage.
+
+**direct** counts represent direct matches with reference identifiers
+
+**child** counts accounts for the number of times a related parent on the lineage of the selected observation node was reported among references
+
+**parent** counts accounts for the number of times related children (not necessarily reported) on the lineage of the selected observation node was reported among references
 """
+
     return {"references_select": references_select,
             "help_button": help_button(title="References", text=help_text, align="start")}
 
 
-def plot_mgnify(cds_p_mgnify):
-    mgnify_fig = figure(height=150, width=300,
+def plot_mgnify(sizes, cds_p_mgnify):
+    mgnify_fig = figure(height=sizes["overview_top_panel_height"] - 50,
+                        width=sizes["overview_top_panel_width_right"],
                         tools="save,wheel_zoom,reset")
 
     mgnify_filter = IndexFilter(indices=[])
@@ -890,7 +915,7 @@ def plot_correlation_widgets(ranks, top_obs_corr):
     neg_slider = RangeSlider(start=-1, end=0, value=(-1, 0), step=.01, title="Negative correlation")
     pos_slider = RangeSlider(start=0, end=1, value=(0, 1), step=.01, title="Positive correlation")
     pval_spinner = Spinner(title="Corrected P-value", low=0, high=1, step=0.01, value=1, width=100, height=50)
-    
+
     help_text = """
 Spearman correlation coefficient with associated and corrected (Benjamini/Hochberg) p-values between the top """ + str(top_obs_corr) + """ most abundant observations. [spearmanr](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.spearmanr.html) function from scipy is used.
 
@@ -904,6 +929,7 @@ Only half matrix is displayed, since the values are symmetric. Widgets can contr
             "pos_slider": pos_slider,
             "pval_spinner": pval_spinner,
             "help_button": help_button(title="Correlation", text=help_text)}
+
 
 def help_button(title: str="", text: str="", align: str="end"):
     hb = Button(width=32, height=32, label="?", align=align, button_type="warning")

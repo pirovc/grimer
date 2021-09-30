@@ -3,34 +3,42 @@ from bokeh.models import Spacer, Tabs, Panel, Div
 import base64
 
 
-def make_layout(ele, version, logo_path, title):
+def make_layout(ele, sizes, version, logo_path, title):
 
-    top_panel_height = 200
-    top_panel_width_sides = 300
-    filterwidgets = column(row(ele["obstable"]["wid"]["frequency_spinner"],
-                               ele["obstable"]["wid"]["counts_perc_avg_spinner"],
-                               ele["obstable"]["wid"]["help_button"]),
+    filterwidgets = column(ele["obstable"]["wid"]["frequency_spinner"],
+                           ele["obstable"]["wid"]["counts_perc_avg_spinner"],
                            ele["obstable"]["wid"]["total_counts_spinner"],
-                           ele["obstable"]["wid"]["name_multichoice"])
+                           ele["obstable"]["wid"]["name_multichoice"],
+                           ele["obstable"]["wid"]["help_button"])
 
     filterwidgetstabs = Tabs(tabs=[Panel(child=filterwidgets, title="Filter")],
                              sizing_mode="fixed",
-                             height=top_panel_height + 20,
-                             width=top_panel_width_sides)
+                             height=sizes["overview_top_panel_height"] + 20,
+                             width=sizes["overview_top_panel_width_left"])
 
     info_tabs = [Panel(child=ele["infopanel"]["textarea"], title="Info")]
-    info_tabs.append(Panel(child=column(ele["references"]["fig"], row(ele["references"]["wid"]["references_select"], ele["references"]["wid"]["help_button"])), title="Refs."))
+    info_tabs.append(Panel(child=column(ele["references"]["fig"],
+                                        row(ele["references"]["wid"]["references_select"],
+                                            ele["references"]["wid"]["help_button"])
+                                        ), title="References"))
 
     if ele["mgnify"]["fig"]:
-        info_tabs.append(Panel(child=column(ele["mgnify"]["fig"], row(ele["mgnify"]["wid"]["biome_spinner"], ele["mgnify"]["wid"]["help_button"])), title="MGNify"))
+        info_tabs.append(Panel(child=column(ele["mgnify"]["fig"],
+                                            row(ele["mgnify"]["wid"]["biome_spinner"],
+                                                ele["mgnify"]["wid"]["help_button"])
+                                            ), title="MGNify"))
 
     if ele["decontam"]["fig"]:
-        info_tabs.append(Panel(child=column(ele["decontam"]["fig"], row(ele["decontam"]["wid"]["pvalue_text"], ele["decontam"]["wid"]["pvalue_input"], ele["decontam"]["wid"]["help_button"])), title="DECONTAM"))
+        info_tabs.append(Panel(child=column(ele["decontam"]["fig"],
+                                            row(ele["decontam"]["wid"]["pvalue_text"],
+                                                ele["decontam"]["wid"]["pvalue_input"],
+                                                ele["decontam"]["wid"]["help_button"])
+                                            ), title="DECONTAM"))
 
     infotabs = Tabs(tabs=info_tabs,
                     sizing_mode="fixed",
-                    height=top_panel_height + 20,
-                    width=top_panel_width_sides)
+                    height=sizes["overview_top_panel_height"] + 20,
+                    width=sizes["overview_top_panel_width_right"])
 
     row_obstable = row(filterwidgetstabs,
                        ele["obstable"]["fig"],

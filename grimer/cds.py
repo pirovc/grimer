@@ -22,7 +22,7 @@ def generate_dict_taxname(tax, taxids):
 
 
 def generate_cds_plot_references(table, tax, references):
-    # Stacked list of references, accounting for its lineage matches
+    # Stacked list of references, accounting for lineage matches
     # index -> observations (repeated)
     # columns -> "rank", "ref", "direct", "child", "parent"
     clist = []

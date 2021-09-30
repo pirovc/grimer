@@ -1,7 +1,7 @@
 import yaml
 
 
-class Source:
+class Reference:
     def __init__(self, file: str=None, ids: list=[]):
         self.ids = {}  # {refid: {ref1: set(desc1, desc2,...), ref2: set(desc3,...)}}
         self.children = {}  # {child_id: set(refids)}
@@ -15,7 +15,7 @@ class Source:
 
     def __repr__(self):
         args = ['{}={}'.format(k, repr(v)) for (k, v) in vars(self).items()]
-        return 'Source({})'.format(', '.join(args))
+        return 'Reference({})'.format(', '.join(args))
 
     def add(self, i, ref: str=None, desc: str=None):
         if i not in self.ids:
