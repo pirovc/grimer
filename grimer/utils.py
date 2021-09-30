@@ -400,7 +400,7 @@ def run_decontam(cfg, table, metadata, control_samples):
             decontam.add_rank_empty(rank, table.observations(rank))
         else:
             # normalized and write temporary table for each rank
-            transform_table(table.data[rank], table.total, "norm", 0).to_csv(out_table, sep="\t", header=True, index=True)
+            transform_table(table.data[rank], table.total[table.data[rank].index], "norm", 0).to_csv(out_table, sep="\t", header=True, index=True)
 
             cmd = " ".join(["scripts/run_decontam.R",
                             "--resout " + tmp_output_prefix + "decontam_out.tsv",

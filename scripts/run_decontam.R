@@ -95,7 +95,7 @@ count_matrix <- data.matrix(data.frame(count_table[,-1], row.names = rows_table,
 # Load concentration table
 if(!args$concentrations==""){
 	concentrations <- read.table(file=args$concentrations, sep='\t', header=FALSE, check.names=FALSE)
-	concentrations_list <- concentrations[ , "V2"]
+	concentrations_list <- concentrations[ (concentrations[, "V1"] %in% rows_table) , "V2"]
 }
 
 # Load list of controls
