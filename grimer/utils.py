@@ -250,28 +250,6 @@ def parse_single_table(table_df, ranks, tax, default_rank_name):
     return ranked_tables, lineage
 
 
-def fdrcorrection_bh(pvals):
-    """
-    Correct multiple p-values with the Benjamini/Hochberg method
-    Code copied and adapted from: statsmodels.stats.multitest.multipletests
-    https://github.com/statsmodels/statsmodels/blob/77bb1d276c7d11bc8657497b4307aa7575c3e65c/statsmodels/stats/multitest.py
-    """
-    pvals_sortind = np.argsort(pvals)
-    pvals_sorted = np.take(pvals, pvals_sortind)
-
-    nobs = len(pvals_sorted)
-    factors = np.arange(1, nobs + 1) / float(nobs)
-
-    pvals_corrected_raw = pvals_sorted / factors
-    pvals_corrected = np.minimum.accumulate(pvals_corrected_raw[::-1])[::-1]
-    pvals_corrected[pvals_corrected > 1] = 1
-
-    pvals_corrected_ = np.empty_like(pvals_corrected)
-    pvals_corrected_[pvals_sortind] = pvals_corrected
-
-    return pvals_corrected_
-
-
 def transform_table(df, total_counts, transformation, replace_zero_value):
     # Special case clr with one observation (result in zeros)
     if transformation == "clr" and df.shape[1] == 1:
@@ -543,6 +521,17 @@ def parse_controls(cfg, table):
             control_samples[desc] = list(valid_samples)
 
     return controls, control_samples
+
+
+def pairwise_vlr(mat):
+    cov = np.cov(mat.T, ddof=1)
+    diagonal = np.diagonal(cov)
+    return -2 * cov + diagonal[:, np.newaxis] + diagonal
+
+
+def pairwise_rho(mat):
+    variances = np.var(mat, axis=0, ddof=1)
+    return 1 - (pairwise_vlr(mat) / np.add.outer(variances, variances))
 
 
 def run_cmd(cmd, print_stderr: bool=False, exit_on_error: bool=True):

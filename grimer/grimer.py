@@ -244,8 +244,8 @@ def main():
     cds_p_annotations = generate_cds_annotations(table, references, controls, decontam)
     # empty matrix {"x": [], "y": [], "c": []}
     cds_p_dendro_x, cds_p_dendro_y = generate_cds_plot_dendro() if not args.skip_dendrogram else [None, None]
-    # stacked: index (repeated observations), other observation, rank, rho, pval, pval_corr
-    cds_p_correlation = generate_cds_correlation(table, args.top_obs_corr)
+    # stacked: index (repeated observations), other observation, rank, rho
+    cds_p_correlation = generate_cds_correlation(table, args.top_obs_corr, replace_zero_value)
     # matrix: index (unique sample-ids), 0, 1, ..., top_obs_bars, unassigned, others, factors
     cds_p_obsbars = generate_cds_obsbars(table, args.top_obs_bars)
 
@@ -279,7 +279,7 @@ def main():
     sizes = {}
     sizes["overview_top_panel_height"] = 300
     sizes["overview_top_panel_width_left"] = 250
-    sizes["overview_top_panel_width_right"] = 500
+    sizes["overview_top_panel_width_right"] = 450
 
     ele = {}
 
@@ -349,7 +349,7 @@ def main():
 
     # correlation
     ele["correlation"] = {}
-    ele["correlation"]["fig"], ele["correlation"]["rho_filter"], ele["correlation"]["pval_filter"] = plot_correlation(cds_p_correlation, table.ranks(), dict_d_taxname)
+    ele["correlation"]["fig"], ele["correlation"]["rho_filter"] = plot_correlation(cds_p_correlation, table.ranks(), dict_d_taxname)
     ele["correlation"]["wid"] = plot_correlation_widgets(table.ranks(), args.top_obs_corr)
 
     # obsbars

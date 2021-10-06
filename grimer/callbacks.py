@@ -649,13 +649,11 @@ def link_correlation_widgets(ele, cds_p_correlation):
         args=dict(rho_filter=ele["correlation"]["rho_filter"],
                   neg_slider=ele["correlation"]["wid"]["neg_slider"],
                   pos_slider=ele["correlation"]["wid"]["pos_slider"],
-                  pval_spinner=ele["correlation"]["wid"]["pval_spinner"],
                   cds_p_correlation=cds_p_correlation),
         code='''
         console.log("filter_callback");
         const indices = [];
         for (var i = 0; i < cds_p_correlation.data["index"].length; i++) {
-            if (cds_p_correlation.data["pval_corr"][i] > pval_spinner.value) continue;
             const rho = cds_p_correlation.data["rho"][i];
             if ((rho >= neg_slider.value[0] && rho <= neg_slider.value[1]) ||
                 (rho >= pos_slider.value[0] && rho <= pos_slider.value[1]))
@@ -669,7 +667,6 @@ def link_correlation_widgets(ele, cds_p_correlation):
 
     ele["correlation"]["wid"]["pos_slider"].js_on_change('value', filter_callback)
     ele["correlation"]["wid"]["neg_slider"].js_on_change('value', filter_callback)
-    ele["correlation"]["wid"]["pval_spinner"].js_on_change('value', filter_callback)
     ele["correlation"]["wid"]["rank_select"].js_on_change('value', rank_select_callback)
 
 

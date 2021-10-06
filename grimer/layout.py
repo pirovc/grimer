@@ -83,7 +83,6 @@ def make_layout(ele, sizes, version, logo_path, title):
     row_correlation = row(column(ele["correlation"]["wid"]["rank_select"],
                                  ele["correlation"]["wid"]["neg_slider"],
                                  ele["correlation"]["wid"]["pos_slider"],
-                                 ele["correlation"]["wid"]["pval_spinner"],
                                  ele["correlation"]["wid"]["help_button"]),
                           ele["correlation"]["fig"])
 

@@ -94,10 +94,7 @@ def plot_obsbars(cds_p_obsbars, dict_d_topobs, ranks, top_obs_bars, dict_d_taxna
                          y_range=Range1d(start=0, end=100),
                          height=450,
                          sizing_mode="stretch_width",
-                         tools="box_zoom,reset,hover,save",
-                         tooltips=[("Sample", "@index"),
-                                   ("Label", "$name"),
-                                   ("Value", "@$name")])
+                         tools="box_zoom,reset,save")
 
     # TODO Need to know which rank to get the correct set of top taxa
     # taxid_name_custom = CustomJSHover(
@@ -108,15 +105,16 @@ def plot_obsbars(cds_p_obsbars, dict_d_topobs, ranks, top_obs_bars, dict_d_taxna
     #     //console.log(dict_d_topobs);
     #     //return dict_d_taxname.data.dict_d_taxname[0][taxid]; // value holds the @taxid
     #     ''')
-    # # Add custom tooltip for heatmap (taxid->name)
-    # obsbars.add_tools(HoverTool(
-    #     tooltips=[
-    #         ('Sample', '@index'),
-    #         ('Taxa', '$name{custom}'),
-    #         ("Value", "@$name")
-    #     ],
-    #     formatters={"$name": taxid_name_custom}
-    # ))
+
+    # Add custom tooltip for heatmap (taxid->name)
+    obsbars_fig.add_tools(HoverTool(
+        tooltips=[("Sample", "@index"),
+                  ("Label", "$name"),
+                  ("Value", "@$name")],
+        mode="mouse",
+        point_policy="follow_mouse",
+        #formatters={"$name": taxid_name_custom}
+    ))
 
     bars = [str(i) for i in range(top_obs_bars)] + ["others", "unassigned"]
     # Plot stacked bars with counts
@@ -132,6 +130,7 @@ def plot_obsbars(cds_p_obsbars, dict_d_topobs, ranks, top_obs_bars, dict_d_taxna
     obsbars_fig.xaxis.subgroup_label_orientation = "vertical"
     obsbars_fig.xaxis.major_label_text_font_size = "8px"
     obsbars_fig.xgrid.grid_line_color = None
+    obsbars_fig.ygrid.grid_line_color = None
     obsbars_fig.xaxis.axis_label = "samples"
     obsbars_fig.yaxis.axis_label = "% counts"
 
@@ -863,9 +862,7 @@ def plot_correlation(cds_p_correlation, ranks, dict_d_taxname):
         tooltips=[
             ('x', '@taxid{custom}'),
             ('y', '@index{custom}'),
-            ('Correlation coefficient (rho)', '@rho'),
-            ('Raw p-value', '@pval'),
-            ('Corrected p-value', '@pval_corr')
+            ('Correlation (rho)', '@rho'),
         ],
         formatters={"@taxid": taxid_name_custom, "@index": taxid_name_custom}
     ))
@@ -874,8 +871,7 @@ def plot_correlation(cds_p_correlation, ranks, dict_d_taxname):
     color_mapper = LinearColorMapper(palette=color_palette, low=-1, high=1)
 
     rho_filter = IndexFilter()
-    pval_filter = IndexFilter()
-    cds_view_correlation = CDSView(source=cds_p_correlation, filters=[rho_filter, pval_filter])
+    cds_view_correlation = CDSView(source=cds_p_correlation, filters=[rho_filter])
     corr_fig.rect(x="taxid", y="index",
                   width=1, height=1,
                   source=cds_p_correlation,
@@ -904,27 +900,27 @@ def plot_correlation(cds_p_correlation, ranks, dict_d_taxname):
     corr_fig.yaxis.minor_tick_line_color = None
     corr_fig.xaxis.major_label_orientation = "vertical"
 
-    return corr_fig, rho_filter, pval_filter
+    return corr_fig, rho_filter
 
 
 def plot_correlation_widgets(ranks, top_obs_corr):
     rank_select = Select(title="Taxonomic rank:", value=ranks[0], options=ranks)
     neg_slider = RangeSlider(start=-1, end=0, value=(-1, 0), step=.01, title="Negative correlation")
     pos_slider = RangeSlider(start=0, end=1, value=(0, 1), step=.01, title="Positive correlation")
-    pval_spinner = Spinner(title="Corrected P-value", low=0, high=1, step=0.01, value=1, width=100, height=50)
 
     help_text = """
-Spearman correlation coefficient with associated and corrected (Benjamini/Hochberg) p-values between the top """ + str(top_obs_corr) + """ most abundant observations. [spearmanr](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.spearmanr.html) function from scipy is used.
+Symmetric proportionality coefficient (rho correlation) [1,2] between the top """ + str(top_obs_corr) + """ most abundant observations, based on log-ratios (clr). Only half matrix is displayed, since the values are symmetric.
 
 - Negative correlation values [-1 .. 0] are displayed in blue.
 - Positive correlation values [0 .. 1] are displayed in red.
 
-Only half matrix is displayed, since the values are symmetric. Widgets can control level of correlation and corrected p-value to show.
+[1] Lovell, D., Pawlowsky-Glahn, V., Egozcue, J. J., Marguerat, S. & Bähler, J. Proportionality: A Valid Alternative to Correlation for Relative Data. PLOS Computational Biology 11, e1004075 (2015).
+
+[2] Erb, I. & Notredame, C. How should we measure proportionality on relative gene expression data? Theory Biosci. 135, 21–36 (2016).
 """
     return {"rank_select": rank_select,
             "neg_slider": neg_slider,
             "pos_slider": pos_slider,
-            "pval_spinner": pval_spinner,
             "help_button": help_button(title="Correlation", text=help_text)}
 
 

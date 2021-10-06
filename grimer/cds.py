@@ -4,13 +4,10 @@ import numpy as np
 from math import pi
 
 #Internal
-from grimer.utils import print_df, transform_table, print_log, fdrcorrection_bh
+from grimer.utils import print_df, transform_table, print_log, pairwise_rho
 
 #Bokeh
 from bokeh.models import ColumnDataSource
-
-# Scipy
-from scipy import stats
 
 
 def generate_dict_taxname(tax, taxids):
@@ -396,14 +393,13 @@ def generate_dict_refs(table, references):
     return d_refs
 
 
-def generate_cds_correlation(table, top_obs_corr):
+def generate_cds_correlation(table, top_obs_corr, replace_zero_value):
     # index (repeated taxids)
     # other taxid
     # rank
     # rho
-    # pval
 
-    df_corr = pd.DataFrame(columns=["taxid", "rank", "rho", "pval"])
+    df_corr = pd.DataFrame(columns=["taxid", "rank", "rho"])
     for rank in table.ranks():
         if top_obs_corr:
             top_taxids = table.get_top(rank, top_obs_corr)
@@ -412,24 +408,15 @@ def generate_cds_correlation(table, top_obs_corr):
             top_taxids = sorted(table.observations(rank))
             matrix = table.data[rank]
 
-        matrix.to_csv(rank + "_top.tsv", sep="\t", header=True, index=True)
-
         # No correlation with just one observation
         if len(matrix.columns) >= 2:
 
-            rho, pval = stats.spearmanr(matrix)
-
-            #from grimer.prop import get_prop_matrix, rho
-            #from skbio.stats.composition import clr
-
-            #rho = get_prop_matrix(transform_table(matrix, 0, "", 0.000001).values, rho, clr)
-            #print(rho)
+            rho = pairwise_rho(transform_table(matrix, 0, "clr", replace_zero_value).values)
 
             if len(matrix.columns) == 2:
                 # If there are only 2 observations, return in a float
                 # re-format in a matrix shape
                 rho = np.array([[np.nan, np.nan], [rho, np.nan]])
-                pval = np.array([[np.nan, np.nan], [pval, np.nan]])
             else:
                 # fill upper triangular matrix (mirrored values) with nan to be ignored by pandas
                 # to save half of the space
@@ -439,17 +426,9 @@ def generate_cds_correlation(table, top_obs_corr):
             stacked_rank_df.rename(columns={"level_1": "taxid"}, inplace=True)
             stacked_rank_df.rename(columns={0: "rho"}, inplace=True)
             stacked_rank_df["rank"] = rank
-            #stack pval
-            stacked_rank_df["pval"] = np.ravel(pval)
 
             # Drop NA for rho (missing values and upper triangular matrix)
             stacked_rank_df.dropna(subset=['rho'], inplace=True)
-
-            # Calculate corrected pvals
-            stacked_rank_df["pval_corr"] = fdrcorrection_bh(stacked_rank_df["pval"].to_list())
-
-            # Filter by p-value
-            #stacked_rank_df = stacked_rank_df[stacked_rank_df["pval_corr"] <= pval_cutoff]
 
             df_corr = pd.concat([df_corr, stacked_rank_df], axis=0)
 
