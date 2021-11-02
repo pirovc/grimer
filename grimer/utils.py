@@ -5,8 +5,6 @@ import sys
 import subprocess
 import shlex
 import pandas as pd
-import yaml
-from collections import OrderedDict
 
 #Internal
 from grimer.decontam import Decontam
@@ -23,7 +21,7 @@ from skbio.stats.composition import clr
 import scipy.cluster.hierarchy as sch
 
 
-def parse_input_table(input_file, unassigned_header, transpose, min_frequency, max_frequency, min_count, max_count):
+def parse_input_table(input_file, unassigned_header, transpose):
 
     if input_file.endswith(".biom"):
         with open(input_file, "r") as f:
@@ -63,8 +61,8 @@ def parse_input_table(input_file, unassigned_header, transpose, min_frequency, m
         print_log("No unassigned entries defined")
 
     print_log("")
-    print_log("- Filtering table")
-    table_df = trim_table(filter_input_table(table_df, total, min_frequency, max_frequency, min_count, max_count))
+    print_log("- Trimming table")
+    table_df = trim_table(table_df)
 
     # Filter based on the table
     unassigned = unassigned.reindex(table_df.index)
@@ -118,15 +116,15 @@ def filter_input_table(table_df, total, min_frequency, max_frequency, min_count,
 
 def trim_table(table_df):
     # Check for cols/rows with sum zero
-    zero_rows = table_df.sum(axis=1) == 0
+    zero_rows = table_df.sum(axis=1).eq(0)
     if any(zero_rows):
         table_df = table_df.loc[~zero_rows, :]
-        print_log(str(sum(zero_rows)) + " samples without valid counts removed")
+        print_log(str(sum(zero_rows)) + " samples with only zero removed")
 
-    zero_cols = table_df.sum(axis=0) == 0
+    zero_cols = table_df.sum(axis=0).eq(0)
     if any(zero_cols):
         table_df = table_df.loc[:, ~zero_cols]
-        print_log(str(sum(zero_cols)) + " observations without valid counts removed")
+        print_log(str(sum(zero_cols)) + " observations with only zero removed")
 
     return table_df
 
@@ -186,6 +184,8 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
         if i > 0:
             lin_count = ranks_df.iloc[:, :i+1].drop_duplicates().groupby(r).count()
             invalid = lin_count[(lin_count > 1).any(axis=1)].index.to_list()
+            print(invalid)
+            print(ranks_df.loc[ranks_df[r].isin(invalid), r])
             if invalid:
                 print_log(str(len(invalid)) + " observations removed with invalid lineage at " + r)
                 # Set to NaN to keep shape of ranks_df

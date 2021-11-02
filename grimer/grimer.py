@@ -119,7 +119,7 @@ def main():
         args.level_separator = ";"
         args.transpose = True
 
-    table_df, total, unassigned = parse_input_table(args.input_file, args.unassigned_header, args.transpose, args.min_frequency, args.max_frequency, args.min_count, args.max_count)
+    table_df, total, unassigned = parse_input_table(args.input_file, args.unassigned_header, args.transpose)
     if args.level_separator:
         ranked_tables, lineage = parse_multi_table(table_df, args.ranks, tax, args.level_separator, args.obs_replace)
     else:
@@ -131,19 +131,23 @@ def main():
 
     table = Table(table_df.index, total, unassigned)
     table.lineage = lineage
-    print_log("Samples: " + str(len(table.samples)))
-    print_log("Observations: ")
-    for r, t in ranked_tables.items():
-        print_log(" " + r + ":")
-        if t.empty:
-            print_log("Skipping without valid entries")
-        else:
-            # Trim table for empty zeros rows/cols
-            table.add_rank(r, trim_table(t))
-            print_log("  " + str(len(table.observations(r))) + " observations")
 
     print_log("")
-    print_log("Total assigned (sum): " + str(table.total.sum()))
+    print_log("Total valid samples: " + str(len(table.samples)))
+    print_log("")
+
+    for r, t in ranked_tables.items():
+        print_log("--- " + r + " ---")
+        filtered_trimmed_t = trim_table(filter_input_table(t, total, args.min_frequency, args.max_frequency, args.min_count, args.max_count))
+        if t.empty:
+            print_log("No valid entries, skipping")
+        else:
+            # Trim table for empty zeros rows/cols
+            table.add_rank(r, filtered_trimmed_t)
+            print_log("Total valid observations: " + str(len(table.observations(r))))
+
+    print_log("")
+    print_log("Total assigned (sum): " + str(table.total.sum() - table.unassigned.sum()))
     print_log("Total unassigned (sum): " + str(table.unassigned.sum()))
     print_log("")
 
