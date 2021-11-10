@@ -44,7 +44,7 @@ grimer -h
 
 ## Powered by
 
-[<img src="https://static.bokeh.org/branding/logos/bokeh-logo.png" width="150">](https://bokeh.org)
-[<img src="https://pandas.pydata.org/static/img/pandas.svg" width="100">](https://pandas.org)
-[<img src="https://raw.githubusercontent.com/scipy/scipy/master/doc/source/_static/logo.svg" width="100">](https://scipy.org)
-[<img src="http://scikit-bio.org/assets/logo.svg" width="100">](https://scikit-bio.org)
+[<img src="https://static.bokeh.org/branding/logos/bokeh-logo.png" height="150">](https://bokeh.org)
+[<img src="https://pandas.pydata.org/static/img/pandas.svg" height="100">](https://pandas.org)
+[<img src="https://raw.githubusercontent.com/scipy/scipy/master/doc/source/_static/logo.svg" height="100">](https://scipy.org)
+[<img src="http://scikit-bio.org/assets/logo.svg" height="100">](https://scikit-bio.org)
