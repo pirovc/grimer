@@ -71,8 +71,10 @@ def plot_samplebars(cds_p_samplebars, max_total_count, ranks):
     legend_obs.orientation = "horizontal"
     legend_obs.location = "bottom_right"
     legend_obs.click_policy = "hide"
+    legend_obs.label_text_color = "#606c38"
     samplebars_fig.add_layout(legend_obs, "above")
 
+    samplebars_fig.xaxis.major_label_orientation = "vertical"
     samplebars_fig.xaxis.major_label_text_font_size = '0pt'
     samplebars_fig.xgrid.grid_line_color = None
     samplebars_fig.xaxis.major_tick_line_color = None
@@ -85,6 +87,7 @@ def plot_samplebars(cds_p_samplebars, max_total_count, ranks):
     samplebars_fig.xaxis.axis_label = "samples"
     samplebars_fig.yaxis[0].axis_label = "# counts"
     samplebars_fig.yaxis[1].axis_label = "% observations"
+    samplebars_fig.yaxis[1].axis_label_text_color = "#606c38"
 
     return samplebars_fig, legend_obs, legend_bars
 
@@ -128,7 +131,9 @@ def plot_obsbars(cds_p_obsbars, dict_d_topobs, ranks, top_obs_bars, dict_d_taxna
     obsbars_fig.xaxis.major_label_orientation = "vertical"
     obsbars_fig.xaxis.group_label_orientation = "horizontal"
     obsbars_fig.xaxis.subgroup_label_orientation = "vertical"
-    obsbars_fig.xaxis.major_label_text_font_size = "8px"
+    obsbars_fig.xaxis.minor_tick_line_color = None
+    obsbars_fig.xaxis.major_tick_line_color = None
+    obsbars_fig.xaxis.major_label_text_font_size = "0px"
     obsbars_fig.xgrid.grid_line_color = None
     obsbars_fig.ygrid.grid_line_color = None
     obsbars_fig.xaxis.axis_label = "samples"
@@ -202,7 +207,7 @@ def plot_obsbars_widgets(ranks, metadata, dict_d_topobs, dict_d_taxname, top_obs
     groupby1_select = Select(title="1) Group samples by", value="none", options=groupby_options, sizing_mode="stretch_width")
     groupby2_select = Select(title="2) Group samples by", value="none", options=groupby_options, sizing_mode="stretch_width")
 
-    toggle_label = CheckboxGroup(labels=["Hide sample labels"], active=[])
+    toggle_label = CheckboxGroup(labels=["Show/Hide samples labels"], active=[])
 
     help_text = """
 Observation bars showing proportions of top """ + str(top_obs_bars) + """ most abundant observations.
@@ -235,7 +240,7 @@ def plot_samplebars_widgets(ranks, metadata, reference_names, control_names, dec
     y2_select = Select(title="Observations", value="%", options=["#", "%", "log10(#)", "log10(%)"], width=80)
 
     sort_options = {}
-    sort_options["Default"] = [("input_order", "input order"), ("#", "# counts"), ("selected_annotation", "selected annotation")]
+    sort_options["Default"] = [("input_order", "input order"), ("counts", "counts"), ("selected_annotation", "selected annotation")]
     sort_options["Selected Rank"] = [("tax|" + r, r) for r in ranks]
     sort_options["Numeric Metadata"] = []
     if metadata:
@@ -253,6 +258,8 @@ def plot_samplebars_widgets(ranks, metadata, reference_names, control_names, dec
             groupby_options["Categorical Metadata"] = [("metadata_cat|" + md, md) for md in categorical_md_data]
     groupby1_select = Select(title="1) Group samples by", value="none", options=groupby_options, sizing_mode="stretch_width")
     groupby2_select = Select(title="2) Group samples by", value="none", options=groupby_options, sizing_mode="stretch_width")
+
+    toggle_label = CheckboxGroup(labels=["Show/Hide samples labels"], active=[])
 
     help_text = """
 Bars showing total counts (left y-axis) for each sample (x-axis).
@@ -273,6 +280,7 @@ Raw counts and observations (#) can be normalized (%) and/or log transformed (lo
             "sort_select": sort_select,
             "groupby1_select": groupby1_select,
             "groupby2_select": groupby2_select,
+            "toggle_label": toggle_label,
             "help_button": help_button(title="Sample bars", text=help_text)}
 
 
@@ -491,7 +499,7 @@ def plot_references(sizes, table, cds_p_references, dict_d_taxname):
 
 
 def plot_references_widgets(sizes, references):
-    references_select = Select(value=list(references.keys())[0], width=sizes["overview_top_panel_width_right"] - 70, options=list(references.keys()))
+    references_select = Select(value=list(references.keys())[0] if references else None, width=sizes["overview_top_panel_width_right"] - 70, options=list(references.keys()))
     help_text = """
 Plot of number of occurences of provided references for each observation and its lineage.
 
@@ -656,16 +664,13 @@ def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, reference_name
         if categorical_md_data:
             y_sort_options["Sort by Categorical Metadata"] = [("metadata_cat|" + md, md) for md in categorical_md_data]
 
-
     x_sort_select = Select(title="Observation cluster/sort:", value="none", options=x_sort_options)
     x_method_select = Select(title="Observation clustering method:", value=linkage_methods[0], options=linkage_methods, disabled=True)
-    #x_group_select = Select(title="Observation group by:", value="none", options={"Default": ["none"], "Taxonomic ranks": ranks})
-    
+
     y_sort_select = Select(title="Sample cluster/sort:", value="none", options=y_sort_options)
     y_method_select = Select(title="Sample clustering method:", value=linkage_methods[0], options=linkage_methods, disabled=True)
 
-    toggle_label_text = Div(text="show/hide labels")
-    toggle_label_heatmap = CheckboxGroup(labels=["Observations", "Samples"], active=[])
+    toggle_labels = CheckboxGroup(labels=["Show/Hide observations labels", "Show/Hide samples labels"], active=[])
 
     help_text = """
 The heatmap shows [transformed] values from the input table (color bar on top). If taxonomy is provided, one heatmap for each taxonomic rank is generated.
@@ -682,11 +687,9 @@ The metadata and annotation plots are automatically sorted to reflect the cluste
     return {"rank_select": rank_select,
             "x_method_select": x_method_select,
             "x_sort_select": x_sort_select,
-            #"x_group_select": x_group_select,
             "y_method_select": y_method_select,
             "y_sort_select": y_sort_select,
-            "toggle_label_heatmap": toggle_label_heatmap,
-            "toggle_label_text": toggle_label_text,
+            "toggle_labels": toggle_labels,
             "help_button": help_button(title="Heatmap/Clustering", text=help_text)}
 
 

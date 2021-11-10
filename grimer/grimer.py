@@ -48,7 +48,8 @@ def main():
     table_group.add_argument('-f', '--level-separator', default=None, type=str, help="If provided, consider --input-table to be a hiearchical multi-level table where the observations headers are separated by the indicated separator characther (usually ';' or '|')")
     table_group.add_argument('-s', '--transpose', default=False, action='store_true', help="Transpose --input-table (if samples are listed on columns and observations on rows)")
     table_group.add_argument('-u', '--unassigned-header', nargs="*", type=str, default=None, help="Define one or more header names containing unsassinged/unclassified counts.")
-    table_group.add_argument('--obs-replace', nargs="*", type=str, default=[], help="Replace values on observations headers usin (support regex). Example: '_' ' ' will replace underscore with spaces, '^.+__' '' will remove the matching regex.")
+    table_group.add_argument('--obs-replace', nargs="*", type=str, default=[], help="Replace values on table observations labels/headers (support regex). Example: '_' ' ' will replace underscore with spaces, '^.+__' '' will remove the matching regex.")
+    table_group.add_argument('--sample-replace', nargs="*", type=str, default=[], help="Replace values on table sample labels/headers (support regex). Example: '_' ' ' will replace underscore with spaces, '^.+__' '' will remove the matching regex.")
 
     filter_group = parser.add_argument_group('Observation filter options')
     filter_group.add_argument('--min-frequency', type=float, help="Define minimum number/percentage of samples containing an observation to keep the observation [values between 0-1 for percentage, >1 specific number].")
@@ -119,7 +120,7 @@ def main():
         args.level_separator = ";"
         args.transpose = True
 
-    table_df, total, unassigned = parse_input_table(args.input_file, args.unassigned_header, args.transpose)
+    table_df, total, unassigned = parse_input_table(args.input_file, args.unassigned_header, args.transpose, args.sample_replace)
     if args.level_separator:
         ranked_tables, lineage = parse_multi_table(table_df, args.ranks, tax, args.level_separator, args.obs_replace)
     else:
@@ -134,6 +135,11 @@ def main():
 
     print_log("")
     print_log("Total valid samples: " + str(len(table.samples)))
+    # Check for long sample headers, break some plots
+    long_sample_headers = [h for h in table_df.index if len(h)>70]
+    if long_sample_headers:
+        print_log("Long sample labels/headers detected, plots may break: ")
+        print_log("\n".join(long_sample_headers))
     print_log("")
 
     for r, t in ranked_tables.items():
@@ -298,7 +304,10 @@ def main():
 
     # references
     ele["references"] = {}
-    ele["references"]["fig"], ele["references"]["filter"] = plot_references(sizes, table, cds_p_references, dict_d_taxname)
+    if references:
+        ele["references"]["fig"], ele["references"]["filter"] = plot_references(sizes, table, cds_p_references, dict_d_taxname)
+    else:
+        ele["references"]["fig"], ele["references"]["filter"] = None, None
     ele["references"]["wid"] = plot_references_widgets(sizes, references)
 
     # mgnify

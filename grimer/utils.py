@@ -21,11 +21,12 @@ from skbio.stats.composition import clr
 import scipy.cluster.hierarchy as sch
 
 
-def parse_input_table(input_file, unassigned_header, transpose):
+def parse_input_table(input_file, unassigned_header, transpose, sample_replace):
 
     if input_file.endswith(".biom"):
-        with open(input_file, "r") as f:
+        with open(input_file, encoding="utf8", errors='ignore') as f:
             table_df = parse_table_biom(f).to_dataframe(dense=True)
+            # biom convert -i feature-table.biom -o feature-table.biom.tsv --to-tsv
     else:
         # Default input_file: index=observations, columns=samples
         # table_df should have samples on indices and observations on columns
@@ -37,6 +38,17 @@ def parse_input_table(input_file, unassigned_header, transpose):
 
     # Remove header on rows
     table_df.index.names = [None]
+
+    # Replace text on sample labels
+    if sample_replace:
+        print_log("Replacing sample label values:")
+        before_replace = table_df.head(1).index
+        #get index as series to use replace method
+        new_index = table_df.reset_index()["index"].replace(regex=dict(zip(sample_replace[::2], sample_replace[1::2])))
+        table_df.set_index(new_index, inplace=True)
+        for b, a in zip(before_replace, table_df.head(1).index):
+            print_log("  " + b + " -> " + a)
+        print_log("  ...")
 
     # Sum total before split unassigned or filter
     total = table_df.sum(axis=1)
@@ -184,8 +196,6 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
         if i > 0:
             lin_count = ranks_df.iloc[:, :i+1].drop_duplicates().groupby(r).count()
             invalid = lin_count[(lin_count > 1).any(axis=1)].index.to_list()
-            print(invalid)
-            print(ranks_df.loc[ranks_df[r].isin(invalid), r])
             if invalid:
                 print_log(str(len(invalid)) + " observations removed with invalid lineage at " + r)
                 # Set to NaN to keep shape of ranks_df

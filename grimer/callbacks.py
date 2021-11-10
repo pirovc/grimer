@@ -26,14 +26,13 @@ def link_obstable_samplebars(ele,
                   y_range=ele["samplebars"]["fig"].y_range,
                   max_total_count=max_total_count),
         code='''
-        console.log("bar_select_callback");
 
         const pdata = cds_p_samplebars.data;
         const ddata = cds_d_samples.data;
         const total = cds_d_samples.data["cnt|total"];
 
         const key = "cnt|" + annotbar_rank_select.value + "|" + annotbar_select.value;
-        console.log(key);
+
         if (y1_select.value=="%"){
             for (var i = 0; i < total.length; ++i) {
                 pdata['bar|selected'][i] = (ddata[key][i]/total[i])*100;
@@ -57,14 +56,12 @@ def link_obstable_samplebars(ele,
     change_y_obs_label_callback = CustomJS(
         args=dict(yaxis=ele["samplebars"]["fig"].yaxis[1]),
         code='''
-        console.log("change_y_obs_label_callback");
         yaxis.axis_label = this.value + " observations";
         ''')
 
     change_y_counts_label_callback = CustomJS(
         args=dict(yaxis=ele["samplebars"]["fig"].yaxis[0]),
         code='''
-        console.log("change_y_counts_label_callback");
         yaxis.axis_label = this.value + " counts";
         ''')
 
@@ -77,19 +74,23 @@ def link_obstable_samplebars(ele,
                   cds_d_metadata=cds_d_metadata,
                   samplebars=ele["samplebars"]["fig"]),
         code='''
-        console.log("sort_groupby_callback");
-        const samples = cds_d_samples.data["index"];
-
         // Define value from Sort by select
         var sort_col;
+        var annot_samples = cds_d_samples.data["index"];
         if (sort_select.value=="input_order"){
             sort_col = cds_d_samples.data["aux|input_order"];
-        }else if (sort_select.value=="#"){
+        }else if (sort_select.value=="counts"){
             sort_col = cds_d_samples.data["cnt|total"];
         }else if (sort_select.value=="selected_annotation"){
             sort_col = cds_p_samplebars.data["bar|selected"];
         }else if (sort_select.value.startsWith("metadata_num|")){
             sort_col = cds_d_metadata.data[sort_select.value.replace('metadata_num|','')];
+
+            // Annotate label with value
+            var annot_samples = annot_samples.map(function(s, i) {
+              return sort_col[i] + " | " + s;
+            });
+
         }else if (sort_select.value.startsWith("tax|")){
             sort_col = cds_p_samplebars.data[sort_select.value];
         }
@@ -103,7 +104,7 @@ def link_obstable_samplebars(ele,
 
             // Zip sample index and metadata field to create nested factors
             factors = groupby_col1.map(function(m, i) {
-              return [m, samples[i]];
+              return [m, annot_samples[i]];
             });
 
             // second grouping level
@@ -112,7 +113,7 @@ def link_obstable_samplebars(ele,
                 var groupby_col2 = cds_d_metadata.data[groupby2_select.value.replace('metadata_cat|','')];
 
                 factors = groupby_col2.map(function(m, i) {
-                  return [m, groupby_col1[i], samples[i]];
+                  return [m, groupby_col1[i], annot_samples[i]];
                 });
 
                 sorted_factors = grimer_sort(factors, sort_col, "numeric", false, groupby_col1, groupby_col2);
@@ -122,7 +123,7 @@ def link_obstable_samplebars(ele,
 
         }else{
             // Single factors, just use the sample index
-            factors = samples;
+            factors = annot_samples;
             sorted_factors = grimer_sort(factors, sort_col, "numeric", false);
         }
 
@@ -139,13 +140,11 @@ def link_obstable_samplebars(ele,
                   cds_d_samples=cds_d_samples,
                   cds_p_obstable=cds_p_obstable,
                   cds_d_sampleobs=cds_d_sampleobs,
-                  samplebars=ele["samplebars"]["fig"],
                   y_range=ele["samplebars"]["fig"].extra_y_ranges['obs'],
                   min_obs_perc=min_obs_perc,
                   max_total_count=max_total_count,
                   active_ranks=active_ranks),
         code='''
-        console.log("plot_obs_callback");
         // get selected row from obstable [0 to get just the first]
         var row = cds_p_obstable.selected.indices[0];
         if (row!=undefined){
@@ -200,7 +199,6 @@ def link_obstable_samplebars(ele,
                   legend_obs=ele["samplebars"]["legend_obs"],
                   active_ranks=active_ranks),
         code='''
-        console.log("change_text_legend_obs_callback");
         // selected row
         var row = cb_obj.indices[0];
         for(let r = 0; r < active_ranks.length; r++){
@@ -218,7 +216,6 @@ def link_obstable_samplebars(ele,
                   annotbar_rank_select=ele["samplebars"]["wid"]["annotbar_rank_select"],
                   legend_bars=ele["samplebars"]["legend_bars"]),
         code='''
-        console.log("change_text_legend_bars_callback");
         legend_bars.items[0].label = annotbar_rank_select.value + "|" + annotbar_select.value;
         ''')
 
@@ -227,8 +224,6 @@ def link_obstable_samplebars(ele,
                   cds_p_obstable=cds_p_obstable,
                   dict_d_refs=dict_d_refs),
         code='''
-        console.log("load_infopanel");
-
         // selected row
         var row = cb_obj.indices[0];
         const name = cds_p_obstable.data['col|name'][row];
@@ -270,7 +265,6 @@ def link_obstable_samplebars(ele,
                   cds_d_decontam=cds_d_decontam,
                   pvalue_input=ele["decontam"]["wid"]["pvalue_input"]),
         code='''
-        console.log("decontam_callback");
         // selected row
         const row = cb_obj.indices[0];
         const taxid = cds_p_obstable.data["index"][row];
@@ -300,7 +294,6 @@ def link_obstable_samplebars(ele,
                   cds_p_obstable=cds_p_obstable,
                   cds_p_mgnify=cds_p_mgnify),
         code='''
-        console.log("mgnify_callback");
         // selected row
         const row = cds_p_obstable.selected.indices[0];
         const indices = [];
@@ -325,7 +318,6 @@ def link_obstable_samplebars(ele,
                   cds_p_references=cds_p_references,
                   active_ranks=active_ranks),
         code='''
-        console.log("references_callback");
         // selected row
         const row = cds_p_obstable.selected.indices[0];
         const indices = [];
@@ -347,11 +339,26 @@ def link_obstable_samplebars(ele,
         cds_p_references.change.emit();
         ''')
 
-    obstable_callbacks = [plot_obs_callback, change_text_legend_obs_callback, sort_groupby_callback, load_infopanel, references_callback]
+    toggle_label_callback = CustomJS(
+        args=dict(xaxis=ele["samplebars"]["fig"].xaxis[0]),
+        code='''
+        if(this.active.includes(0)){
+            xaxis.major_label_text_font_size = "10px";
+            xaxis.major_tick_line_color="black";
+        }else{
+            xaxis.major_label_text_font_size = "0px";
+            xaxis.major_tick_line_color=null;
+        }
+        ''')
+
+    obstable_callbacks = [plot_obs_callback, change_text_legend_obs_callback, sort_groupby_callback, load_infopanel]
     if cds_p_decontam:
         obstable_callbacks.append(decontam_callback)
     if cds_p_mgnify:
         obstable_callbacks.append(mgnify_callback)
+    if ele["references"]["filter"]:
+        obstable_callbacks.append(references_callback)
+
     cds_p_obstable.selected.js_on_change('indices', *obstable_callbacks)
 
     ele["samplebars"]["wid"]["sort_select"].js_on_change('value', sort_groupby_callback)
@@ -361,8 +368,10 @@ def link_obstable_samplebars(ele,
     ele["samplebars"]["wid"]["annotbar_rank_select"].js_on_change('value', bar_select_callback, change_text_legend_bars_callback, sort_groupby_callback)
     ele["samplebars"]["wid"]["y1_select"].js_on_change('value', bar_select_callback, change_y_counts_label_callback, sort_groupby_callback)
     ele["samplebars"]["wid"]["y2_select"].js_on_change('value', plot_obs_callback, change_y_obs_label_callback, sort_groupby_callback)
+    ele["samplebars"]["wid"]["toggle_label"].js_on_click(toggle_label_callback)
     ele["mgnify"]["wid"]["biome_spinner"].js_on_change('value', mgnify_callback)
     ele["references"]["wid"]["references_select"].js_on_change('value', references_callback)
+
 
 def link_heatmap_widgets(ele,
                          cds_d_samples,
@@ -384,7 +393,6 @@ def link_heatmap_widgets(ele,
                   cds_p_dendro_x=cds_p_dendro_x,
                   dict_d_dedro_x=dict_d_dedro_x),
         code='''
-        console.log("x_dendro_callback");
         if (x_sort_select.value.startsWith("metric|")){
             const key = rank_select.value+"|"+x_method_select.value+"|"+x_sort_select.value.replace("metric|","");
             cds_p_dendro_x.data = {"x": dict_d_dedro_x[key+"|x"],
@@ -408,7 +416,6 @@ def link_heatmap_widgets(ele,
                   cds_p_annotations=cds_p_annotations,
                   cds_p_obstable=cds_p_obstable),
         code='''
-        console.log("x_select_callback");
         const rank = rank_select.value;
         var sorted_factors = [];
         if (x_sort_select.value=="none"){
@@ -467,7 +474,6 @@ def link_heatmap_widgets(ele,
                   cds_p_dendro_y=cds_p_dendro_y,
                   dict_d_dedro_y=dict_d_dedro_y),
         code='''
-        console.log("y_dendro_callback");
         if (y_sort_select.value.startsWith("metric|")){
             const key = rank_select.value+"|"+y_method_select.value+"|"+y_sort_select.value.replace("metric|","");
             cds_p_dendro_y.data = {"x": dict_d_dedro_y[key+"|x"],
@@ -491,7 +497,6 @@ def link_heatmap_widgets(ele,
                   y_sort_select=ele["heatmap"]["wid"]["y_sort_select"],
                   dict_d_hcluster_y=dict_d_hcluster_y),
         code='''
-        console.log("y_select_callback");
         var sorted_factors = [];
         if (y_sort_select.value=="none"){
             // None
@@ -516,20 +521,20 @@ def link_heatmap_widgets(ele,
         heatmap.y_range.factors = sorted_factors;
         ''')
 
-    toggle_label_callback = CustomJS(
+    toggle_labels_callback = CustomJS(
         args=dict(cds_p_heatmap=cds_p_heatmap,
                   xaxis=ele["heatmap"]["fig"].xaxis[0],
                   yaxis=ele["heatmap"]["fig"].yaxis[0]),
         code='''
         if(this.active.includes(0)){
-            xaxis.major_label_text_font_size = "12px";
+            xaxis.major_label_text_font_size = "10px";
             xaxis.major_tick_line_color="black";
         }else{
             xaxis.major_label_text_font_size = "0px";
             xaxis.major_tick_line_color=null;
         }
         if(this.active.includes(1)){
-            yaxis.major_label_text_font_size = "12px";
+            yaxis.major_label_text_font_size = "10px";
             yaxis.major_tick_line_color="black";
         }else{
             yaxis.major_label_text_font_size = "0px";
@@ -537,7 +542,7 @@ def link_heatmap_widgets(ele,
         }
         ''')
 
-    ele["heatmap"]["wid"]["toggle_label_heatmap"].js_on_click(toggle_label_callback)
+    ele["heatmap"]["wid"]["toggle_labels"].js_on_click(toggle_labels_callback)
     ele["heatmap"]["wid"]["rank_select"].js_on_change('value', x_select_callback, x_dendro_callback, y_select_callback, y_dendro_callback)
     ele["heatmap"]["wid"]["x_method_select"].js_on_change('value', x_select_callback, x_dendro_callback)
     ele["heatmap"]["wid"]["x_sort_select"].js_on_change('value', x_select_callback, x_dendro_callback)
@@ -553,7 +558,6 @@ def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols
                   cds_d_metadata=cds_d_metadata),
         code='''
         const index_len = cds_d_metadata.data["index"].length;
-        console.log(cds_d_metadata.data)
         var x_factors = [];
         var empty_y_values = new Array(index_len);
         for (var i = 0; i < index_len; ++i) empty_y_values[i]=["", ""];
@@ -564,7 +568,6 @@ def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols
                 for (var i = 0; i < index_len; ++i){
                     y_values[i]=[selected, cds_d_metadata.data[selected][i].toString()];
                 }
-                console.log(y_values);
                 cds_p_metadata.data["md" + s.toString()] = y_values;
                 x_factors.push("md" + s.toString());
             }else{
@@ -616,12 +619,8 @@ def link_obstable_filter(ele, cds_p_obstable, active_ranks):
             }
             indices.push(i);
         }
-        console.log(cds_p_obstable);
-        console.log(widgets_filter);
         widgets_filter.indices = indices;
         cds_p_obstable.change.emit();
-        console.log(cds_p_obstable);
-        console.log(widgets_filter);
     ''')
     ele["obstable"]["wid"]["frequency_spinner"].js_on_change('value', filter_callback)
     ele["obstable"]["wid"]["counts_perc_avg_spinner"].js_on_change('value', filter_callback)
@@ -634,7 +633,6 @@ def link_correlation_widgets(ele, cds_p_correlation):
         args=dict(correlation=ele["correlation"]["fig"],
                   cds_p_correlation=cds_p_correlation),
         code='''
-        console.log("rank_select_callback");
         const factors = new Set();
         for(let i = 0; i < cds_p_correlation.data["index"].length; i++){
             if(cds_p_correlation.data["rank"][i]==this.value){
@@ -651,7 +649,6 @@ def link_correlation_widgets(ele, cds_p_correlation):
                   pos_slider=ele["correlation"]["wid"]["pos_slider"],
                   cds_p_correlation=cds_p_correlation),
         code='''
-        console.log("filter_callback");
         const indices = [];
         for (var i = 0; i < cds_p_correlation.data["index"].length; i++) {
             const rho = cds_p_correlation.data["rho"][i];
@@ -681,7 +678,6 @@ def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, cds_d_sampleobs, cds
                   dict_d_taxname=dict_d_taxname,
                   top_obs_bars=top_obs_bars),
         code='''
-        console.log("rank_select_callback");
         const rank = this.value;
         const n_sample = cds_p_obsbars.data["index"].length;
         const total = cds_d_samples.data["cnt|total"];
@@ -729,8 +725,6 @@ def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, cds_d_sampleobs, cds
                   cds_d_samples=cds_d_samples,
                   cds_d_metadata=cds_d_metadata),
         code='''
-        console.log("sort_groupby_callback");
-
         // Define value from Sort by select
         var sort_col;
         var annot_samples = cds_d_samples.data["index"];
@@ -738,7 +732,6 @@ def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, cds_d_sampleobs, cds
             sort_col = cds_d_samples.data["aux|input_order"];
         }else if (sort_select.value.startsWith("metadata_num|")){
             sort_col = cds_d_metadata.data[sort_select.value.replace('metadata_num|','')];
-
             // Annotate label with value
             var annot_samples = annot_samples.map(function(s, i) {
               return sort_col[i] + " | " + s;
@@ -791,11 +784,11 @@ def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, cds_d_sampleobs, cds
         args=dict(xaxis=ele["obsbars"]["fig"].xaxis[0]),
         code='''
         if(this.active.includes(0)){
+            xaxis.major_label_text_font_size = "10px";
+            xaxis.major_tick_line_color="black";
+        }else{
             xaxis.major_label_text_font_size = "0px";
             xaxis.major_tick_line_color=null;
-        }else{
-            xaxis.major_label_text_font_size = "12px";
-            xaxis.major_tick_line_color="black";
         }
         ''')
 

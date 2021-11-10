@@ -17,10 +17,12 @@ def make_layout(ele, sizes, version, logo_path, title):
                              width=sizes["overview_top_panel_width_left"])
 
     info_tabs = [Panel(child=ele["infopanel"]["textarea"], title="Info")]
-    info_tabs.append(Panel(child=column(ele["references"]["fig"],
-                                        row(ele["references"]["wid"]["references_select"],
-                                            ele["references"]["wid"]["help_button"])
-                                        ), title="References"))
+
+    if ele["references"]["fig"]:
+        info_tabs.append(Panel(child=column(ele["references"]["fig"],
+                                            row(ele["references"]["wid"]["references_select"],
+                                                ele["references"]["wid"]["help_button"])
+                                            ), title="References"))
 
     if ele["mgnify"]["fig"]:
         info_tabs.append(Panel(child=column(ele["mgnify"]["fig"],
@@ -53,7 +55,8 @@ def make_layout(ele, sizes, version, logo_path, title):
                             ele["samplebars"]["wid"]["groupby2_select"],
                             ele["samplebars"]["wid"]["sort_select"],
                             ele["samplebars"]["wid"]["y2_select"],
-                            ele["samplebars"]["wid"]["help_button"]))
+                            ele["samplebars"]["wid"]["help_button"]),
+                        ele["samplebars"]["wid"]["toggle_label"])
 
     row_heatmap = gridplot([[ele["heatmap"]["fig"], ele["dendroy"]["fig"], ele["metadata"]["fig"]],
                            [ele["dendrox"]["fig"]],
@@ -62,8 +65,7 @@ def make_layout(ele, sizes, version, logo_path, title):
                            merge_tools=True)
 
     row_heatmap_widgets = row(column(ele["heatmap"]["wid"]["rank_select"],
-                                     row(ele["heatmap"]["wid"]["toggle_label_text"],
-                                         ele["heatmap"]["wid"]["toggle_label_heatmap"]),
+                                     ele["heatmap"]["wid"]["toggle_labels"],
                                      sizing_mode="stretch_height",
                                      width=300),
                               column(row(ele["heatmap"]["wid"]["x_sort_select"],
@@ -87,12 +89,12 @@ def make_layout(ele, sizes, version, logo_path, title):
                           ele["correlation"]["fig"])
 
     row_obsbars = column(row(ele["obsbars"]["fig"]),
-                         ele["obsbars"]["wid"]["toggle_label"],
                          row(ele["obsbars"]["wid"]["rank_select"],
                              ele["obsbars"]["wid"]["groupby1_select"],
                              ele["obsbars"]["wid"]["groupby2_select"],
                              ele["obsbars"]["wid"]["sort_select"],
-                             ele["obsbars"]["wid"]["help_button"]))
+                             ele["obsbars"]["wid"]["help_button"]),
+                         ele["obsbars"]["wid"]["toggle_label"])
 
     main_panels = []
     main_panels.append(Panel(child=column(row_obstable, row_barpot, sizing_mode="stretch_width"), title="Overview"))
