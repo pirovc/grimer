@@ -1,12 +1,14 @@
 import markdown
+
 # Bokeh
-from bokeh.models import AdaptiveTicker, Button, CategoricalColorMapper, CDSView, CheckboxGroup, ColorBar, ColumnDataSource, CustomJS, CustomJSHover, Div, FactorRange, FuncTickFormatter, HoverTool, Legend, LinearAxis, LinearColorMapper, MultiChoice, MultiSelect, NumberFormatter, Panel, Paragraph, Range1d, RangeSlider, Select, Spinner, Tabs, TextAreaInput, TextInput
+from bokeh.models import AdaptiveTicker, Button, CategoricalColorMapper, CDSView, CheckboxGroup, ColorBar, ColumnDataSource, CustomJS, CustomJSHover, FactorRange, FuncTickFormatter, HoverTool, Legend, LinearAxis, LinearColorMapper, MultiChoice, MultiSelect, NumberFormatter, Panel, Paragraph, Range1d, RangeSlider, Select, Spinner, Tabs, TextAreaInput, TextInput
 from bokeh.models.filters import IndexFilter, GroupFilter
 from bokeh.models.widgets import DataTable, TableColumn
-from bokeh.palettes import Blues, Category10, Category20, Colorblind, Dark2, linear_palette, Magma256, Reds, Turbo256
+from bokeh.palettes import Blues, Dark2, Magma256, Reds
 from bokeh.plotting import figure
 from bokeh.transform import cumsum, factor_cmap
 
+from grimer.utils import format_js_toString, make_color_palette
 
 def plot_samplebars(cds_p_samplebars, max_total_count, ranks):
     # Bar plots has 3 main stacks: selection, others, unassigned
@@ -44,7 +46,7 @@ def plot_samplebars(cds_p_samplebars, max_total_count, ranks):
     for i, rank in enumerate(ranks):
         ren = samplebars_fig.scatter(x="aux|factors", y="tax|" + rank,
                                      y_range_name="obs",
-                                     name="tax|" + rank, #to work with hover properly
+                                     name="tax|" + rank,  # to work with hover properly
                                      source=cds_p_samplebars,
                                      marker="circle", size=7, line_color="navy", alpha=0.6,
                                      fill_color=obs_palette[i])
@@ -737,10 +739,10 @@ def plot_dendrogram(heatmap, tools_heatmap, cds_p_dendro_x, cds_p_dendro_y):
 
 
 def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metadata):
-    # Number of cols added to the plot cds (user input)
-    ncols = len(cds_p_metadata.data) - 1
+    # Get fixed headers from cds
+    cols = list(cds_p_metadata.data.keys())[1:]
 
-    metadata_fig = figure(x_range=["md" + str(c) for c in range(ncols)],
+    metadata_fig = figure(x_range=cols,
                           y_range=heatmap.y_range,
                           tools=tools_heatmap,
                           x_axis_location="above",
@@ -760,32 +762,33 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
     factors = []
     palette = []
     for i, md_header in enumerate(metadata_fields):
-        unique_values = metadata.get_unique_values(md_header)
+        unique_values = sorted(metadata.get_unique_values(md_header))
         if unique_values:
             n = len(unique_values)
             if metadata.get_type(md_header) == "numeric":
                 unique_palette = make_color_palette(n, linear=True)
+                unique_values = map(format_js_toString, unique_values)
             else:
                 unique_palette = make_color_palette(n)
             assert len(unique_palette) == n, 'Wrong number of colors on palette'
             palette.extend(unique_palette)
-            factors.extend([(md_header, md_value) for md_value in metadata.get_formatted_unique_values(md_header)])
+            factors.extend([(md_header, md_value) for md_value in unique_values])
     metadata_colormap = CategoricalColorMapper(palette=palette, factors=factors)
 
     # Custom tooltip to show metadata field and value
     md_custom = CustomJSHover(code='return value[0] ? "(" + value[0] + ") " + value[1] : "";')
     tooltips = [('Sample', '@index')]
     formatters = {}
-    for i in range(ncols):
-        tooltips.append(("md" + str(i), "@md" + str(i) + "{custom}"))
-        formatters["@md" + str(i)] = md_custom
+    for col in cols:
+        tooltips.append((col, "@" + col + "{custom}"))
+        formatters["@" + col] = md_custom
     metadata_fig.add_tools(HoverTool(tooltips=tooltips, formatters=formatters))
 
-    for i in range(ncols):
-        metadata_fig.rect(x=i + 0.5, y="index",
+    for col in cols:
+        metadata_fig.rect(x=dict(value=col), y="index",
                           width=1, height=1,
                           source=cds_p_metadata,
-                          fill_color={'field': "md" + str(i), 'transform': metadata_colormap},
+                          fill_color={'field': col, 'transform': metadata_colormap},
                           line_color=None)
 
     metadata_fig.xaxis.axis_label = "metadata"
@@ -799,7 +802,7 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
     metadata_fig.yaxis.axis_line_color = None
     metadata_fig.ygrid.grid_line_color = None
 
-    metadata_multiselect = MultiSelect(title="Metadata to show ('md#', max. " + str(ncols) + "):", value=[metadata_fields[c] for c in range(ncols)], options=metadata_fields)
+    metadata_multiselect = MultiSelect(title="Metadata to show (max. " + str(len(cols)) + " columns):", value=[metadata_fields[c] for c in range(len(cols))], options=metadata_fields)
 
     return metadata_fig, {"metadata_multiselect": metadata_multiselect}
 
@@ -940,31 +943,3 @@ def help_button(title: str="", text: str="", align: str="end"):
     hb.js_on_click(CustomJS(code="pop.open('" + title + "', '" + html_text + "');"))
     return hb
 
-
-def make_color_palette(n_colors, linear: bool=False, palette: dict=None):
-    if isinstance(palette, dict) and n_colors <= max(palette.keys()):
-        # Special case for 1 and 2 (not in palettes)
-        palette = palette[3 if n_colors < 3 else n_colors]
-
-    if linear or n_colors > 20:
-        if not palette:
-            palette = Turbo256
-        if n_colors <= 256:
-            return linear_palette(palette, n_colors)
-        else:
-            # Repeat colors
-            return [palette[int(i * 256.0 / n_colors)] for i in range(n_colors)]
-    else:
-        # Select color palette based on number of requested colors
-        # Return the closest palette with most distinc set of colors
-        if not palette:
-            if n_colors <= 8:
-                palette = Colorblind[8]
-            elif n_colors <= 10:
-                palette = Category10[10]
-            elif n_colors <= 20:
-                palette = Category20[20]
-            else:
-                palette = Turbo256
-
-        return palette[:n_colors]

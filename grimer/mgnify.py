@@ -23,5 +23,3 @@ class MGnify:
     def update_taxids(self, taxid_updated):
         # Update taxonomy to taxid or keep name if not available
         self.data["taxa"] = self.data[["rank", "taxa"]].apply(lambda rt: taxid_updated[(rt[0], rt[1])] if taxid_updated[(rt[0], rt[1])] is not None else rt[1], axis=1)
-
-

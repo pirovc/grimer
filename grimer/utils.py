@@ -8,8 +8,10 @@ import pandas as pd
 
 #Internal
 from grimer.decontam import Decontam
-from grimer.plots import make_color_palette
 from grimer.reference import Reference
+
+# Bokeh
+from bokeh.palettes import Blues, Category10, Category20, Colorblind, Dark2, linear_palette, Magma256, Reds, Turbo256
 
 #biom
 from biom import parse_table as parse_table_biom
@@ -543,6 +545,39 @@ def pairwise_rho(mat):
     variances = np.var(mat, axis=0, ddof=1)
     return 1 - (pairwise_vlr(mat) / np.add.outer(variances, variances))
 
+
+def format_js_toString(val):
+    # Transform numeric value to float and string to match toString
+    return str(float(val)) if isinstance(val, (int, float)) else str(val)
+
+
+def make_color_palette(n_colors, linear: bool=False, palette: dict=None):
+    if isinstance(palette, dict) and n_colors <= max(palette.keys()):
+        # Special case for 1 and 2 (not in palettes)
+        palette = palette[3 if n_colors < 3 else n_colors]
+
+    if linear or n_colors > 20:
+        if not palette:
+            palette = Turbo256
+        if n_colors <= 256:
+            return linear_palette(palette, n_colors)
+        else:
+            # Repeat colors
+            return [palette[int(i * 256.0 / n_colors)] for i in range(n_colors)]
+    else:
+        # Select color palette based on number of requested colors
+        # Return the closest palette with most distinc set of colors
+        if not palette:
+            if n_colors <= 8:
+                palette = Colorblind[8]
+            elif n_colors <= 10:
+                palette = Category10[10]
+            elif n_colors <= 20:
+                palette = Category20[20]
+            else:
+                palette = Turbo256
+
+        return palette[:n_colors]
 
 def run_cmd(cmd, print_stderr: bool=False, exit_on_error: bool=True):
     errcode = 0

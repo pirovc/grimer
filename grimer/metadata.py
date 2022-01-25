@@ -9,7 +9,7 @@ class Metadata:
 
     def __init__(self, metadata_file, samples: list=[]):
         # Read metadata and let pandas guess dtypes, index as str
-        self.data = pd.read_table(metadata_file, sep='\t', header=0, skiprows=0, index_col=0, dtype={0:str})
+        self.data = pd.read_table(metadata_file, sep='\t', header=0, skiprows=0, index_col=0, dtype={0: str})
 
         # Enforce string index
         self.data.index = self.data.index.astype('str')
@@ -85,13 +85,7 @@ class Metadata:
         return self.data[col]
 
     def get_unique_values(self, col):
-        return sorted(self.get_col(col).dropna().unique())
-
-    def get_formatted_unique_values(self, col):
-        if self.types[col] == "categorical":
-            return self.get_unique_values(col)
-        else:
-            return list(map('{:.16g}'.format, self.get_unique_values(col)))
+        return self.get_col(col).dropna().unique()
 
     def get_type(self, col):
         return self.types[col]

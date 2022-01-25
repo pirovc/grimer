@@ -4,7 +4,7 @@ import numpy as np
 from math import pi
 
 #Internal
-from grimer.utils import print_df, transform_table, print_log, pairwise_rho
+from grimer.utils import print_df, transform_table, print_log, pairwise_rho, format_js_toString
 
 #Bokeh
 from bokeh.models import ColumnDataSource
@@ -212,7 +212,8 @@ def generate_cds_plot_metadata(metadata, max_metadata_cols):
     metadata_fields = metadata.get_col_headers().to_list()
     for i in range(max_metadata_cols):
         # Same transformation done in the colormap for numeric entries
-        df_plot_md["md" + str(i)] = [(metadata_fields[i], '{:.16g}'.format(md_value) if not isinstance(md_value, str) else md_value) for md_value in metadata.get_col(metadata_fields[i])]
+        #df_plot_md[str(i+1)] = [(metadata_fields[i], '{:.16g}'.format(md_value) if not isinstance(md_value, str) else md_value) for md_value in metadata.get_col(metadata_fields[i])]
+        df_plot_md[str(i + 1)] = [(metadata_fields[i], format_js_toString(md_value)) for md_value in metadata.get_col(metadata_fields[i])]
 
     print_df(df_plot_md, "df_plot_md -> cds_p_metadata")
     return ColumnDataSource(df_plot_md)

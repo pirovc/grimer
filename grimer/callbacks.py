@@ -566,12 +566,19 @@ def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols
                 var selected = this.value[s];
                 var y_values = new Array(index_len);
                 for (var i = 0; i < index_len; ++i){
-                    y_values[i]=[selected, cds_d_metadata.data[selected][i].toString()];
+                    var val = cds_d_metadata.data[selected][i];
+                    // fix conversion from float to integer (30.0).toString() = "30"
+                    if (Number.isInteger(val)){
+                        val = val + ".0";
+                    } else {
+                        val = val.toString();
+                    }
+                    y_values[i]=[selected, val];
                 }
-                cds_p_metadata.data["md" + s.toString()] = y_values;
-                x_factors.push("md" + s.toString());
+                cds_p_metadata.data[(s+1).toString()] = y_values;
+                x_factors.push((s+1).toString());
             }else{
-                cds_p_metadata.data["md" + s.toString()] = empty_y_values;
+                cds_p_metadata.data[(s+1).toString()] = empty_y_values;
             }
         }
         metadata_heatmap.x_range.factors = x_factors;

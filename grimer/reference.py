@@ -49,7 +49,7 @@ class Reference:
                 print("Updated taxonomic node: " + node + " -> " + upd_node)
                 self.add(upd_node)
                 self.ids[upd_node].update(self.ids[node])
-                self.ids.discard(node)
+                del self.ids[node]
 
     def get_refs_desc(self, i, direct: bool=False, parents: bool=False):
         refs_desc = {}

@@ -136,7 +136,7 @@ def main():
     print_log("")
     print_log("Total valid samples: " + str(len(table.samples)))
     # Check for long sample headers, break some plots
-    long_sample_headers = [h for h in table_df.index if len(h)>70]
+    long_sample_headers = [h for h in table_df.index if len(h) > 70]
     if long_sample_headers:
         print_log("Long sample labels/headers detected, plots may break: ")
         print_log("\n".join(long_sample_headers))
