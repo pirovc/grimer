@@ -261,7 +261,8 @@ def main():
 
     # _d_
     # matrix: index (unique sample-ids), columns (unique observations) -> raw counts
-    cds_d_sampleobs = generate_cds_sampleobs(table)
+    #cds_d_sampleobs = generate_cds_sampleobs(table)
+    dict_d_sampleobs = generate_dict_sampleobs(table)
     # df: index (unique sample-ids), aux|..., cnt|...,
     cds_d_samples = generate_cds_samples(table, references, controls, decontam)
     # matrix: index (unique sample-ids) x columns (metadata fields) -> metadata values
@@ -378,7 +379,7 @@ def main():
                              cds_p_obstable,
                              cds_p_samplebars,
                              cds_d_samples,
-                             cds_d_sampleobs,
+                             dict_d_sampleobs,
                              cds_d_metadata,
                              cds_p_decontam,
                              cds_p_decontam_models,
@@ -410,7 +411,7 @@ def main():
     link_obsbars_widgets(ele,
                          cds_p_obsbars,
                          dict_d_topobs,
-                         cds_d_sampleobs,
+                         dict_d_sampleobs,
                          cds_d_samples,
                          args.top_obs_bars,
                          dict_d_taxname,

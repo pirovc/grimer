@@ -261,6 +261,22 @@ def generate_cds_plot_decontam_models(decontam):
     return ColumnDataSource(dict_decontam_models)
 
 
+def generate_dict_sampleobs(table):
+    # dict with raw counts
+    # dict_sampleobs[rank][obs][sample] = count
+    dict_sampleobs = {}
+    for rank in table.ranks():
+        dict_sampleobs[rank] = {}
+        for obs, sample_val in table.data[rank].to_dict().items():
+            dict_sampleobs[rank][obs] = {}
+            for sample, val in sample_val.items():
+                if val > 0:
+                    dict_sampleobs[rank][obs][sample] = val
+
+    print_df(dict_sampleobs, "dict_sampleobs -> dict_d_sampleobs")
+    return dict_sampleobs
+
+
 def generate_cds_sampleobs(table):
     # matrix-like cds with raw counts
     # index -> sample-ids
@@ -269,7 +285,6 @@ def generate_cds_sampleobs(table):
     df_sampleobs = pd.DataFrame(index=table.samples)
     for rank in table.ranks():
         df_sampleobs = pd.concat([df_sampleobs, table.data[rank]], axis=1)
-
     # fill NaN with zero so bars do not "dissapear" when plotting
     df_sampleobs.fillna(0, inplace=True)
     print_df(df_sampleobs, "df_sampleobs -> cds_d_sampleobs")

@@ -5,7 +5,7 @@ def link_obstable_samplebars(ele,
                              cds_p_obstable,
                              cds_p_samplebars,
                              cds_d_samples,
-                             cds_d_sampleobs,
+                             dict_d_sampleobs,
                              cds_d_metadata,
                              cds_p_decontam,
                              cds_p_decontam_models,
@@ -139,7 +139,7 @@ def link_obstable_samplebars(ele,
                   cds_p_samplebars=cds_p_samplebars,
                   cds_d_samples=cds_d_samples,
                   cds_p_obstable=cds_p_obstable,
-                  cds_d_sampleobs=cds_d_sampleobs,
+                  dict_d_sampleobs=dict_d_sampleobs,
                   y_range=ele["samplebars"]["fig"].extra_y_ranges['obs'],
                   min_obs_perc=min_obs_perc,
                   max_total_count=max_total_count,
@@ -152,23 +152,24 @@ def link_obstable_samplebars(ele,
             const total = cds_d_samples.data["cnt|total"];
             // for each rank
             for(let r = 0; r < active_ranks.length; r++){
+                // get rank
+                let rank = active_ranks[r];
                 // get taxid of the rank
-                let rank_taxid = cds_p_obstable.data["tax|"+active_ranks[r]][row];
+                let taxid = cds_p_obstable.data["tax|"+rank][row];
                 // for each sample
-                for (var i = 0; i < cds_d_sampleobs.length; i++) {
+                for (var i = 0; i < cds_d_samples.length; i++) {
+                    let sample = cds_d_samples.data["index"][i];
                     let val = 0;
-                    // if taxid for the rank exists, [transform and] copy  values over to the cds_p_samplebars
-                    if (rank_taxid){
-                        val = cds_d_sampleobs.data[rank_taxid][i];
+                    // if taxid exists in the lineage, [transform and] copy values over to the cds_p_samplebars
+                    if (taxid){
+                        val = dict_d_sampleobs[rank][taxid][sample];
                         if(val>0){
-                            if (y2_select.value=="#"){
-                                val = cds_d_sampleobs.data[rank_taxid][i];
-                            }else if (y2_select.value=="%"){
-                                val = (cds_d_sampleobs.data[rank_taxid][i]/total[i])*100;
+                            if (y2_select.value=="%"){
+                                val = (val/total[i])*100;
                             }else if (y2_select.value=="log10(%)"){
-                                val = Math.log10((cds_d_sampleobs.data[rank_taxid][i]/total[i])*100);
+                                val = Math.log10((val/total[i])*100);
                             }else if (y2_select.value=="log10(#)"){
-                                val = Math.log10(cds_d_sampleobs.data[rank_taxid][i]);
+                                val = Math.log10(val);
                             }
                         }
                     }
@@ -259,7 +260,7 @@ def link_obstable_samplebars(ele,
     decontam_callback = CustomJS(
         args=dict(cds_d_samples=cds_d_samples,
                   cds_p_obstable=cds_p_obstable,
-                  cds_d_sampleobs=cds_d_sampleobs,
+                  dict_d_sampleobs=dict_d_sampleobs,
                   cds_p_decontam=cds_p_decontam,
                   cds_p_decontam_models=cds_p_decontam_models,
                   cds_d_decontam=cds_d_decontam,
@@ -268,9 +269,15 @@ def link_obstable_samplebars(ele,
         // selected row
         const row = cb_obj.indices[0];
         const taxid = cds_p_obstable.data["index"][row];
+        const rank = cds_p_obstable.data["col|rank"][row];
         const total = cds_d_samples.data["cnt|total"];
-        for(let i = 0; i < cds_p_decontam.data["counts"].length; i++){
-            cds_p_decontam.data["counts"][i] = cds_d_sampleobs.data[taxid][i]/total[i];
+        for(let i = 0; i < cds_p_decontam.length; i++){
+            let sample = cds_p_decontam.data["index"][i];
+            if (dict_d_sampleobs[rank][taxid][sample]!=undefined){
+                cds_p_decontam.data["counts"][i] = dict_d_sampleobs[rank][taxid][sample]/total[i];
+            }else{
+                cds_p_decontam.data["counts"][i] = 0;
+            }
         }
         cds_p_decontam.change.emit();
 
@@ -674,12 +681,12 @@ def link_correlation_widgets(ele, cds_p_correlation):
     ele["correlation"]["wid"]["rank_select"].js_on_change('value', rank_select_callback)
 
 
-def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, cds_d_sampleobs, cds_d_samples, top_obs_bars, dict_d_taxname, cds_d_metadata):
+def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, dict_d_sampleobs, cds_d_samples, top_obs_bars, dict_d_taxname, cds_d_metadata):
     rank_select_callback = CustomJS(
         args=dict(sort_select=ele["obsbars"]["wid"]["sort_select"],
                   legend=ele["obsbars"]["legend"],
                   cds_p_obsbars=cds_p_obsbars,
-                  cds_d_sampleobs=cds_d_sampleobs,
+                  dict_d_sampleobs=dict_d_sampleobs,
                   cds_d_samples=cds_d_samples,
                   dict_d_topobs=dict_d_topobs,
                   dict_d_taxname=dict_d_taxname,
@@ -703,9 +710,14 @@ def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, cds_d_sampleobs, cds
             var sum_bars = 0;
             if (taxid!=undefined){
                 for(let s = 0; s<n_sample; s++){
-                    cds_p_obsbars.data[i.toString()][s] = (cds_d_sampleobs.data[taxid][s]/total[s])*100;
+                    let sample = cds_p_obsbars.data["index"][s];
+                    let val = 0;
+                    if(dict_d_sampleobs[rank][taxid][sample]!=undefined){
+                        val = dict_d_sampleobs[rank][taxid][sample];
+                    }
+                    cds_p_obsbars.data[i.toString()][s] = (val/total[s])*100;
                     // sum counts for sample
-                    sum_assigned[s]+=cds_d_sampleobs.data[taxid][s];
+                    sum_assigned[s]+=val;
                     // update legend label
                     legend.items[i].label = i.toString() + ") " + dict_d_taxname[taxid];
                 }
