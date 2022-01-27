@@ -368,8 +368,8 @@ def main():
 
     # obsbars
     ele["obsbars"] = {}
-    ele["obsbars"]["fig"], ele["obsbars"]["legend"] = plot_obsbars(cds_p_obsbars, dict_d_topobs, table.ranks(), args.top_obs_bars, dict_d_taxname)
     ele["obsbars"]["wid"] = plot_obsbars_widgets(table.ranks(), metadata, dict_d_topobs, dict_d_taxname, args.top_obs_bars)
+    ele["obsbars"]["fig"], ele["obsbars"]["legend"] = plot_obsbars(cds_p_obsbars, dict_d_topobs, table.ranks(), args.top_obs_bars, dict_d_taxname, ele["obsbars"]["wid"]["rank_select"])
 
     ############ JAVASCRIPT LINKING
 

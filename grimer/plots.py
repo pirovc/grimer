@@ -94,7 +94,7 @@ def plot_samplebars(cds_p_samplebars, max_total_count, ranks):
     return samplebars_fig, legend_obs, legend_bars
 
 
-def plot_obsbars(cds_p_obsbars, dict_d_topobs, ranks, top_obs_bars, dict_d_taxname):
+def plot_obsbars(cds_p_obsbars, dict_d_topobs, ranks, top_obs_bars, dict_d_taxname, rank_select):
     obsbars_fig = figure(x_range=FactorRange(factors=cds_p_obsbars.data["factors"]),
                          y_range=Range1d(start=0, end=100),
                          height=450,
@@ -102,23 +102,28 @@ def plot_obsbars(cds_p_obsbars, dict_d_topobs, ranks, top_obs_bars, dict_d_taxna
                          tools="box_zoom,reset,save")
 
     # TODO Need to know which rank to get the correct set of top taxa
-    # taxid_name_custom = CustomJSHover(
-    #     args=dict(dict_d_taxname=ColumnDataSource(dict(dict_d_taxname=[dict_d_taxname])),
-    #               dict_d_topobs=ColumnDataSource(dict(dict_d_topobs=[dict_d_topobs]))),
-    #     code='''
-    #     //var taxid = dict_d_topobs.data.dict_d_topobs[0][RANK][value];
-    #     //console.log(dict_d_topobs);
-    #     //return dict_d_taxname.data.dict_d_taxname[0][taxid]; // value holds the @taxid
-    #     ''')
+    taxid_name_custom = CustomJSHover(
+        args=dict(dict_d_taxname=ColumnDataSource(dict(dict_d_taxname=[dict_d_taxname])),
+                  dict_d_topobs=ColumnDataSource(dict(dict_d_topobs=[dict_d_topobs])),
+                  rank_select=rank_select),
+        code='''
+        // value holds the column index
+        var taxid = dict_d_topobs.data.dict_d_topobs[0][rank_select.value][value];
+        if(taxid!=undefined){
+            return dict_d_taxname.data.dict_d_taxname[0][taxid]; 
+        }else{
+            return value;
+        }
+        ''')
 
     # Add custom tooltip for heatmap (taxid->name)
     obsbars_fig.add_tools(HoverTool(
         tooltips=[("Sample", "@index"),
-                  ("Label", "$name"),
-                  ("Value", "@$name")],
+                  ("Observation", "$name{custom}"),
+                  ("Value", "@$name{0.2f}%")],
         mode="mouse",
         point_policy="follow_mouse",
-        #formatters={"$name": taxid_name_custom}
+        formatters={"$name": taxid_name_custom}
     ))
 
     bars = [str(i) for i in range(top_obs_bars)] + ["others", "unassigned"]
