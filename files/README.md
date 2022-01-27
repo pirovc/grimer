@@ -4,24 +4,28 @@
 
 1) File with a list (one per line) of taxonomic identifiers or taxonomic names
 
-or
+2) or formatted `.yml` file:
 
-2) Formatted `.yml` file:
 
-    "General Description":
-      "Specific description":
-        url: "www.website.com?id={}" 
-        ids: [1,2,3]
+```yaml
+"General Description":
+  "Specific description":
+    url: "www.website.com?id={}" 
+    ids: [1,2,3]
+```
+
 
 The url can be a link to the entries listed on the id. Use the `{}` as a placeholder for the id. Example: `https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id={}`
 
 The files should be provided in the main configuration file for grimer as follows:
 
-    references:
-      "Contaminants": "files/contaminants.yml"
-      "Human-related": "files/human-related.yml" 
-      "CUSTOM CONTAMINANTS": "file.txt"
-      "LAB RELATED BACTERIA": "another_file.yml"
+```yaml
+references:
+  "Contaminants": "files/contaminants.yml"
+  "Human-related": "files/human-related.yml" 
+  "CUSTOM CONTAMINANTS": "file.txt"
+  "LAB RELATED BACTERIA": "another_file.yml"
+```
 
 ### contaminants.yml
 
