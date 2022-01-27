@@ -6,14 +6,12 @@
 
 2) or formatted `.yml` file:
 
-
 ```yaml
 "General Description":
   "Specific description":
     url: "www.website.com?id={}" 
     ids: [1,2,3]
 ```
-
 
 The url can be a link to the entries listed on the id. Use the `{}` as a placeholder for the id. Example: `https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id={}`
 
