@@ -11,6 +11,10 @@ from bokeh.models import ColumnDataSource
 
 
 def generate_dict_taxname(tax, taxids):
+    """
+    mapping taxids to names
+    (or names to names if taxid is not used)
+    """
     id_name = {}
     for i in taxids:
         n = tax.name(i) if tax else i
@@ -36,6 +40,7 @@ def generate_cds_plot_references(table, tax, references):
 
     print_df(df_references, "df_references -> cds_p_references")
     return ColumnDataSource(df_references)
+
 
 def generate_cds_annotations(table, references, controls, decontam):
     # Stacked matrix of true annotations (omit false)
@@ -262,7 +267,7 @@ def generate_cds_plot_decontam_models(decontam):
 
 
 def generate_dict_sampleobs(table):
-    # dict with raw counts
+    # dict with raw counts (not storing zeros)
     # dict_sampleobs[rank][obs][sample] = count
     dict_sampleobs = {}
     for rank in table.ranks():
@@ -275,20 +280,6 @@ def generate_dict_sampleobs(table):
 
     print_df(dict_sampleobs, "dict_sampleobs -> dict_d_sampleobs")
     return dict_sampleobs
-
-
-def generate_cds_sampleobs(table):
-    # matrix-like cds with raw counts
-    # index -> sample-ids
-    # columns -> taxids (from all ranks)
-    # values are observation raw counts
-    df_sampleobs = pd.DataFrame(index=table.samples)
-    for rank in table.ranks():
-        df_sampleobs = pd.concat([df_sampleobs, table.data[rank]], axis=1)
-    # fill NaN with zero so bars do not "dissapear" when plotting
-    df_sampleobs.fillna(0, inplace=True)
-    print_df(df_sampleobs, "df_sampleobs -> cds_d_sampleobs")
-    return ColumnDataSource(df_sampleobs)
 
 
 def generate_cds_heatmap(table, transformation, replace_zero_value, show_zeros):
@@ -454,7 +445,7 @@ def generate_cds_correlation(table, top_obs_corr, replace_zero_value):
 
 def generate_cds_obsbars(table, top_obs_bars):
     # index (unique sample-ids)
-    # cols: 0, 1, ..., top_obs_bars, unassigned, others, factors
+    # cols: 1, 2, ..., top_obs_bars, unassigned, others, factors
 
     #Load with data from first rank
     top_taxids = table.get_top(table.ranks()[0], top_obs_bars)

@@ -719,7 +719,7 @@ def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, dict_d_sampleobs, cd
                     // sum counts for sample
                     sum_assigned[s]+=val;
                     // update legend label
-                    legend.items[i].label = i.toString() + ") " + dict_d_taxname[taxid];
+                    legend.items[i].label = (i+1).toString() + ") " + dict_d_taxname[taxid];
                 }
                 // not sync with gui
                 // https://github.com/bokeh/bokeh/issues/10211

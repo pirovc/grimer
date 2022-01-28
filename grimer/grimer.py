@@ -260,8 +260,7 @@ def main():
     cds_p_obsbars = generate_cds_obsbars(table, args.top_obs_bars)
 
     # _d_
-    # matrix: index (unique sample-ids), columns (unique observations) -> raw counts
-    #cds_d_sampleobs = generate_cds_sampleobs(table)
+    # dict: {rank: {obs: {sample: count}}}
     dict_d_sampleobs = generate_dict_sampleobs(table)
     # df: index (unique sample-ids), aux|..., cnt|...,
     cds_d_samples = generate_cds_samples(table, references, controls, decontam)

@@ -164,7 +164,7 @@ def plot_obsbars(cds_p_obsbars, dict_d_topobs, ranks, top_obs_bars, dict_d_taxna
     legend_bars_items = []
     for i in range(top_obs_bars):
         if i < len(dict_d_topobs[ranks[0]]):
-            label = str(i) + ") " + dict_d_taxname[dict_d_topobs[ranks[0]][i]]
+            label = str(i+1) + ") " + dict_d_taxname[dict_d_topobs[ranks[0]][i]]
         else:
             label = None
         legend_bars_items.append((label, [vbar_ren[i]]))
@@ -194,8 +194,7 @@ def plot_obsbars_widgets(ranks, metadata, dict_d_topobs, dict_d_taxname, top_obs
     sort_options["Default"].append(("col|others", "others"))
     sort_options["Default"].append(("col|unassigned", "unassigned"))
 
-    #sort_options["Observation"] = [("col|" + str(i), dict_d_taxname[t]) for i, t in enumerate(dict_d_topobs[ranks[0]])]
-    sort_options["Observation"] = [("col|" + str(i), str(i)) for i in range(top_obs_bars)]
+    sort_options["Observation"] = [("col|" + str(i), str(i+1)) for i in range(top_obs_bars)]
 
     sort_options["Numeric Metadata"] = []
     if metadata:
