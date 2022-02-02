@@ -150,6 +150,8 @@ def generate_cds_sampletable(table):
     for rank in table.ranks():
         df_sampletable["col|" + rank] = table.data[rank].sum(axis=1).divide(table.total, axis=0)
 
+    df_sampletable.fillna(0, inplace=True)
+
     print_df(df_sampletable, "df_sampletable -> cds_p_sampletable")
     return ColumnDataSource(df_sampletable)
 

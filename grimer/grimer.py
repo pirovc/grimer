@@ -258,7 +258,7 @@ def main():
     cds_p_correlation = generate_cds_correlation(table, args.top_obs_corr, replace_zero_value)
     # matrix: index (unique sample-ids), 0, 1, ..., top_obs_bars, unassigned, others, factors
     cds_p_obsbars = generate_cds_obsbars(table, args.top_obs_bars)
-    # df: index (unique sample-ids), col|...,  tax|..., aux|ref
+    # df: index (unique sample-ids), col|...
     cds_p_sampletable = generate_cds_sampletable(table)
 
     # _d_
@@ -397,7 +397,6 @@ def main():
                              cds_p_mgnify,
                              dict_d_refs)
 
-
     link_heatmap_widgets(ele,
                          cds_d_samples,
                          cds_d_metadata,
@@ -424,6 +423,8 @@ def main():
                          dict_d_taxname,
                          cds_d_metadata,
                          cds_p_sampletable)
+
+    link_sampletable_select(ele, cds_p_sampletable, cds_d_metadata)
 
     ############ LAYOUT
 

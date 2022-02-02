@@ -828,3 +828,43 @@ def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, dict_d_sampleobs, cd
     ele["obsbars"]["wid"]["groupby2_select"].js_on_change('value', sort_groupby_callback)
     ele["obsbars"]["wid"]["sort_select"].js_on_change('value', sort_groupby_callback)
     ele["obsbars"]["wid"]["rank_select"].js_on_change('value', rank_select_callback, sort_groupby_callback)
+
+
+def link_sampletable_select(ele, cds_p_sampletable, cds_d_metadata):
+
+    select_callback = CustomJS(
+        args=dict(cds_p_sampletable=cds_p_sampletable,
+                  cds_d_metadata=cds_d_metadata,
+                  total_counts_spinner=ele["sampletable"]["wid"]["total_counts_spinner"],
+                  assigned_spinner=ele["sampletable"]["wid"]["assigned_spinner"],
+                  metadata_multichoice=ele["sampletable"]["wid"]["metadata_multichoice"],
+                  ),
+        code='''
+        var selected_indices = [];
+        for (var i = 0; i < cds_p_sampletable.length; i++) {
+            if (cds_p_sampletable.data['col|total'][i] < total_counts_spinner.value){
+                continue;
+            }
+            if (cds_p_sampletable.data['col|assigned_perc'][i] < (assigned_spinner.value/100)){
+                continue;
+            }
+            if (metadata_multichoice.value.length > 0 ){
+                var found = false;
+                for (var m=0; m < metadata_multichoice.value.length; ++m){
+                    const md = metadata_multichoice.value[m].split("|");
+                    if(cds_d_metadata.data[md[0]][i]==md[1]){
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    continue;
+                }
+            }
+            selected_indices.push(i);
+        }
+        cds_p_sampletable.selected.indices = selected_indices;
+    ''')
+    ele["sampletable"]["wid"]["total_counts_spinner"].js_on_change('value', select_callback)
+    ele["sampletable"]["wid"]["assigned_spinner"].js_on_change('value', select_callback)
+    ele["sampletable"]["wid"]["metadata_multichoice"].js_on_change('value', select_callback)

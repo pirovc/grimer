@@ -407,7 +407,7 @@ def plot_sampletable_widgets(sizes, max_count_samples, metadata):
     spinner_width = sizes["overview_top_panel_width_left"] - 20
 
     total_counts_spinner = Spinner(title="Total counts", low=1, high=max_count_samples, step=1, value=1, width=spinner_width, height=50)
-    assigned_spinner = Spinner(title="Assigned", low=0, high=100, value=0, step=0.1, width=spinner_width, height=50)
+    assigned_spinner = Spinner(title="Assigned %", low=0, high=100, value=0, step=1, width=spinner_width, height=50)
 
     if metadata:
         metadata_values = []
@@ -415,7 +415,7 @@ def plot_sampletable_widgets(sizes, max_count_samples, metadata):
             for value in metadata.get_unique_values(field):
                 metadata_values.append((field + "|" + str(value), field + " = " + str(value)))
 
-        metadata_multichoice = MultiChoice(title="Metadata",
+        metadata_multichoice = MultiChoice(title="Metadata (union)",
                                            options=metadata_values,
                                            sizing_mode="fixed",
                                            width=sizes["overview_top_panel_width_left"] - 20, height=60)
