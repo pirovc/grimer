@@ -58,6 +58,28 @@ def make_layout(ele, sizes, version, logo_path, title):
                             ele["samplebars"]["wid"]["help_button"]),
                         ele["samplebars"]["wid"]["toggle_label"])
 
+    selectwidgets = column(ele["sampletable"]["wid"]["total_counts_spinner"],
+                           ele["sampletable"]["wid"]["assigned_spinner"],
+                           ele["sampletable"]["wid"]["metadata_multichoice"],
+                           ele["sampletable"]["wid"]["help_button"])
+
+    selectwidgetstabs = Tabs(tabs=[Panel(child=selectwidgets, title="Select")],
+                             sizing_mode="fixed",
+                             height=sizes["overview_top_panel_height"] + 20,
+                             width=sizes["overview_top_panel_width_left"])
+
+    row_sampletable = row(selectwidgetstabs,
+                          ele["sampletable"]["fig"],
+                          sizing_mode="stretch_width")
+
+    row_obsbars = column(row(ele["obsbars"]["fig"]),
+                         row(ele["obsbars"]["wid"]["rank_select"],
+                             ele["obsbars"]["wid"]["groupby1_select"],
+                             ele["obsbars"]["wid"]["groupby2_select"],
+                             ele["obsbars"]["wid"]["sort_select"],
+                             ele["obsbars"]["wid"]["help_button"]),
+                         ele["obsbars"]["wid"]["toggle_label"])
+
     row_heatmap = gridplot([[ele["heatmap"]["fig"], ele["dendroy"]["fig"], ele["metadata"]["fig"]],
                            [ele["dendrox"]["fig"]],
                            [ele["annotations"]["fig"], ele["heatmap"]["wid"]["help_button"]]],
@@ -88,19 +110,11 @@ def make_layout(ele, sizes, version, logo_path, title):
                                  ele["correlation"]["wid"]["help_button"]),
                           ele["correlation"]["fig"])
 
-    row_obsbars = column(row(ele["obsbars"]["fig"]),
-                         row(ele["obsbars"]["wid"]["rank_select"],
-                             ele["obsbars"]["wid"]["groupby1_select"],
-                             ele["obsbars"]["wid"]["groupby2_select"],
-                             ele["obsbars"]["wid"]["sort_select"],
-                             ele["obsbars"]["wid"]["help_button"]),
-                         ele["obsbars"]["wid"]["toggle_label"])
-
     main_panels = []
     main_panels.append(Panel(child=column(row_obstable, row_barpot, sizing_mode="stretch_width"), title="Overview"))
+    main_panels.append(Panel(child=column(row_sampletable, row_obsbars, sizing_mode="stretch_width"), title="Samples"))
     main_panels.append(Panel(child=column(row_heatmap, row_heatmap_widgets, sizing_mode="stretch_width"), title="Heatmap"))
     main_panels.append(Panel(child=column(row_correlation, sizing_mode="stretch_width"), title="Correlation"))
-    main_panels.append(Panel(child=column(row_obsbars, sizing_mode="stretch_width"), title="Bars"))
     main_tab = Tabs(tabs=main_panels)
 
     logo_base64 = base64.b64encode(open(logo_path, 'rb').read())  # encode to base64

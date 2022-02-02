@@ -1,8 +1,20 @@
 function sort_numeric(a, b){ return a - b; }
 function sort_string(a, b){ return a.localeCompare(b); }
 
-function grimer_sort(factors, sort_col, sort_mode="numeric", desc=false, group_col1=[], group_col2=[]) {
-    //mode : numeric, string
+function grimer_sort(factors, sort_col, sort_mode="numeric", desc=false, group_col1=[], group_col2=[], index=[]) {
+    //sort_mode : numeric, string
+
+    // subset data if index provided
+    if(index.length){
+    	factors = index.map( s => factors[s] );
+		sort_col = index.map( s => sort_col[s] );
+		if(group_col1.length){
+			group_col1 = index.map( s => group_col1[s] );
+		}
+		if(group_col2.length){
+			group_col2 = index.map( s => group_col2[s] );
+		}
+    }
 
     // Generate numerical index to sort arrays
     var idx = new Array(factors.length);

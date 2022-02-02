@@ -134,7 +134,27 @@ def generate_cds_obstable(table, tax, references, controls, control_samples, dec
     return ColumnDataSource(df_obstable)
 
 
-def generate_cds_bars(table):
+def generate_cds_sampletable(table):
+    # index unique sample-ids
+    # col|...  values to plot to columns in the datatable
+
+    df_sampletable = pd.DataFrame(index=table.samples)
+    df_sampletable["col|total"] = table.total
+    assigned = table.total - table.unassigned
+    df_sampletable["col|assigned"] = assigned
+    df_sampletable["col|assigned_perc"] = assigned.divide(table.total, axis=0)
+    df_sampletable["col|unassigned"] = table.unassigned
+    df_sampletable["col|unassigned_perc"] = table.unassigned.divide(table.total, axis=0)
+
+    # assigned by rank
+    for rank in table.ranks():
+        df_sampletable["col|" + rank] = table.data[rank].sum(axis=1).divide(table.total, axis=0)
+
+    print_df(df_sampletable, "df_sampletable -> cds_p_sampletable")
+    return ColumnDataSource(df_sampletable)
+
+
+def generate_cds_samplebars(table):
     # index unique sample-ids
     # aux| auxiliary values (not plotted)
     # bar| values plotted as bars (sample counts)

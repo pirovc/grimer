@@ -372,6 +372,70 @@ Widgets can filter entries of the table. "Obs. name or id" filters the lineage o
             "help_button": help_button(title="Observation table", text=help_text, align="start")}
 
 
+
+
+def plot_sampletable(cds_p_sampletable, sizes, ranks):
+
+    table_cols = []
+    table_cols.append(TableColumn(field="index", title="Sample"))
+    table_cols.append(TableColumn(field="col|total", title="Total counts", default_sort="descending"))
+    table_cols.append(TableColumn(field="col|assigned", title="Assigned"))
+    table_cols.append(TableColumn(field="col|assigned_perc", title="Assigned %", default_sort="descending", formatter=NumberFormatter(format="0.00%")))
+    table_cols.append(TableColumn(field="col|unassigned", title="Unassigned"))
+    table_cols.append(TableColumn(field="col|unassigned_perc", title="Unassigned %", formatter=NumberFormatter(format="0.00%")))
+
+    # Pre-select all checkboxes
+    cds_p_sampletable.selected.indices = list(range(len(cds_p_sampletable.data["index"])))
+
+    for rank in ranks:
+        table_cols.append(TableColumn(field="col|" + rank, title=rank, formatter=NumberFormatter(format="0.00%")))
+
+    sampletable = DataTable(height=sizes["overview_top_panel_height"],
+                            sizing_mode="stretch_width",
+                            index_position=None,
+                            autosize_mode="fit_viewport",
+                            selectable="checkbox",
+                            frozen_columns=1,
+                            columns=table_cols,
+                            source=cds_p_sampletable)
+
+    return sampletable
+
+
+def plot_sampletable_widgets(sizes, max_count_samples, metadata):
+    # Filtering options
+    spinner_width = sizes["overview_top_panel_width_left"] - 20
+
+    total_counts_spinner = Spinner(title="Total counts", low=1, high=max_count_samples, step=1, value=1, width=spinner_width, height=50)
+    assigned_spinner = Spinner(title="Assigned", low=0, high=100, value=0, step=0.1, width=spinner_width, height=50)
+
+    if metadata:
+        metadata_values = []
+        for field in metadata.get_data().columns.to_list():
+            for value in metadata.get_unique_values(field):
+                metadata_values.append((field + "|" + str(value), field + " = " + str(value)))
+
+        metadata_multichoice = MultiChoice(title="Metadata",
+                                           options=metadata_values,
+                                           sizing_mode="fixed",
+                                           width=sizes["overview_top_panel_width_left"] - 20, height=60)
+    else:
+        metadata_multichoice = None
+
+    help_text = """
+helppp
+
+samples
+
+aaa
+"""
+
+    return {"total_counts_spinner": total_counts_spinner,
+            "assigned_spinner": assigned_spinner,
+            "metadata_multichoice": metadata_multichoice,
+            "help_button": help_button(title="Sample selection", text=help_text, align="start")}
+
+
 def plot_infopanel():
     return TextAreaInput(value="Click on the table items to load more information",
                          sizing_mode="stretch_both",

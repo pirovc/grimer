@@ -237,7 +237,7 @@ def main():
     # this cds an exeption and contains data to plot (col|) and auxiliary data (tax|)
     cds_p_obstable = generate_cds_obstable(table, tax, references, controls, control_samples, decontam)
     # df: index (unique sample-ids), aux|..., bar|..., tax|...
-    cds_p_samplebars = generate_cds_bars(table)
+    cds_p_samplebars = generate_cds_samplebars(table)
     # stacked: index (repeated observations), rank, ref, direct, parent
     cds_p_references = generate_cds_plot_references(table, tax, references)
     # matrix: index (unique sample-ids), concentrations, controls, counts
@@ -258,6 +258,8 @@ def main():
     cds_p_correlation = generate_cds_correlation(table, args.top_obs_corr, replace_zero_value)
     # matrix: index (unique sample-ids), 0, 1, ..., top_obs_bars, unassigned, others, factors
     cds_p_obsbars = generate_cds_obsbars(table, args.top_obs_bars)
+    # df: index (unique sample-ids), col|...,  tax|..., aux|ref
+    cds_p_sampletable = generate_cds_sampletable(table)
 
     # _d_
     # dict: {rank: {obs: {sample: count}}}
@@ -332,6 +334,11 @@ def main():
     ele["samplebars"]["fig"], ele["samplebars"]["legend_obs"], ele["samplebars"]["legend_bars"] = plot_samplebars(cds_p_samplebars, max_total_count, table.ranks())
     ele["samplebars"]["wid"] = plot_samplebars_widgets(table.ranks(), metadata, list(references.keys()), list(controls.keys()), decontam)
 
+    # sampletable
+    ele["sampletable"] = {}
+    ele["sampletable"]["fig"] = plot_sampletable(cds_p_sampletable, sizes, table.ranks())
+    ele["sampletable"]["wid"] = plot_sampletable_widgets(sizes, max(cds_p_sampletable.data["col|total"]), metadata)
+
     # heatmap
     tools_heatmap = "hover,save,box_zoom,reset,crosshair,box_select"
     ele["heatmap"] = {}
@@ -390,6 +397,7 @@ def main():
                              cds_p_mgnify,
                              dict_d_refs)
 
+
     link_heatmap_widgets(ele,
                          cds_d_samples,
                          cds_d_metadata,
@@ -414,7 +422,8 @@ def main():
                          cds_d_samples,
                          args.top_obs_bars,
                          dict_d_taxname,
-                         cds_d_metadata)
+                         cds_d_metadata,
+                         cds_p_sampletable)
 
     ############ LAYOUT
 

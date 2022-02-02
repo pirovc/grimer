@@ -681,7 +681,7 @@ def link_correlation_widgets(ele, cds_p_correlation):
     ele["correlation"]["wid"]["rank_select"].js_on_change('value', rank_select_callback)
 
 
-def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, dict_d_sampleobs, cds_d_samples, top_obs_bars, dict_d_taxname, cds_d_metadata):
+def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, dict_d_sampleobs, cds_d_samples, top_obs_bars, dict_d_taxname, cds_d_metadata, cds_p_sampletable):
     rank_select_callback = CustomJS(
         args=dict(sort_select=ele["obsbars"]["wid"]["sort_select"],
                   legend=ele["obsbars"]["legend"],
@@ -740,60 +740,71 @@ def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, dict_d_sampleobs, cd
                   sort_select=ele["obsbars"]["wid"]["sort_select"],
                   groupby1_select=ele["obsbars"]["wid"]["groupby1_select"],
                   groupby2_select=ele["obsbars"]["wid"]["groupby2_select"],
+                  cds_p_sampletable=cds_p_sampletable,
                   cds_p_obsbars=cds_p_obsbars,
                   cds_d_samples=cds_d_samples,
                   cds_d_metadata=cds_d_metadata),
         code='''
-        // Define value from Sort by select
-        var sort_col;
-        var annot_samples = cds_d_samples.data["index"];
-        if (sort_select.value=="input_order"){
-            sort_col = cds_d_samples.data["aux|input_order"];
-        }else if (sort_select.value.startsWith("metadata_num|")){
-            sort_col = cds_d_metadata.data[sort_select.value.replace('metadata_num|','')];
-            // Annotate label with value
-            var annot_samples = annot_samples.map(function(s, i) {
-              return sort_col[i] + " | " + s;
-            });
-
-        }else if (sort_select.value.startsWith("col|")){
-            sort_col = cds_p_obsbars.data[sort_select.value.replace('col|','')];
-        }
 
         // Factors can be: index (sort_col|index), [md1, index] or [md1, md2, index]
-        var factors;
-        var sorted_factors;
-        // If group by is selected, use as first sort factor
-        if(groupby1_select.value!="none"){
-            var groupby_col1 = cds_d_metadata.data[groupby1_select.value.replace('metadata_cat|','')];
+        var factors = [];
+        var sorted_factors = [];
 
-            // Zip sample index and metadata field to create nested factors
-            factors = groupby_col1.map(function(m, i) {
-              return [m, annot_samples[i]];
-            });
+        // get index of selected indices
+        var selected_indices = cds_p_sampletable.selected.indices;
 
-            // second grouping level
-            if(groupby2_select.value!="none" && groupby2_select.value!=groupby1_select.value){
+        if(selected_indices.length){
+            // samples
+            var annot_samples = cds_d_samples.data["index"];
 
-                var groupby_col2 = cds_d_metadata.data[groupby2_select.value.replace('metadata_cat|','')];
-
-                factors = groupby_col2.map(function(m, i) {
-                  return [m, groupby_col1[i], annot_samples[i]];
+            // Define value from Sort by select
+            var sort_col;
+            if (sort_select.value=="input_order"){
+                sort_col = cds_d_samples.data["aux|input_order"];
+            }else if (sort_select.value.startsWith("metadata_num|")){
+                sort_col = cds_d_metadata.data[sort_select.value.replace('metadata_num|','')];
+                // Annotate label with value
+                var annot_samples = annot_samples.map(function(s, i) {
+                  return sort_col[i] + " | " + s;
                 });
-
-                sorted_factors = grimer_sort(factors, sort_col, "numeric", false, groupby_col1, groupby_col2);
-            }else{
-                sorted_factors = grimer_sort(factors, sort_col, "numeric", false, groupby_col1);
+            }else if (sort_select.value.startsWith("col|")){
+                sort_col = cds_p_obsbars.data[sort_select.value.replace('col|','')];
             }
 
-        }else{
-            // Single factors, just use the sample index
-            factors = annot_samples;
-            sorted_factors = grimer_sort(factors, sort_col, "numeric", false);
-        }
+            // If group by is selected, use as first sort factor
+            if(groupby1_select.value!="none"){
+                var groupby_col1 = cds_d_metadata.data[groupby1_select.value.replace('metadata_cat|','')];
 
-        // Change value of the factors on the obsbars cds
-        cds_p_obsbars.data["factors"] = factors;
+                // Zip sample index and metadata field to create nested factors
+                factors = groupby_col1.map(function(m, i) {
+                  return [m, annot_samples[i]];
+                });
+
+                // second grouping level
+                if(groupby2_select.value!="none" && groupby2_select.value!=groupby1_select.value){
+
+                    var groupby_col2 = cds_d_metadata.data[groupby2_select.value.replace('metadata_cat|','')];
+
+                    factors = groupby_col2.map(function(m, i) {
+                      return [m, groupby_col1[i], annot_samples[i]];
+                    });
+
+                    // only selected_indices
+                    sorted_factors = grimer_sort(factors, sort_col, "numeric", false, groupby_col1, groupby_col2, selected_indices);
+                }else{
+                    sorted_factors = grimer_sort(factors, sort_col, "numeric", false, groupby_col1, [], selected_indices);
+                }
+
+            }else{
+                // Single factors, just use the sample index
+                factors = annot_samples;
+                sorted_factors = grimer_sort(factors, sort_col, "numeric", false, [], [], selected_indices);
+            }
+
+            // Change value of the factors on the obsbars cds
+            cds_p_obsbars.data["factors"] = factors; 
+
+        }
 
         // Plot sorted factors
         obsbars.x_range.factors = sorted_factors;
@@ -811,6 +822,7 @@ def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, dict_d_sampleobs, cd
         }
         ''')
 
+    cds_p_sampletable.selected.js_on_change('indices', sort_groupby_callback)
     ele["obsbars"]["wid"]["toggle_label"].js_on_click(toggle_label_callback)
     ele["obsbars"]["wid"]["groupby1_select"].js_on_change('value', sort_groupby_callback)
     ele["obsbars"]["wid"]["groupby2_select"].js_on_change('value', sort_groupby_callback)
