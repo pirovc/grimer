@@ -415,7 +415,7 @@ def plot_sampletable_widgets(sizes, max_count_samples, metadata):
             for value in metadata.get_unique_values(field):
                 metadata_values.append((field + "|" + str(value), field + " = " + str(value)))
 
-        metadata_multichoice = MultiChoice(title="Metadata (union)",
+        metadata_multichoice = MultiChoice(title="Metadata",
                                            options=metadata_values,
                                            sizing_mode="fixed",
                                            width=sizes["overview_top_panel_width_left"] - 20, height=60)
@@ -423,11 +423,11 @@ def plot_sampletable_widgets(sizes, max_count_samples, metadata):
         metadata_multichoice = None
 
     help_text = """
-helppp
+Summary of samples. Entries selected in the table are shown in the barplot below. 
 
-samples
+Widgets can select batches of entries in the table by multiple criteria.
 
-aaa
+Multiple metadata fields/values can be chosen and the union of the matching results will be selected in the table.
 """
 
     return {"total_counts_spinner": total_counts_spinner,
@@ -658,7 +658,7 @@ def plot_heatmap(table, cds_p_heatmap, tools_heatmap, transformation, dict_d_tax
     # Need to pass dict_d_taxname inside a one column data
     taxid_name_custom = CustomJSHover(
         args=dict(dict_d_taxname=ColumnDataSource(dict(dict_d_taxname=[dict_d_taxname]))),
-        code="return dict_d_taxname.data.dict_d_taxname[0][value]; // value holds the @taxid"
+        code="console.log(special_vars); return dict_d_taxname.data.dict_d_taxname[0][value]; // value holds the @taxid"
     )
     # Add custom tooltip for heatmap (taxid->name)
     heatmap.add_tools(HoverTool(

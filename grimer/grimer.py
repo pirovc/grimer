@@ -356,7 +356,10 @@ def main():
 
     # annotations
     ele["annotations"] = {}
-    ele["annotations"]["fig"] = plot_annotations(ele["heatmap"]["fig"], tools_heatmap, cds_p_annotations, dict_d_taxname)
+    if cds_p_annotations.data["index"].size:
+        ele["annotations"]["fig"] = plot_annotations(ele["heatmap"]["fig"], tools_heatmap, cds_p_annotations, dict_d_taxname)
+    else:
+        ele["annotations"]["fig"] = Spacer()
 
     # dendrograms
     ele["dendrox"] = {}
