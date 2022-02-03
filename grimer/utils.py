@@ -619,21 +619,16 @@ def print_log(text):
 def print_df(df, name: str=None):
     from grimer.grimer import _debug
     if _debug:
-        print("-----------------------------------------------")
         print(name)
         if isinstance(df, dict):
             if df:
-                print(list(df.keys())[0])
-                print("...")
-                print(list(df.keys())[-1])
-                print(list(df.values())[0])
-                print("...")
-                print(list(df.values())[-1])
-                print(len(df.keys()))
+                print(len(df.keys()), "keys:", list(df.keys())[0], "...", list(df.keys())[-1])
+                # print(list(df.values())[0], "...", list(df.values())[-1])
         else:
-            print(df.columns)
+            #print(df.columns)
             print(df.head())
             print(df.shape)
+        print("size:", sys.getsizeof(df))
         print("-----------------------------------------------")
 
 

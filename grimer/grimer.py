@@ -67,7 +67,7 @@ def main():
     heatmap_group.add_argument('--optimal-ordering', default=False, action='store_true', help="Activate optimal_ordering on linkage, takes longer for large number of samples.")
     heatmap_group.add_argument('--show-zeros', default=False, action='store_true', help="Do not skip zeros on heatmap. File will be bigger and iteraction with heatmap slower.")
     heatmap_group.add_argument('--linkage-methods', type=str, nargs="*", default=["complete"], choices=list(_LINKAGE_METHODS))
-    heatmap_group.add_argument('--linkage-metrics', type=str, nargs="*", default=["euclidean", "braycurtis"], choices=_METRICS_NAMES)
+    heatmap_group.add_argument('--linkage-metrics', type=str, nargs="*", default=["euclidean"], choices=_METRICS_NAMES)
     heatmap_group.add_argument('--skip-dendrogram', default=False, action='store_true', help="Disable dendogram. Will create smaller files.")
 
     correlation_group = parser.add_argument_group('Correlation options')

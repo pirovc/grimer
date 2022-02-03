@@ -39,6 +39,9 @@ class Metadata:
 
         # Convert NaN on categorical to ""
         self.data[self.types[self.types == "categorical"].index] = self.data[self.types[self.types == "categorical"].index].fillna('')
+        # Convert boolean to String
+        mask = self.data[self.types[self.types == "categorical"].index].applymap(type) != bool
+        self.data[self.types[self.types == "categorical"].index] = self.data[self.types[self.types == "categorical"].index].where(mask, self.data[self.types[self.types == "categorical"].index].replace({True: 'True', False: 'False'}))
 
         # Remove names
         self.data.index.names = [None]

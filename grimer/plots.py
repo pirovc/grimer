@@ -1,7 +1,7 @@
 import markdown
 
 # Bokeh
-from bokeh.models import AdaptiveTicker, Button, CategoricalColorMapper, CDSView, CheckboxGroup, ColorBar, ColumnDataSource, CustomJS, CustomJSHover, FactorRange, FuncTickFormatter, HoverTool, Legend, LinearAxis, LinearColorMapper, MultiChoice, MultiSelect, NumberFormatter, Panel, Paragraph, Range1d, RangeSlider, Select, Spinner, Tabs, TextAreaInput, TextInput
+from bokeh.models import AdaptiveTicker, Button, CategoricalColorMapper, CDSView, CheckboxGroup, ColorBar, ColumnDataSource, CustomJS, CustomJSHover, FactorRange, FuncTickFormatter, HoverTool, Legend, LinearAxis, LinearColorMapper, MultiChoice, MultiSelect, NumberFormatter, Panel, Paragraph, Range1d, RangeSlider, Select, Spacer, Spinner, Tabs, TextAreaInput, TextInput
 from bokeh.models.filters import IndexFilter, GroupFilter
 from bokeh.models.widgets import DataTable, TableColumn
 from bokeh.palettes import Blues, Dark2, Magma256, Reds
@@ -420,7 +420,7 @@ def plot_sampletable_widgets(sizes, max_count_samples, metadata):
                                            sizing_mode="fixed",
                                            width=sizes["overview_top_panel_width_left"] - 20, height=60)
     else:
-        metadata_multichoice = None
+        metadata_multichoice = Spacer()
 
     help_text = """
 Summary of samples. Entries selected in the table are shown in the barplot below. 
@@ -658,14 +658,13 @@ def plot_heatmap(table, cds_p_heatmap, tools_heatmap, transformation, dict_d_tax
     # Need to pass dict_d_taxname inside a one column data
     taxid_name_custom = CustomJSHover(
         args=dict(dict_d_taxname=ColumnDataSource(dict(dict_d_taxname=[dict_d_taxname]))),
-        code="console.log(special_vars); return dict_d_taxname.data.dict_d_taxname[0][value]; // value holds the @taxid"
+        code="return dict_d_taxname.data.dict_d_taxname[0][value]; // value holds the @taxid"
     )
     # Add custom tooltip for heatmap (taxid->name)
     heatmap.add_tools(HoverTool(
         tooltips=[
             ('Sample', '@index'),
             ('Observation', '@obs{custom}'),
-            ('Original value', '@ov'),
             ('Transformed value (' + transformation + ')', '@tv')
         ],
         formatters={"@obs": taxid_name_custom}
@@ -764,7 +763,7 @@ The metadata and annotation plots are automatically sorted to reflect the cluste
 
 
 def plot_dendrogram(heatmap, tools_heatmap, cds_p_dendro_x, cds_p_dendro_y):
-    
+
     dendrox_fig = figure(x_range=heatmap.x_range,
                          tools="save",
                          height=80,
@@ -824,7 +823,7 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
     # (metadata header, str(metadata value)) -> color
     # Add them to a CategoricalColorMapper which will be applied for the whole plot
     # Use different palettes for numeric types, but convert to string to be treated as a category
-    # Need to be careful with int and float, since the value of str(0.0) 
+    # Need to be careful with int and float, since the value of str(0.0)
     # will not match the 0 in the javascript data conversion, therefore use the numeric to calculate palette
     # but make get_formatted_unique_values on the dictionary
     factors = []
@@ -918,6 +917,7 @@ def plot_correlation(cds_p_correlation, ranks, dict_d_taxname):
     for i, rank in enumerate(cds_p_correlation.data["rank"]):
         if rank == ranks[0]:
             taxids.add(cds_p_correlation.data["index"][i])
+            taxids.add(cds_p_correlation.data["taxid"][i])
 
     taxids = sorted(taxids)
     corr_fig = figure(x_range=taxids,

@@ -38,7 +38,7 @@ def generate_cds_plot_references(table, tax, references):
     df_references = pd.DataFrame(clist, columns=["obs", "rank", "ref", "direct", "parent"])
     df_references.set_index('obs', inplace=True)
 
-    print_df(df_references, "df_references -> cds_p_references")
+    print_df(df_references, "cds_p_references")
     return ColumnDataSource(df_references)
 
 
@@ -73,7 +73,7 @@ def generate_cds_annotations(table, references, controls, decontam):
         # Concat in the main df
         df_annotations = pd.concat([df_annotations, df_rank], axis=0)
 
-    print_df(df_annotations, "df_annotations -> cds_p_annotations")
+    print_df(df_annotations, "cds_p_annotations")
     return ColumnDataSource(df_annotations)
 
 
@@ -130,7 +130,7 @@ def generate_cds_obstable(table, tax, references, controls, control_samples, dec
         # Concat in the main df
         df_obstable = pd.concat([df_obstable, df_rank], axis=0)
 
-    print_df(df_obstable, "df_obstable -> cds_p_obstable")
+    print_df(df_obstable, "cds_p_obstable")
     return ColumnDataSource(df_obstable)
 
 
@@ -152,7 +152,7 @@ def generate_cds_sampletable(table):
 
     df_sampletable.fillna(0, inplace=True)
 
-    print_df(df_sampletable, "df_sampletable -> cds_p_sampletable")
+    print_df(df_sampletable, "cds_p_sampletable")
     return ColumnDataSource(df_sampletable)
 
 
@@ -174,7 +174,7 @@ def generate_cds_samplebars(table):
     for rank in table.ranks():
         df_bars["tax|" + rank] = None
 
-    print_df(df_bars, "df_bars -> cds_p_samplebars")
+    print_df(df_bars, "cds_p_samplebars")
     return ColumnDataSource(df_bars)
 
 
@@ -216,7 +216,7 @@ def generate_cds_samples(table, references, controls, decontam):
     # fill NaN with zero so bars do not "dissapear" when plotting
     df_samples.fillna(0, inplace=True)
 
-    print_df(df_samples, "df_samples -> cds_d_samples")
+    print_df(df_samples, "cds_d_samples")
     return ColumnDataSource(df_samples)
 
 
@@ -225,7 +225,7 @@ def generate_cds_metadata(metadata):
     # columns -> metadata fields
     # values -> metadata values
     df_md = metadata.get_data()
-    print_df(df_md, "df_md -> cds_d_metadata")
+    print_df(df_md, "cds_d_metadata")
     return ColumnDataSource(df_md)
 
 
@@ -242,7 +242,7 @@ def generate_cds_plot_metadata(metadata, max_metadata_cols):
         #df_plot_md[str(i+1)] = [(metadata_fields[i], '{:.16g}'.format(md_value) if not isinstance(md_value, str) else md_value) for md_value in metadata.get_col(metadata_fields[i])]
         df_plot_md[str(i + 1)] = [(metadata_fields[i], format_js_toString(md_value)) for md_value in metadata.get_col(metadata_fields[i])]
 
-    print_df(df_plot_md, "df_plot_md -> cds_p_metadata")
+    print_df(df_plot_md, "cds_p_metadata")
     return ColumnDataSource(df_plot_md)
 
 
@@ -254,7 +254,7 @@ def generate_cds_plot_decontam(decontam):
     df_decontam = decontam.get_data()
     df_decontam["controls"] = df_decontam["controls"].map({True: 'Control', False: 'Sample'})
     df_decontam["counts"] = None
-    print_df(df_decontam, "df_decontam -> cds_p_decontam")
+    print_df(df_decontam, "cds_p_decontam")
     return ColumnDataSource(df_decontam)
 
 
@@ -270,7 +270,7 @@ def generate_cds_decontam(decontam, ranks):
         vals = list(zip(df_valid_vals["contam"], df_valid_vals["contam_2"], df_valid_vals["non.contam"], pval))
         dict_coord_mod.update(dict(zip(df_valid_vals.index, vals)))
 
-    print_df(dict_coord_mod, "dict_coord_mod -> cds_d_decontam_models")
+    print_df(dict_coord_mod, "cds_d_decontam_models")
     return ColumnDataSource(dict_coord_mod)
 
 
@@ -284,7 +284,7 @@ def generate_cds_plot_decontam_models(decontam):
                                  decontam.get_data()["concentration"].max()]
     dict_decontam_models["y_cont"] = [None, None]
     dict_decontam_models["y_noncont"] = [None, None]
-    print_df(dict_decontam_models, "dict_decontam_models -> cds_p_decontam_models")
+    print_df(dict_decontam_models, "cds_p_decontam_models")
     return ColumnDataSource(dict_decontam_models)
 
 
@@ -300,7 +300,7 @@ def generate_dict_sampleobs(table):
                 if val > 0:
                     dict_sampleobs[rank][obs][sample] = val
 
-    print_df(dict_sampleobs, "dict_sampleobs -> dict_d_sampleobs")
+    print_df(dict_sampleobs, "dict_d_sampleobs")
     return dict_sampleobs
 
 
@@ -326,7 +326,8 @@ def generate_cds_heatmap(table, transformation, replace_zero_value, show_zeros):
 
         df_heatmap = pd.concat([df_heatmap, stacked_rank_df], axis=0)
 
-    print_df(df_heatmap, "df_heatmap -> cds_p_heatmap")
+    df_heatmap.drop('ov', axis=1, inplace=True)
+    print_df(df_heatmap, "cds_p_heatmap")
     return ColumnDataSource(df_heatmap)
 
 
@@ -350,8 +351,8 @@ def generate_dict_hcluster(table, hcluster):
                 # taxa
                 leaves_x[key] = hcluster[rank][method][metric]["x"]["index"]
 
-    print_df(leaves_x, "leaves_x -> dict_d_hcluster_x")
-    print_df(leaves_y, "leaves_y -> dict_d_hcluster_y")
+    print_df(leaves_x, "dict_d_hcluster_x")
+    print_df(leaves_y, "dict_d_hcluster_y")
     return leaves_x, leaves_y
 
 
@@ -359,8 +360,8 @@ def generate_cds_plot_dendro():
     # Empty CDS {"x": [], "y": [], "c": []}
     dendro_x = {"x": [], "y": [], "c": []}
     dendro_y = {"x": [], "y": [], "c": []}
-    print_df(dendro_x, "dendro_x -> cds_p_dendro_x")
-    print_df(dendro_y, "dendro_y -> cds_p_dendro_y")
+    print_df(dendro_x, "cds_p_dendro_x")
+    print_df(dendro_y, "cds_p_dendro_y")
     return ColumnDataSource(dendro_x), ColumnDataSource(dendro_y)
 
 
@@ -391,7 +392,7 @@ def generate_dict_topobs(table, top_obs_bars):
     dict_top_taxa = {}
     for rank in table.ranks():
         dict_top_taxa[rank] = table.get_top(rank, top_obs_bars)
-    print_df(dict_top_taxa, "dict_top_taxa -> dict_d_topobs")
+    print_df(dict_top_taxa, "dict_d_topobs")
     return dict_top_taxa
 
 
@@ -418,7 +419,7 @@ def generate_dict_refs(table, references):
                         d_refs[i][sname][desc] = []
                     d_refs[i][sname][desc].append(ref)
 
-    print_df(d_refs, "d_refs -> dict_d_refs")
+    print_df(d_refs, "dict_d_refs")
     return d_refs
 
 
@@ -445,7 +446,7 @@ def generate_cds_correlation(table, top_obs_corr, replace_zero_value):
             if len(matrix.columns) == 2:
                 # If there are only 2 observations, return in a float
                 # re-format in a matrix shape
-                rho = np.array([[np.nan, np.nan], [rho, np.nan]])
+                rho = np.array([[np.nan, np.nan], [rho[1, 0], np.nan]])
             else:
                 # fill upper triangular matrix (mirrored values) with nan to be ignored by pandas
                 # to save half of the space
@@ -461,7 +462,7 @@ def generate_cds_correlation(table, top_obs_corr, replace_zero_value):
 
             df_corr = pd.concat([df_corr, stacked_rank_df], axis=0)
 
-    print_df(df_corr, "df_corr -> cds_p_correlation")
+    print_df(df_corr, "cds_p_correlation")
     return ColumnDataSource(df_corr)
 
 
@@ -484,7 +485,7 @@ def generate_cds_obsbars(table, top_obs_bars):
     df_obsbars = transform_table(df_obsbars, table.total, "norm", 0) * 100
     df_obsbars["factors"] = df_obsbars.index.to_list()
 
-    print_df(df_obsbars, "df_obsbars -> cds_p_obsbars")
+    print_df(df_obsbars, "cds_p_obsbars")
     return ColumnDataSource(df_obsbars)
 
 
@@ -535,5 +536,5 @@ def generate_cds_mgnify(mgnify, table, tax):
     # set index
     df_mgnify.set_index('taxa', inplace=True)
 
-    print_df(df_mgnify, "df_mgnify -> cds_p_mgnify")
+    print_df(df_mgnify, "cds_p_mgnify")
     return ColumnDataSource(df_mgnify)

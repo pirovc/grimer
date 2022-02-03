@@ -647,14 +647,16 @@ def link_correlation_widgets(ele, cds_p_correlation):
         args=dict(correlation=ele["correlation"]["fig"],
                   cds_p_correlation=cds_p_correlation),
         code='''
-        const factors = new Set();
+        var factors = new Set();
         for(let i = 0; i < cds_p_correlation.data["index"].length; i++){
             if(cds_p_correlation.data["rank"][i]==this.value){
                 factors.add(cds_p_correlation.data["index"][i]);
+                factors.add(cds_p_correlation.data["taxid"][i]);
             }
         }
-        correlation.x_range.factors = [...factors];
-        correlation.y_range.factors = [...factors].reverse();
+        factors = [...factors].sort();
+        correlation.x_range.factors = factors;
+        correlation.y_range.factors = factors.reverse();
         ''')
 
     filter_callback = CustomJS(
@@ -867,4 +869,5 @@ def link_sampletable_select(ele, cds_p_sampletable, cds_d_metadata):
     ''')
     ele["sampletable"]["wid"]["total_counts_spinner"].js_on_change('value', select_callback)
     ele["sampletable"]["wid"]["assigned_spinner"].js_on_change('value', select_callback)
-    ele["sampletable"]["wid"]["metadata_multichoice"].js_on_change('value', select_callback)
+    if cds_d_metadata:
+        ele["sampletable"]["wid"]["metadata_multichoice"].js_on_change('value', select_callback)
