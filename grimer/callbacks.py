@@ -15,7 +15,8 @@ def link_obstable_samplebars(ele,
                              min_obs_perc,
                              max_total_count,
                              cds_p_mgnify,
-                             dict_d_refs):
+                             dict_d_refs,
+                             dict_d_taxname):
 
     bar_select_callback = CustomJS(
         args=dict(y1_select=ele["samplebars"]["wid"]["y1_select"],
@@ -223,7 +224,9 @@ def link_obstable_samplebars(ele,
     load_infopanel = CustomJS(
         args=dict(infopanel=ele["infopanel"]["textarea"],
                   cds_p_obstable=cds_p_obstable,
-                  dict_d_refs=dict_d_refs),
+                  dict_d_refs=dict_d_refs,
+                  dict_d_taxname=dict_d_taxname,
+                  active_ranks=active_ranks),
         code='''
         // selected row
         var row = cb_obj.indices[0];
@@ -232,14 +235,41 @@ def link_obstable_samplebars(ele,
         const taxid = cds_p_obstable.data['index'][row];
 
         var text = "";
-        text+="Name: " + name;
+        text+="[ Obs ]";
         text+="\\n";
-        text+="Id: " + taxid;
+        text+=name;
+        if(taxid!=name){
+            text+="\\n";
+            text+="taxid: " + taxid;
+        }
         text+="\\n";
-        text+="Rank: " + rank;
+        text+="[ Rank ]";
         text+="\\n";
-        text+="\\n"
+        text+=rank;
+        text+="\\n";
 
+
+        var lineage = "";
+
+        for(let r = 0; r < active_ranks.length; r++){
+            var obs_lin = cds_p_obstable.data["tax|" + active_ranks[r]][row];
+            if(taxid!=name){
+                if(dict_d_taxname[obs_lin])
+                    lineage+=dict_d_taxname[obs_lin]+" | ";
+                else
+                    lineage+=" | ";
+            }else{
+                lineage+=obs_lin+" | ";
+            }
+            if(active_ranks[r]==rank)
+                break;
+        }
+        text+="[ Lineage ]";
+        text+="\\n";
+        text+=lineage.slice(0, -3);
+        text+="\\n";
+
+        text+="\\n"
         for (var source in dict_d_refs[taxid]){
             text+="[ "+source+" ]";
             text+="\\n";
@@ -396,28 +426,22 @@ def link_heatmap_widgets(ele,
     x_dendro_callback = CustomJS(
         args=dict(rank_select=ele["heatmap"]["wid"]["rank_select"],
                   x_sort_select=ele["heatmap"]["wid"]["x_sort_select"],
-                  x_method_select=ele["heatmap"]["wid"]["x_method_select"],
                   cds_p_dendro_x=cds_p_dendro_x,
                   dict_d_dedro_x=dict_d_dedro_x),
         code='''
-        if (x_sort_select.value.startsWith("metric|")){
-            const key = rank_select.value+"|"+x_method_select.value+"|"+x_sort_select.value.replace("metric|","");
+        if (x_sort_select.value.startsWith("cluster|")){
+            const key = rank_select.value+"|"+x_sort_select.value.replace("cluster|","");
             cds_p_dendro_x.data = {"x": dict_d_dedro_x[key+"|x"],
                                  "y": dict_d_dedro_x[key+"|y"],
                                  "c": dict_d_dedro_x[key+"|c"]};
-            // Enable method select
-            x_method_select.disabled=false;
         }else{
             cds_p_dendro_x.data = {"x": [], "y": [], "c": []};
-            // Disable method select
-            x_method_select.disabled=true;
         }
         ''')
 
     x_select_callback = CustomJS(
         args=dict(heatmap=ele["heatmap"]["fig"],
                   rank_select=ele["heatmap"]["wid"]["rank_select"],
-                  x_method_select=ele["heatmap"]["wid"]["x_method_select"],
                   x_sort_select=ele["heatmap"]["wid"]["x_sort_select"],
                   dict_d_hcluster_x=dict_d_hcluster_x,
                   cds_p_annotations=cds_p_annotations,
@@ -425,13 +449,14 @@ def link_heatmap_widgets(ele,
         code='''
         const rank = rank_select.value;
         var sorted_factors = [];
+        console.log(x_sort_select.value);
         if (x_sort_select.value=="none"){
             // None
             sorted_factors = dict_d_hcluster_x["default|" + rank];
-        }else if (x_sort_select.value.startsWith("metric|")){
+        }else if (x_sort_select.value.startsWith("cluster|")){
             // Clustering
             // Get sorted elements based on rank|method|metric
-            const key = rank+"|"+x_method_select.value+"|"+x_sort_select.value.replace("metric|","");
+            const key = rank+"|"+x_sort_select.value.replace("cluster|","");
             sorted_factors = dict_d_hcluster_x[key];
         }else{
             // Sorting
@@ -477,21 +502,16 @@ def link_heatmap_widgets(ele,
     y_dendro_callback = CustomJS(
         args=dict(rank_select=ele["heatmap"]["wid"]["rank_select"],
                   y_sort_select=ele["heatmap"]["wid"]["y_sort_select"],
-                  y_method_select=ele["heatmap"]["wid"]["y_method_select"],
                   cds_p_dendro_y=cds_p_dendro_y,
                   dict_d_dedro_y=dict_d_dedro_y),
         code='''
-        if (y_sort_select.value.startsWith("metric|")){
-            const key = rank_select.value+"|"+y_method_select.value+"|"+y_sort_select.value.replace("metric|","");
+        if (y_sort_select.value.startsWith("cluster|")){
+            const key = rank_select.value+"|"+y_sort_select.value.replace("cluster|","");
             cds_p_dendro_y.data = {"x": dict_d_dedro_y[key+"|x"],
                                  "y": dict_d_dedro_y[key+"|y"],
                                  "c": dict_d_dedro_y[key+"|c"]};
-            // Enable method select
-            y_method_select.disabled=false;
         }else{
             cds_p_dendro_y.data = {"x": [], "y": [], "c": []};
-            // Disable method select
-            y_method_select.disabled=true;
         }
         ''')
 
@@ -500,7 +520,6 @@ def link_heatmap_widgets(ele,
                   cds_d_samples=cds_d_samples,
                   cds_d_metadata=cds_d_metadata,
                   rank_select=ele["heatmap"]["wid"]["rank_select"],
-                  y_method_select=ele["heatmap"]["wid"]["y_method_select"],
                   y_sort_select=ele["heatmap"]["wid"]["y_sort_select"],
                   dict_d_hcluster_y=dict_d_hcluster_y),
         code='''
@@ -508,10 +527,10 @@ def link_heatmap_widgets(ele,
         if (y_sort_select.value=="none"){
             // None
             sorted_factors = dict_d_hcluster_y["default"];
-        }else if (y_sort_select.value.startsWith("metric|")){
+        }else if (y_sort_select.value.startsWith("cluster|")){
             // Clustering
             // Get sorted elements based on rank|method|metric
-            const key = rank_select.value+"|"+y_method_select.value+"|"+y_sort_select.value.replace("metric|","");
+            const key = rank_select.value+"|"+y_sort_select.value.replace("cluster|","");
             sorted_factors = dict_d_hcluster_y[key];
         }else{
             // Sorting
@@ -551,9 +570,7 @@ def link_heatmap_widgets(ele,
 
     ele["heatmap"]["wid"]["toggle_labels"].js_on_click(toggle_labels_callback)
     ele["heatmap"]["wid"]["rank_select"].js_on_change('value', x_select_callback, x_dendro_callback, y_select_callback, y_dendro_callback)
-    ele["heatmap"]["wid"]["x_method_select"].js_on_change('value', x_select_callback, x_dendro_callback)
     ele["heatmap"]["wid"]["x_sort_select"].js_on_change('value', x_select_callback, x_dendro_callback)
-    ele["heatmap"]["wid"]["y_method_select"].js_on_change('value', y_select_callback, y_dendro_callback)
     ele["heatmap"]["wid"]["y_sort_select"].js_on_change('value', y_select_callback, y_dendro_callback)
 
 

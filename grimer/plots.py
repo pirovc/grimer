@@ -712,8 +712,13 @@ def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, reference_name
 
     rank_select = Select(title="Taxonomic rank:", value=ranks[0], options=ranks)
 
+    cluster_options = []
+    for lmetric in linkage_metrics:
+        for lmethod in linkage_methods:
+            cluster_options.append(("cluster|" + lmethod + "|" + lmetric, lmethod + "/" + lmetric))
+
     x_sort_options = {}
-    x_sort_options["Clustering Metric"] = [("metric|" + lm, lm) for lm in linkage_metrics]
+    x_sort_options["Clustering Method/Metric"] = cluster_options
     x_sort_options["Default order"] = [("none", "none"), ("counts", "counts"), ("observations", "observations")]
     x_sort_options["Sort by References"] = [("annot|" + r, r) for r in reference_names]
     if controls_names:
@@ -722,9 +727,8 @@ def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, reference_name
         x_sort_options["Sort by DECONTAM"] = [("annot|decontam", "decontam")]
 
     y_sort_options = {}
-    y_sort_options["Clustering Metric"] = [("metric|" + lm, lm) for lm in linkage_metrics]
+    y_sort_options["Clustering Method/Metric"] = cluster_options
     y_sort_options["Default order"] = [("none", "none"), ("counts", "counts"), ("samples", "samples")]
-
     if metadata:
         numeric_md_data = metadata.get_data(metadata_type="numeric").columns.to_list()
         if numeric_md_data:
@@ -734,10 +738,7 @@ def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, reference_name
             y_sort_options["Sort by Categorical Metadata"] = [("metadata_cat|" + md, md) for md in categorical_md_data]
 
     x_sort_select = Select(title="Observation cluster/sort:", value="none", options=x_sort_options)
-    x_method_select = Select(title="Observation clustering method:", value=linkage_methods[0], options=linkage_methods, disabled=True)
-
     y_sort_select = Select(title="Sample cluster/sort:", value="none", options=y_sort_options)
-    y_method_select = Select(title="Sample clustering method:", value=linkage_methods[0], options=linkage_methods, disabled=True)
 
     toggle_labels = CheckboxGroup(labels=["Show/Hide observations labels", "Show/Hide samples labels"], active=[])
 
@@ -754,9 +755,7 @@ The metadata and annotation plots are automatically sorted to reflect the cluste
 """
 
     return {"rank_select": rank_select,
-            "x_method_select": x_method_select,
             "x_sort_select": x_sort_select,
-            "y_method_select": y_method_select,
             "y_sort_select": y_sort_select,
             "toggle_labels": toggle_labels,
             "help_button": help_button(title="Heatmap/Clustering", text=help_text)}

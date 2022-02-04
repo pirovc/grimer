@@ -398,7 +398,8 @@ def main():
                              min_obs_perc,
                              max_total_count,
                              cds_p_mgnify,
-                             dict_d_refs)
+                             dict_d_refs,
+                             dict_d_taxname)
 
     link_heatmap_widgets(ele,
                          cds_d_samples,
