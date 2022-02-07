@@ -230,6 +230,7 @@ def link_obstable_samplebars(ele,
         code='''
         // selected row
         var row = cb_obj.indices[0];
+
         const name = cds_p_obstable.data['col|name'][row];
         const rank = cds_p_obstable.data['col|rank'][row];
         const taxid = cds_p_obstable.data['index'][row];
@@ -248,9 +249,7 @@ def link_obstable_samplebars(ele,
         text+=rank;
         text+="\\n";
 
-
         var lineage = "";
-
         for(let r = 0; r < active_ranks.length; r++){
             var obs_lin = cds_p_obstable.data["tax|" + active_ranks[r]][row];
             if(taxid!=name){
@@ -449,7 +448,6 @@ def link_heatmap_widgets(ele,
         code='''
         const rank = rank_select.value;
         var sorted_factors = [];
-        console.log(x_sort_select.value);
         if (x_sort_select.value=="none"){
             // None
             sorted_factors = dict_d_hcluster_x["default|" + rank];

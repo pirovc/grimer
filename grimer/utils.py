@@ -14,7 +14,7 @@ from grimer.reference import Reference
 from bokeh.palettes import Blues, Category10, Category20, Colorblind, Dark2, linear_palette, Magma256, Reds, Turbo256
 
 #biom
-from biom import parse_table as parse_table_biom
+import biom
 
 # scikit-bio
 from skbio.stats.composition import clr
@@ -26,9 +26,7 @@ import scipy.cluster.hierarchy as sch
 def parse_input_table(input_file, unassigned_header, transpose, sample_replace):
 
     if input_file.endswith(".biom"):
-        with open(input_file, encoding="utf8", errors='ignore') as f:
-            table_df = parse_table_biom(f).to_dataframe(dense=True)
-            # biom convert -i feature-table.biom -o feature-table.biom.tsv --to-tsv
+        table_df = biom.load_table(input_file).to_dataframe(dense=True)
     else:
         # Default input_file: index=observations, columns=samples
         # table_df should have samples on indices and observations on columns
@@ -39,7 +37,7 @@ def parse_input_table(input_file, unassigned_header, transpose, sample_replace):
         table_df = table_df.transpose()
 
     # Remove header on rows
-    table_df.index.names = [None]
+    table_df.index.name = None
 
     # Replace text on sample labels
     if sample_replace:
@@ -208,9 +206,9 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
         # ranks_df and table_df.T have the same shape
         ranked_table_df = pd.concat([ranks_df[r], table_df.T.reset_index(drop=True)], axis=1)
         ranked_tables[r] = ranked_table_df.groupby([r], dropna=True).sum().T
+        ranked_tables[r].columns.name = None
 
     lineage = ranks_df
-
     return ranked_tables, lineage
 
 
