@@ -26,7 +26,7 @@ class Metadata:
             self.types[self.data.dtypes.map(is_numeric_dtype)] = "numeric"
 
         # Convert datatypes to adequate numeric values (int, float)
-        self.data = self.data.convert_dtypes(infer_objects=False, convert_string=False)
+        self.data = self.data.convert_dtypes(infer_objects=False, convert_string=False, convert_boolean=False)
         # Re-convert everython to object to standardize (int64 NA is not seriazable on bokeh)
         self.data = self.data.astype("object")
 
@@ -39,7 +39,7 @@ class Metadata:
 
         # Convert NaN on categorical to ""
         self.data[self.types[self.types == "categorical"].index] = self.data[self.types[self.types == "categorical"].index].fillna('')
-        # Convert boolean to String
+        # Convert boolean from categorical to String
         mask = self.data[self.types[self.types == "categorical"].index].applymap(type) != bool
         self.data[self.types[self.types == "categorical"].index] = self.data[self.types[self.types == "categorical"].index].where(mask, self.data[self.types[self.types == "categorical"].index].replace({True: 'True', False: 'False'}))
 

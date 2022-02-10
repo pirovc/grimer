@@ -9,7 +9,7 @@ references:
 external:
   mgnify: "files/mgnify.tsv"
   decontam:
-    threshold: 0.2 # [0-1]
+    threshold: 0.1 # [0-1]
     method: "frequency" # frequency, prevalence, combined
     # # frequency (default: use sum of counts)
     # frequency_file: "path/file1.txt"
