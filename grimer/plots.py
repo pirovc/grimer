@@ -341,9 +341,8 @@ def plot_obstable_widgets(sizes, dict_d_taxname, max_count_rank):
     counts_perc_avg_spinner = Spinner(title="Avg. counts/sample", low=0, high=100, value=0, step=0.1, width=spinner_width, height=50)
     total_counts_spinner = Spinner(title="Total counts", low=1, high=max_count_rank, step=1, value=1, width=spinner_width, height=50)
     # Create unique list of names with taxids for filtering. map to str and set to get unique
-    unique_dict_d_taxname_tuples = set(zip(dict_d_taxname.keys(), map(str, dict_d_taxname.values())))
-    name_multichoice = MultiChoice(title="Obs. name or id",
-                                   options=list(unique_dict_d_taxname_tuples),
+    name_multichoice = MultiChoice(title="Observation name or id",
+                                   options=list(set(zip(dict_d_taxname.keys(), map(str, dict_d_taxname.values())))),
                                    sizing_mode="fixed",
                                    width=sizes["overview_top_panel_width_left"] - 20, height=60)
 
@@ -370,8 +369,6 @@ Widgets can filter entries of the table. "Obs. name or id" filters the lineage o
             "total_counts_spinner": total_counts_spinner,
             "name_multichoice": name_multichoice,
             "help_button": help_button(title="Observation table", text=help_text, align="start")}
-
-
 
 
 def plot_sampletable(cds_p_sampletable, sizes, ranks):
@@ -675,17 +672,12 @@ def plot_heatmap(table, cds_p_heatmap, tools_heatmap, transformation, dict_d_tax
     color_mapper.low = min(cds_p_heatmap.data["tv"])
     color_mapper.high = max(cds_p_heatmap.data["tv"])
 
-    # Convert taxid ticks to taxa names on client-side
-    heatmap.xaxis.formatter = FuncTickFormatter(args=dict(dict_d_taxname=dict_d_taxname), code='''
-        return dict_d_taxname[tick];
-    ''')
-
     heatmap.rect(x="obs", y="index", width=1, height=1,
                  source=cds_p_heatmap,
                  fill_color={'field': 'tv', 'transform': color_mapper},
                  line_color=None)
 
-    color_bar = ColorBar(color_mapper=color_mapper, label_standoff=12, border_line_color=None, location="center", orientation="horizontal")
+    color_bar = ColorBar(color_mapper=color_mapper, label_standoff=6, height=10, border_line_color=None, location="center", orientation="horizontal")
     heatmap.add_layout(color_bar, 'above')
 
     # Convert taxid ticks to taxa names on client-side
@@ -725,6 +717,7 @@ def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, reference_name
         x_sort_options["Sort by Controls"] = [("annot|" + c, c) for c in controls_names]
     if decontam:
         x_sort_options["Sort by DECONTAM"] = [("annot|decontam", "decontam")]
+    x_sort_options["Sort by taxonomic rank"] = [("tax|" + r, r) for r in ranks]
 
     y_sort_options = {}
     y_sort_options["Clustering Method/Metric"] = cluster_options
@@ -752,6 +745,8 @@ The right-most panel will show metadata values related to each sample (y-axis), 
 The bottom-most panel shows annotations for each observation/taxa values (x-axis).
 
 The metadata and annotation plots are automatically sorted to reflect the clustering/sort of the heatmap.
+
+**If the panels are not properly aligned after data selection, use the reset tool (top right) to re-align them**
 """
 
     return {"rank_select": rank_select,
@@ -871,7 +866,7 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
     metadata_fig.add_tools(HoverTool(tooltips=tooltips, formatters=formatters))
 
     for col in cols:
-        metadata_fig.rect(x=dict(value=col), y="index",
+        metadata_fig.rect(x={"value": col}, y="index",
                           width=1, height=1,
                           source=cds_p_metadata,
                           fill_color={'field': col, 'transform': metadata_colormap},
@@ -881,7 +876,8 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
 
     for i, md_header in enumerate(metadata_fields):
         # Start showing only first
-        if i == 0: legend_colorbars[md_header].visible = True
+        if i == 0:
+            legend_colorbars[md_header].visible = True
         metadata_fig.add_layout(legend_colorbars[md_header], 'right')
 
     metadata_fig.xaxis.axis_label = "metadata"

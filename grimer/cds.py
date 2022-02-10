@@ -319,7 +319,6 @@ def generate_cds_heatmap(table, transformation, replace_zero_value, show_zeros):
         #Drop zeros based on original counts
         if not show_zeros:
             stacked_rank_df = stacked_rank_df[stacked_rank_df["ov"] > 0]
-
         df_heatmap = pd.concat([df_heatmap, stacked_rank_df], axis=0)
 
     df_heatmap.drop('ov', axis=1, inplace=True)

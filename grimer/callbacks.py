@@ -460,10 +460,19 @@ def link_heatmap_widgets(ele,
             // Sorting
             var factors =  [];
             var sort_col = [];
-            if (x_sort_select.value=="counts"){
+            if (x_sort_select.value.startsWith("tax|")){
+                const group_rank = x_sort_select.value.replace("tax|","");
                 for (let i = 0; i < cds_p_obstable.data["index"].length; i++) {
                     if(cds_p_obstable.data["col|rank"][i]==rank){
-                        factors.push(cds_p_obstable.data["index"][i])
+                        factors.push(cds_p_obstable.data["index"][i]);
+                        sort_col.push(cds_p_obstable.data["tax|" + group_rank][i]);
+                    }
+                }
+                sorted_factors = grimer_sort(factors, sort_col, "string", false);
+            }else if (x_sort_select.value=="counts"){
+                for (let i = 0; i < cds_p_obstable.data["index"].length; i++) {
+                    if(cds_p_obstable.data["col|rank"][i]==rank){
+                        factors.push(cds_p_obstable.data["index"][i]);
                         sort_col.push(cds_p_obstable.data["col|total_counts"][i]);
                     }
                 }
@@ -471,7 +480,7 @@ def link_heatmap_widgets(ele,
             }else if (x_sort_select.value=="observations"){
                 for (let i = 0; i < cds_p_obstable.data["index"].length; i++) {
                     if(cds_p_obstable.data["col|rank"][i]==rank){
-                        factors.push(cds_p_obstable.data["index"][i])
+                        factors.push(cds_p_obstable.data["index"][i]);
                         sort_col.push(cds_p_obstable.data["col|name"][i]);
                     }
                 }
