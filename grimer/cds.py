@@ -234,14 +234,10 @@ def generate_cds_plot_metadata(metadata, max_metadata_cols):
     # md0, md1, ..., md(max_metadata_cols)
     # values (metadata field, metadata values)
 
-    df_plot_md = pd.DataFrame(index=metadata.data.index)
-    # Fill with first N metadata fields
-    metadata_fields = metadata.get_col_headers().to_list()
-    for i in range(max_metadata_cols):
-        # Same transformation done in the colormap for numeric entries
-        #df_plot_md[str(i+1)] = [(metadata_fields[i], '{:.16g}'.format(md_value) if not isinstance(md_value, str) else md_value) for md_value in metadata.get_col(metadata_fields[i])]
-        df_plot_md[str(i + 1)] = [(metadata_fields[i], format_js_toString(md_value)) for md_value in metadata.get_col(metadata_fields[i])]
-
+    df_plot_md = pd.DataFrame(index=metadata.data.index, columns=[str(i) for i in range(1, max_metadata_cols + 1)])
+    # Fill in only first metadata field
+    first_field = metadata.get_col_headers()[0]
+    df_plot_md["1"] = [(first_field, format_js_toString(md_value)) for md_value in metadata.get_col(first_field)]
     print_df(df_plot_md, "cds_p_metadata")
     return ColumnDataSource(df_plot_md)
 

@@ -300,6 +300,7 @@ def main(argv=sys.argv[1:]):
     else:
         ele["metadata"]["fig"] = Spacer()
         ele["metadata"]["wid"]["metadata_multiselect"] = Spacer()
+        ele["metadata"]["wid"]["legend_colorbars"] = Spacer()
 
     # annotations
     ele["annotations"] = {}

@@ -1,7 +1,7 @@
 import markdown
 
 # Bokeh
-from bokeh.models import AdaptiveTicker, Button, CategoricalColorMapper, CDSView, CheckboxGroup, ColorBar, ColumnDataSource, CustomJS, CustomJSHover, FactorRange, FuncTickFormatter, HoverTool, Legend, LinearAxis, LinearColorMapper, MultiChoice, MultiSelect, NumberFormatter, Panel, Paragraph, Range1d, RangeSlider, Select, Spacer, Spinner, Tabs, TextAreaInput, TextInput
+from bokeh.models import AdaptiveTicker, Button, CategoricalColorMapper, CDSView, CheckboxGroup, ColorBar, ColumnDataSource, CustomJS, CustomJSHover, FactorRange, FixedTicker, FuncTickFormatter, HoverTool, Legend, LinearAxis, LinearColorMapper, MultiChoice, MultiSelect, NumberFormatter, Panel, Paragraph, PrintfTickFormatter, Range1d, RangeSlider, Select, Spacer, Spinner, Tabs, TextAreaInput, TextInput
 from bokeh.models.filters import IndexFilter, GroupFilter
 from bokeh.models.widgets import DataTable, TableColumn
 from bokeh.palettes import Blues, Dark2, Magma256, Reds
@@ -9,6 +9,7 @@ from bokeh.plotting import figure
 from bokeh.transform import cumsum, factor_cmap
 
 from grimer.utils import format_js_toString, make_color_palette
+
 
 def plot_samplebars(cds_p_samplebars, max_total_count, ranks):
     # Bar plots has 3 main stacks: selection, others, unassigned
@@ -101,7 +102,6 @@ def plot_obsbars(cds_p_obsbars, dict_d_topobs, ranks, top_obs_bars, dict_d_taxna
                          sizing_mode="stretch_width",
                          tools="box_zoom,reset,save")
 
-    # TODO Need to know which rank to get the correct set of top taxa
     taxid_name_custom = CustomJSHover(
         args=dict(dict_d_taxname=ColumnDataSource(dict(dict_d_taxname=[dict_d_taxname])),
                   dict_d_topobs=ColumnDataSource(dict(dict_d_topobs=[dict_d_topobs])),
@@ -812,8 +812,11 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
                           y_range=heatmap.y_range,
                           tools=tools_heatmap,
                           x_axis_location="above",
-                          width=80, height=heatmap.height,
+                          width=300,
+                          height=heatmap.height,
                           tooltips="")
+    metadata_fig.xaxis.major_label_orientation = 0.7
+
     metadata_fields = metadata.get_col_headers().to_list()
 
     # A bit of a hack of the "proper" user of a colormap, since I need mixed types (categorical and numeric)
@@ -827,18 +830,35 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
     # but make get_formatted_unique_values on the dictionary
     factors = []
     palette = []
+    legend_colorbars = {}
     for i, md_header in enumerate(metadata_fields):
         unique_values = sorted(metadata.get_unique_values(md_header))
         if unique_values:
             n = len(unique_values)
+            legend_colorbars[md_header] = ColorBar(label_standoff=1,
+                                                   width=10,
+                                                   border_line_color=None,
+                                                   location=(0, 0),
+                                                   title=md_header,
+                                                   title_text_align="left",
+                                                   title_text_font_size="11px",
+                                                   major_label_text_align="left",
+                                                   major_label_text_font_size="9px",
+                                                   visible=False)
             if metadata.get_type(md_header) == "numeric":
                 unique_palette = make_color_palette(n, linear=True)
-                unique_values = map(format_js_toString, unique_values)
+                legend_colorbars[md_header].color_mapper = LinearColorMapper(palette=unique_palette, low=min(unique_values), high=max(unique_values))
+                #legend_colorbars[md_header].formatter = PrintfTickFormatter(format="%f")
             else:
                 unique_palette = make_color_palette(n)
+                legend_colorbars[md_header].color_mapper = LinearColorMapper(palette=unique_palette, low=0, high=n)
+                legend_colorbars[md_header].ticker = FixedTicker(ticks=[t+0.5 for t in range(n)])
+                legend_colorbars[md_header].major_label_overrides = {i+0.5: unique_values[i] for i in range(n)}
+
             assert len(unique_palette) == n, 'Wrong number of colors on palette'
             palette.extend(unique_palette)
-            factors.extend([(md_header, md_value) for md_value in unique_values])
+            factors.extend([(md_header, md_value) for md_value in map(format_js_toString, unique_values)])
+
     metadata_colormap = CategoricalColorMapper(palette=palette, factors=factors)
 
     # Custom tooltip to show metadata field and value
@@ -856,6 +876,13 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
                           source=cds_p_metadata,
                           fill_color={'field': col, 'transform': metadata_colormap},
                           line_color=None)
+    # Show just first when loading
+    metadata_fig.x_range.factors = ["1"]
+
+    for i, md_header in enumerate(metadata_fields):
+        # Start showing only first
+        if i == 0: legend_colorbars[md_header].visible = True
+        metadata_fig.add_layout(legend_colorbars[md_header], 'right')
 
     metadata_fig.xaxis.axis_label = "metadata"
     metadata_fig.xaxis.major_label_orientation = "vertical"
@@ -868,9 +895,17 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
     metadata_fig.yaxis.axis_line_color = None
     metadata_fig.ygrid.grid_line_color = None
 
-    metadata_multiselect = MultiSelect(title="Metadata to show (max. " + str(len(cols)) + " columns):", value=[metadata_fields[c] for c in range(len(cols))], options=metadata_fields)
+    metadata_multiselect = MultiSelect(title="Metadata to show (select max. " + str(len(cols)) + " columns):", value=[metadata_fields[0]], options=metadata_fields)
 
-    return metadata_fig, {"metadata_multiselect": metadata_multiselect}
+    # Rename ticker to selected metadata
+    metadata_fig.xaxis.formatter = FuncTickFormatter(
+        args=dict(metadata_multiselect=metadata_multiselect),
+        code='''
+            return metadata_multiselect.value[tick-1];
+        ''')
+
+    toggle_legend = CheckboxGroup(labels=["Show/Hide metadata legend"], active=[0])
+    return metadata_fig, {"metadata_multiselect": metadata_multiselect, "legend_colorbars": legend_colorbars, "toggle_legend": toggle_legend}
 
 
 def plot_annotations(heatmap, tools_heatmap, cds_p_annotations, dict_d_taxname):

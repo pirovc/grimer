@@ -94,6 +94,7 @@ def make_layout(ele, sizes, version, logo_path, title):
                                   ele["heatmap"]["wid"]["y_sort_select"],
                                   sizing_mode="stretch_width"),
                               column(ele["metadata"]["wid"]["metadata_multiselect"],
+                                     ele["metadata"]["wid"]["toggle_legend"],
                                      sizing_mode="stretch_height",
                                      width=300))
 

@@ -575,6 +575,9 @@ def link_heatmap_widgets(ele,
 def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols):
     metadata_multiselect_callback = CustomJS(
         args=dict(metadata_heatmap=ele["metadata"]["fig"],
+                  metadata_multiselect=ele["metadata"]["wid"]["metadata_multiselect"],
+                  legend_colorbars=ele["metadata"]["wid"]["legend_colorbars"],
+                  toggle_legend=ele["metadata"]["wid"]["toggle_legend"],
                   max_metadata_cols=max_metadata_cols,
                   cds_p_metadata=cds_p_metadata,
                   cds_d_metadata=cds_d_metadata),
@@ -583,9 +586,11 @@ def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols
         var x_factors = [];
         var empty_y_values = new Array(index_len);
         for (var i = 0; i < index_len; ++i) empty_y_values[i]=["", ""];
+        // hide all legends
+        for (let md_header in legend_colorbars) legend_colorbars[md_header].visible = false;
         for(var s=0; s < max_metadata_cols; ++s){
-            if (s<this.value.length){
-                var selected = this.value[s];
+            if (s<metadata_multiselect.value.length){
+                var selected = metadata_multiselect.value[s];
                 var y_values = new Array(index_len);
                 for (var i = 0; i < index_len; ++i){
                     var val = cds_d_metadata.data[selected][i];
@@ -599,6 +604,11 @@ def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols
                 }
                 cds_p_metadata.data[(s+1).toString()] = y_values;
                 x_factors.push((s+1).toString());
+
+                // show legend
+                if(toggle_legend.active.includes(0))
+                    legend_colorbars[selected].visible = true;
+
             }else{
                 cds_p_metadata.data[(s+1).toString()] = empty_y_values;
             }
@@ -609,6 +619,7 @@ def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols
 
     if cds_d_metadata:
         ele["metadata"]["wid"]["metadata_multiselect"].js_on_change('value', metadata_multiselect_callback)
+        ele["metadata"]["wid"]["toggle_legend"].js_on_click(metadata_multiselect_callback)
 
 
 def link_obstable_filter(ele, cds_p_obstable, active_ranks):

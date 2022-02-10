@@ -44,7 +44,7 @@ class Config:
 
         heatmap_group = parser.add_argument_group('Heatmap and clustering options')
         heatmap_group.add_argument('-a', '--transformation', type=str, default="log", help="none (counts), norm (percentage), log (log10), clr (centre log ratio). Default: log")
-        heatmap_group.add_argument('-e', '--metadata-cols', type=int, default=5, help="How many metadata cols to show on the heatmap. Higher values makes plot slower to navigate.")
+        heatmap_group.add_argument('-e', '--metadata-cols', type=int, default=3, help="How many metadata cols to show on the heatmap. Higher values makes plot slower to navigate.")
         heatmap_group.add_argument('--optimal-ordering', default=False, action='store_true', help="Activate optimal_ordering on linkage, takes longer for large number of samples.")
         heatmap_group.add_argument('--show-zeros', default=False, action='store_true', help="Do not skip zeros on heatmap. File will be bigger and iteraction with heatmap slower.")
         heatmap_group.add_argument('--linkage-methods', type=str, nargs="*", default=["complete"], choices=list(_LINKAGE_METHODS))
