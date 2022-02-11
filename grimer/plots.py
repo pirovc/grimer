@@ -1,7 +1,7 @@
 import markdown
 
 # Bokeh
-from bokeh.models import AdaptiveTicker, Button, CategoricalColorMapper, CDSView, CheckboxGroup, ColorBar, ColumnDataSource, CustomJS, CustomJSHover, FactorRange, FixedTicker, FuncTickFormatter, HoverTool, Legend, LinearAxis, LinearColorMapper, MultiChoice, MultiSelect, NumberFormatter, Panel, Paragraph, PrintfTickFormatter, Range1d, RangeSlider, Select, Spacer, Spinner, Tabs, TextAreaInput, TextInput
+from bokeh.models import AdaptiveTicker, Button, CategoricalColorMapper, CDSView, CheckboxGroup, ColorBar, ColumnDataSource, CustomJS, CustomJSHover, FactorRange, FixedTicker, FuncTickFormatter, HoverTool, Legend, LegendItem, LinearAxis, LinearColorMapper, MultiChoice, MultiSelect, NumberFormatter, Panel, Paragraph, PrintfTickFormatter, Range1d, RangeSlider, Select, Spacer, Spinner, Tabs, TextAreaInput, TextInput
 from bokeh.models.filters import IndexFilter, GroupFilter
 from bokeh.models.widgets import DataTable, TableColumn
 from bokeh.palettes import Blues, Dark2, Magma256, Reds
@@ -164,10 +164,10 @@ def plot_obsbars(cds_p_obsbars, dict_d_topobs, ranks, top_obs_bars, dict_d_taxna
     legend_bars_items = []
     for i in range(top_obs_bars):
         if i < len(dict_d_topobs[ranks[0]]):
-            label = str(i+1) + ") " + dict_d_taxname[dict_d_topobs[ranks[0]][i]]
+            label = str(i + 1) + ") " + dict_d_taxname[dict_d_topobs[ranks[0]][i]]
         else:
             label = None
-        legend_bars_items.append((label, [vbar_ren[i]]))
+        legend_bars_items.append(LegendItem(label=label, renderers=[vbar_ren[i]]))
 
     legend_obsbars = Legend(items=legend_bars_items)
     # legend_bars.label_text_font_size="9px"
@@ -629,7 +629,7 @@ def plot_mgnify(sizes, cds_p_mgnify):
 
 
 def plot_mgnify_widgets():
-    biome_spinner = Spinner(title="Biome level", low=1, high=5, value=1, step=1, width=100, height=50, orientation="horizontal")
+    biome_spinner = Spinner(title="Biome level", low=1, high=5, value=1, step=1, width=100, height=50)#, orientation="horizontal")
     help_text = """
 Pie chart with the number of occurrences of the selected taxa in the table by environment (biome) in other microbiome studies analyzed and publicly available at the [MGNify](https://www.ebi.ac.uk/metagenomics) [1] resource.
 
