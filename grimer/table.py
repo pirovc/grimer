@@ -55,7 +55,7 @@ class Table:
                     valid_samples.append(s)
 
             if valid_samples:
-                subtable = subtable.loc[valid_samples]
+                subtable = subtable.loc[subtable.index.intersection(valid_samples)]
                 if not keep_shape:
                     subtable = subtable.loc[:, subtable.sum(axis=0) > 0]
             else:
