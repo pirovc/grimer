@@ -360,7 +360,8 @@ def main(argv=sys.argv[1:]):
                          dict_d_dedro_y,
                          cds_p_annotations,
                          cds_p_obstable,
-                         cds_p_heatmap)
+                         cds_p_heatmap,
+                         table.ranks())
 
     link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols)
 

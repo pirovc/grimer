@@ -47,7 +47,7 @@ def generate_cds_annotations(table, references, controls, decontam):
     # index -> taxids
     # columns -> rank, annot
 
-    df_annotations = pd.DataFrame(columns=["rank", "annot"])
+    df_annotations = pd.DataFrame(columns=["rank", "annot", "factors"])
     for rank in table.ranks():
         # Generate a DataFrame to use as source in tables
         df_rank = pd.DataFrame(index=table.observations(rank))
@@ -69,6 +69,8 @@ def generate_cds_annotations(table, references, controls, decontam):
 
         if "val" in df_rank.columns:
             df_rank.drop(columns="val", inplace=True)  # drop boolean col
+
+        df_rank["factors"] = df_rank.index
 
         # Concat in the main df
         df_annotations = pd.concat([df_annotations, df_rank], axis=0)
@@ -308,7 +310,7 @@ def generate_cds_heatmap(table, transformation, replace_zero_value, show_zeros):
     # ov -> original value (raw counts)
     # tv -> transformed values (user choice: log10, clr, ...)
 
-    df_heatmap = pd.DataFrame(columns=["obs", "rank", "ov", "tv"])
+    df_heatmap = pd.DataFrame(columns=["obs", "rank", "ov", "tv", "factors_sample", "factors_obs"])
     for rank in table.ranks():
         stacked_rank_df = pd.DataFrame(table.data[rank].stack(), columns=["ov"]).reset_index(1)
         # Rename first col to obs
@@ -319,6 +321,10 @@ def generate_cds_heatmap(table, transformation, replace_zero_value, show_zeros):
         #Drop zeros based on original counts
         if not show_zeros:
             stacked_rank_df = stacked_rank_df[stacked_rank_df["ov"] > 0]
+        # initialize factors
+        stacked_rank_df["factors_sample"] = stacked_rank_df.index
+        stacked_rank_df["factors_obs"] = stacked_rank_df["obs"]
+
         df_heatmap = pd.concat([df_heatmap, stacked_rank_df], axis=0)
 
     df_heatmap.drop('ov', axis=1, inplace=True)

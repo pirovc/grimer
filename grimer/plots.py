@@ -1,12 +1,12 @@
 import markdown
 
 # Bokeh
-from bokeh.models import AdaptiveTicker, Button, CategoricalColorMapper, CDSView, CheckboxGroup, ColorBar, ColumnDataSource, CustomJS, CustomJSHover, FactorRange, FixedTicker, FuncTickFormatter, HoverTool, Legend, LegendItem, LinearAxis, LinearColorMapper, MultiChoice, MultiSelect, NumberFormatter, Panel, Paragraph, PrintfTickFormatter, Range1d, RangeSlider, Select, Spacer, Spinner, Tabs, TextAreaInput, TextInput
+from bokeh.models import AdaptiveTicker, Button, CategoricalColorMapper, CDSView, CheckboxGroup, ColorBar, ColumnDataSource, CustomJS, CustomJSHover, CustomJSTransform, FactorRange, FixedTicker, FuncTickFormatter, HoverTool, Legend, LegendItem, LinearAxis, LinearColorMapper, MultiChoice, MultiSelect, NumberFormatter, Panel, Paragraph, PrintfTickFormatter, Range1d, RangeSlider, Select, Spacer, Spinner, Tabs, TextAreaInput, TextInput
 from bokeh.models.filters import IndexFilter, GroupFilter
 from bokeh.models.widgets import DataTable, TableColumn
 from bokeh.palettes import Blues, Dark2, Magma256, Reds
 from bokeh.plotting import figure
-from bokeh.transform import cumsum, factor_cmap
+from bokeh.transform import cumsum, factor_cmap, transform
 
 from grimer.utils import format_js_toString, make_color_palette
 
@@ -50,7 +50,8 @@ def plot_samplebars(cds_p_samplebars, max_total_count, ranks):
                                      name="tax|" + rank,  # to work with hover properly
                                      source=cds_p_samplebars,
                                      marker="circle", size=7, line_color="navy", alpha=0.6,
-                                     fill_color=obs_palette[i])
+                                     fill_color=obs_palette[i],
+                                     visible=False)
         legend_obs_items.append((rank, [ren]))
 
     # Legend counts (vbars)
@@ -672,7 +673,7 @@ def plot_heatmap(table, cds_p_heatmap, tools_heatmap, transformation, dict_d_tax
     color_mapper.low = min(cds_p_heatmap.data["tv"])
     color_mapper.high = max(cds_p_heatmap.data["tv"])
 
-    heatmap.rect(x="obs", y="index", width=1, height=1,
+    heatmap.rect(x="factors_obs", y="factors_sample", width=1, height=1,
                  source=cds_p_heatmap,
                  fill_color={'field': 'tv', 'transform': color_mapper},
                  line_color=None)
@@ -685,6 +686,7 @@ def plot_heatmap(table, cds_p_heatmap, tools_heatmap, transformation, dict_d_tax
         return dict_d_taxname[tick];
     ''')
 
+    heatmap.xaxis.group_label_orientation = "vertical"
     heatmap.xaxis.major_label_orientation = "vertical"
     heatmap.xgrid.grid_line_color = None
     heatmap.ygrid.grid_line_color = None
@@ -710,14 +712,17 @@ def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, reference_name
             cluster_options.append(("cluster|" + lmethod + "|" + lmetric, lmethod + "/" + lmetric))
 
     x_sort_options = {}
-    x_sort_options["Clustering Method/Metric"] = cluster_options
     x_sort_options["Default order"] = [("none", "none"), ("counts", "counts"), ("observations", "observations")]
     x_sort_options["Sort by References"] = [("annot|" + r, r) for r in reference_names]
     if controls_names:
         x_sort_options["Sort by Controls"] = [("annot|" + c, c) for c in controls_names]
     if decontam:
         x_sort_options["Sort by DECONTAM"] = [("annot|decontam", "decontam")]
-    x_sort_options["Sort by taxonomic rank"] = [("tax|" + r, r) for r in ranks]
+
+    x_groupby_options = {}
+    x_groupby_options["Default"] = [("none", "none")]
+    x_groupby_options["Clustering Method/Metric"] = cluster_options
+    x_groupby_options["Taxonomic rank"] = [("tax|" + r, r) for r in ranks]
 
     y_sort_options = {}
     y_sort_options["Clustering Method/Metric"] = cluster_options
@@ -730,7 +735,8 @@ def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, reference_name
         if categorical_md_data:
             y_sort_options["Sort by Categorical Metadata"] = [("metadata_cat|" + md, md) for md in categorical_md_data]
 
-    x_sort_select = Select(title="Observation cluster/sort:", value="none", options=x_sort_options)
+    x_sort_select = Select(title="Observation sort:", value="none", options=x_sort_options)
+    x_groupby_select = Select(title="Observation cluster/group by:", value="none", options=x_groupby_options)
     y_sort_select = Select(title="Sample cluster/sort:", value="none", options=y_sort_options)
 
     toggle_labels = CheckboxGroup(labels=["Show/Hide observations labels", "Show/Hide samples labels"], active=[])
@@ -751,6 +757,7 @@ The metadata and annotation plots are automatically sorted to reflect the cluste
 
     return {"rank_select": rank_select,
             "x_sort_select": x_sort_select,
+            "x_groupby_select": x_groupby_select,
             "y_sort_select": y_sort_select,
             "toggle_labels": toggle_labels,
             "help_button": help_button(title="Heatmap/Clustering", text=help_text)}
@@ -847,8 +854,8 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
             else:
                 unique_palette = make_color_palette(n)
                 legend_colorbars[md_header].color_mapper = LinearColorMapper(palette=unique_palette, low=0, high=n)
-                legend_colorbars[md_header].ticker = FixedTicker(ticks=[t+0.5 for t in range(n)])
-                legend_colorbars[md_header].major_label_overrides = {i+0.5: unique_values[i] for i in range(n)}
+                legend_colorbars[md_header].ticker = FixedTicker(ticks=[t + 0.5 for t in range(n)])
+                legend_colorbars[md_header].major_label_overrides = {i + 0.5: unique_values[i] for i in range(n)}
 
             assert len(unique_palette) == n, 'Wrong number of colors on palette'
             palette.extend(unique_palette)
@@ -925,7 +932,14 @@ def plot_annotations(heatmap, tools_heatmap, cds_p_annotations, dict_d_taxname):
         formatters={"@index": taxid_name_custom}
     ))
 
-    annot_fig.rect(x="index", y="annot",
+    # trans = CustomJSTransform(
+    #     args=dict(heatmap=heatmap),
+    #     v_func="""
+    #             console.log(xs); return heatmap.x_range.factors;
+    #             """)
+    # annot_fig.rect(x=transform(("index","rank"), trans), y="annot",
+
+    annot_fig.rect(x="factors", y="annot",
                    width=1, height=1,
                    source=cds_p_annotations,
                    fill_color="black",

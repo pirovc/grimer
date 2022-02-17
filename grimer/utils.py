@@ -142,6 +142,8 @@ def trim_table(table_df):
 
 
 def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
+    from grimer.grimer import _debug
+
     # Transpose table (obseravations as index) and expand ranks in columns
     ranks_df = table_df.T.index.str.split(level_separator, expand=True).to_frame(index=False)
 
@@ -198,6 +200,8 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
             invalid = lin_count[(lin_count > 1).any(axis=1)].index.to_list()
             if invalid:
                 print_log(str(len(invalid)) + " observations removed with invalid lineage at " + r)
+                if _debug:
+                    print_log(",".join(invalid) + " observations removed with invalid lineage at " + r)
                 # Set to NaN to keep shape of ranks_df
                 ranks_df.loc[ranks_df[r].isin(invalid), r] = np.nan
 
@@ -621,7 +625,7 @@ def print_df(df, name: str=None):
         if isinstance(df, dict):
             if df:
                 print(len(df.keys()), "keys:", list(df.keys())[0], "...", list(df.keys())[-1])
-                # print(list(df.values())[0], "...", list(df.values())[-1])
+                print(list(df.values())[0], "...", list(df.values())[-1])
         else:
             #print(df.columns)
             print(df.head())

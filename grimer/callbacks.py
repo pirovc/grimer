@@ -199,16 +199,25 @@ def link_obstable_samplebars(ele,
     change_text_legend_obs_callback = CustomJS(
         args=dict(cds_p_obstable=cds_p_obstable,
                   legend_obs=ele["samplebars"]["legend_obs"],
+                  samplebars=ele["samplebars"]["fig"],
                   active_ranks=active_ranks),
         code='''
         // selected row
-        var row = cb_obj.indices[0];
+        const row = cb_obj.indices[0];
+        const selected_rank = cds_p_obstable.data['col|rank'][row];
+
         for(let r = 0; r < active_ranks.length; r++){
             let taxid = cds_p_obstable.data["tax|"+active_ranks[r]][row];
             if (taxid){
                 legend_obs.items[r].label = active_ranks[r] + "|" + cds_p_obstable.data['col|name'][cds_p_obstable.data['index'].indexOf(taxid)];
             }else{
                 legend_obs.items[r].label = active_ranks[r];
+            }
+            // activate only selected rank
+            if(active_ranks[r]==selected_rank){
+                samplebars.renderers[r+3].visible=true;
+            }else{
+                samplebars.renderers[r+3].visible=false;
             }
         }
         ''')
@@ -420,16 +429,17 @@ def link_heatmap_widgets(ele,
                          dict_d_dedro_y,
                          cds_p_annotations,
                          cds_p_obstable,
-                         cds_p_heatmap):
+                         cds_p_heatmap,
+                         active_ranks):
 
     x_dendro_callback = CustomJS(
         args=dict(rank_select=ele["heatmap"]["wid"]["rank_select"],
-                  x_sort_select=ele["heatmap"]["wid"]["x_sort_select"],
+                  x_groupby_select=ele["heatmap"]["wid"]["x_groupby_select"],
                   cds_p_dendro_x=cds_p_dendro_x,
                   dict_d_dedro_x=dict_d_dedro_x),
         code='''
-        if (x_sort_select.value.startsWith("cluster|")){
-            const key = rank_select.value+"|"+x_sort_select.value.replace("cluster|","");
+        if (x_groupby_select.value.startsWith("cluster|")){
+            const key = rank_select.value+"|"+x_groupby_select.value.replace("cluster|","");
             cds_p_dendro_x.data = {"x": dict_d_dedro_x[key+"|x"],
                                  "y": dict_d_dedro_x[key+"|y"],
                                  "c": dict_d_dedro_x[key+"|c"]};
@@ -440,70 +450,109 @@ def link_heatmap_widgets(ele,
 
     x_select_callback = CustomJS(
         args=dict(heatmap=ele["heatmap"]["fig"],
+                  active_ranks=active_ranks,
                   rank_select=ele["heatmap"]["wid"]["rank_select"],
                   x_sort_select=ele["heatmap"]["wid"]["x_sort_select"],
+                  x_groupby_select=ele["heatmap"]["wid"]["x_groupby_select"],
                   dict_d_hcluster_x=dict_d_hcluster_x,
                   cds_p_annotations=cds_p_annotations,
-                  cds_p_obstable=cds_p_obstable),
+                  cds_p_obstable=cds_p_obstable,
+                  cds_p_heatmap=cds_p_heatmap),
         code='''
+
+        // selected rank
         const rank = rank_select.value;
-        var sorted_factors = [];
-        if (x_sort_select.value=="none"){
-            // None
-            sorted_factors = dict_d_hcluster_x["default|" + rank];
-        }else if (x_sort_select.value.startsWith("cluster|")){
-            // Clustering
-            // Get sorted elements based on rank|method|metric
-            const key = rank+"|"+x_sort_select.value.replace("cluster|","");
-            sorted_factors = dict_d_hcluster_x[key];
-        }else{
-            // Sorting
-            var factors =  [];
-            var sort_col = [];
-            if (x_sort_select.value.startsWith("tax|")){
-                const group_rank = x_sort_select.value.replace("tax|","");
-                for (let i = 0; i < cds_p_obstable.data["index"].length; i++) {
-                    if(cds_p_obstable.data["col|rank"][i]==rank){
-                        factors.push(cds_p_obstable.data["index"][i]);
-                        sort_col.push(cds_p_obstable.data["tax|" + group_rank][i]);
-                    }
-                }
-                sorted_factors = grimer_sort(factors, sort_col, "string", false);
-            }else if (x_sort_select.value=="counts"){
-                for (let i = 0; i < cds_p_obstable.data["index"].length; i++) {
-                    if(cds_p_obstable.data["col|rank"][i]==rank){
-                        factors.push(cds_p_obstable.data["index"][i]);
-                        sort_col.push(cds_p_obstable.data["col|total_counts"][i]);
-                    }
-                }
-                sorted_factors = grimer_sort(factors, sort_col, "numeric", false);
-            }else if (x_sort_select.value=="observations"){
-                for (let i = 0; i < cds_p_obstable.data["index"].length; i++) {
-                    if(cds_p_obstable.data["col|rank"][i]==rank){
-                        factors.push(cds_p_obstable.data["index"][i]);
-                        sort_col.push(cds_p_obstable.data["col|name"][i]);
-                    }
-                }
-                sorted_factors = grimer_sort(factors, sort_col, "string", false);
-            }else{
-                // copy array of factors
-                factors =  [...dict_d_hcluster_x["default|" + rank]];
-                const annot = x_sort_select.value.replace("annot|","");
-                for (let i = 0; i < cds_p_annotations.data["index"].length; i++) {
-                    if (cds_p_annotations.data["rank"][i]==rank && cds_p_annotations.data["annot"][i]==annot) {
-                        // if annotation is present in selected rank + annot
-                        const index = factors.indexOf(cds_p_annotations.data["index"][i]);
-                        if (index > -1) {
-                          sorted_factors.push(factors[index]); // add to the sorted_factors
-                          factors.splice(index, 1); //remove from factors
-                        }
-                    }
-                }
-                // join annotated and left-overs
-                sorted_factors = sorted_factors.concat(factors);
+
+        // get index to access data from observations from cds_p_obstable
+        var obs_index = [];
+        for (let i = 0; i < cds_p_obstable.data["index"].length; i++) {
+            if(cds_p_obstable.data["col|rank"][i]==rank){
+                obs_index.push(i);
             }
         }
+        var annot_obs = obs_index.map( s => cds_p_obstable.data["index"][s] );
+
+        var sorted_factors = [];
+        var dict_factors = {};
+        if (x_groupby_select.value.startsWith("cluster|")){
+            // Clustering - Get sorted elements based on rank|method|metric
+            sorted_factors = dict_d_hcluster_x[rank+"|"+x_groupby_select.value.replace("cluster|","")];
+            // Default dict_factors
+            for(let i = 0; i < annot_obs.length; i++){
+                dict_factors[annot_obs[i]] = annot_obs[i];
+            }
+        }else{
+            // Define value from Sort by select
+            var sort_col = [];
+            var sort_col_type = "string";
+            if (x_sort_select.value=="none"){
+                sort_col = dict_d_hcluster_x["default|" + rank];
+            }else if (x_sort_select.value=="observations"){
+                sort_col = obs_index.map( s => cds_p_obstable.data["col|name"][s] );
+            }else if (x_sort_select.value=="counts"){
+                sort_col = obs_index.map( s => cds_p_obstable.data["col|total_counts"][s] );
+                sort_col_type = "numeric";
+            }else if (x_sort_select.value.startsWith("annot|")){
+                const annot = x_sort_select.value.replace("annot|","");
+                // create array with zeros, mark with one if annotation is present
+                sort_col = new Array(annot_obs.length); for (let i=0; i<annot_obs.length; ++i) sort_col[i] = 0;
+                for (let i = 0; i < cds_p_annotations.data["index"].length; i++) {
+                    if (cds_p_annotations.data["rank"][i]==rank && cds_p_annotations.data["annot"][i]==annot) {
+                        sort_col[annot_obs.indexOf(cds_p_annotations.data["index"][i])] = 1;
+                    }
+                }
+                sort_col_type = "numeric";
+            }
+
+            if(x_groupby_select.value=="none"){
+                sorted_factors = grimer_sort(annot_obs, sort_col, sort_col_type, false);
+                // Default dict_factors
+                for(let i = 0; i < annot_obs.length; i++){
+                    dict_factors[annot_obs[i]] = annot_obs[i];
+                }
+            }else if (x_groupby_select.value.startsWith("tax|")){
+                const group_rank = x_groupby_select.value.replace("tax|","");
+
+                // group entries without selected rank with space " "
+                var groupby_col =  obs_index.map(function(s) { return cds_p_obstable.data["tax|" + group_rank][s] == "" ? " " : cds_p_obstable.data["tax|" + group_rank][s]; });
+
+                // if grouping with a higher rank
+                if(active_ranks.indexOf(rank) > active_ranks.indexOf(group_rank)){
+                    for(let i = 0; i < annot_obs.length; i++){
+                        dict_factors[annot_obs[i]] = [groupby_col[i], annot_obs[i]];
+                    }
+                    sorted_factors = grimer_sort(Object.values(dict_factors), sort_col, sort_col_type, false, groupby_col);
+                }else{
+                    // normal sort
+                    sorted_factors = grimer_sort(annot_obs, sort_col, sort_col_type, false);
+                    // Default dict_factors
+                    for(let i = 0; i < annot_obs.length; i++){
+                        dict_factors[annot_obs[i]] = annot_obs[i];
+                    }
+
+                }
+            }
+        }
+
+        // update factors on heatmap col otherwise remove
+        for (let i = 0; i < cds_p_heatmap.data["index"].length; i++) {
+            if(cds_p_heatmap.data["rank"][i]==rank){
+                cds_p_heatmap.data["factors_obs"][i] = dict_factors[cds_p_heatmap.data["obs"][i]];
+            }else{
+                cds_p_heatmap.data["factors_obs"][i] = "";
+            }
+        }
+
+        for (let i = 0; i < cds_p_annotations.data["index"].length; i++) {
+            if(cds_p_annotations.data["rank"][i]==rank){
+                cds_p_annotations.data["factors"][i] = dict_factors[cds_p_annotations.data["index"][i]];
+            }else{
+                cds_p_annotations.data["factors"][i] = "";
+            }
+        }
+
         heatmap.x_range.factors = sorted_factors;
+
         ''')
 
     y_dendro_callback = CustomJS(
@@ -578,6 +627,7 @@ def link_heatmap_widgets(ele,
     ele["heatmap"]["wid"]["toggle_labels"].js_on_click(toggle_labels_callback)
     ele["heatmap"]["wid"]["rank_select"].js_on_change('value', x_select_callback, x_dendro_callback, y_select_callback, y_dendro_callback)
     ele["heatmap"]["wid"]["x_sort_select"].js_on_change('value', x_select_callback, x_dendro_callback)
+    ele["heatmap"]["wid"]["x_groupby_select"].js_on_change('value', x_select_callback, x_dendro_callback)
     ele["heatmap"]["wid"]["y_sort_select"].js_on_change('value', y_select_callback, y_dendro_callback)
 
 
