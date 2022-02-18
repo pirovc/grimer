@@ -948,21 +948,32 @@ def plot_annotations(heatmap, tools_heatmap, cds_p_annotations, dict_d_taxname):
     )
     # Add custom tooltip for heatmap (taxid->name)
     annot_fig.add_tools(HoverTool(
-        tooltips=[('Annotation', '@annot'), ('Observation', '@index{custom}')],
+        tooltips=[('Annotation', '@annot'),
+                  ('Observation', '@index{custom}'),
+                  ('Original Value', '@ov'),
+                  ('Transformed Value', '@tv')],
         formatters={"@index": taxid_name_custom}
     ))
 
-    # trans = CustomJSTransform(
-    #     args=dict(heatmap=heatmap),
-    #     v_func="""
-    #             console.log(xs); return heatmap.x_range.factors;
-    #             """)
-    # annot_fig.rect(x=transform(("index","rank"), trans), y="annot",
+    color_palette = Magma256[::-1]
+    color_mapper = LinearColorMapper(palette=color_palette, low=0, high=1)
+
+    color_bar = ColorBar(color_mapper=color_mapper,
+                         label_standoff=2,
+                         width=6,
+                         height=60,
+                         border_line_color=None,
+                         location="center",
+                         orientation="vertical",
+                         major_label_text_align="left",
+                         major_label_text_font_size="9px")
+    annot_fig.add_layout(color_bar, 'left')
 
     annot_fig.rect(x="factors", y="annot",
                    width=1, height=1,
                    source=cds_p_annotations,
-                   fill_color="black",
+                   #fill_color="black",
+                   fill_color={'field': 'tv', 'transform': color_mapper},
                    line_color=None)
 
     annot_fig.yaxis.axis_label = "annotations"

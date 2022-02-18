@@ -42,38 +42,57 @@ def generate_cds_plot_references(table, tax, references):
     return ColumnDataSource(df_references)
 
 
-def generate_cds_annotations(table, references, controls, decontam):
+def generate_cds_annotations(table, references, controls, decontam, control_samples):
     # Stacked matrix of true annotations (omit false)
     # index -> taxids
     # columns -> rank, annot
 
-    df_annotations = pd.DataFrame(columns=["rank", "annot", "factors"])
-    for i,rank in enumerate(table.ranks()):
+    df_annotations = pd.DataFrame(columns=["rank", "annot", "factors", "ov", "tv"])
+    for i, rank in enumerate(table.ranks()):
         # Generate a DataFrame to use as source in tables
         df_rank = pd.DataFrame(index=table.observations(rank))
 
         if decontam:
-            df_rank["decontam"] = decontam.get_contaminants(rank, df_rank.index)
+            df_rank["decontam"] = decontam.get_pvalues(rank, df_rank.index)[decontam.get_contaminants(rank, df_rank.index).values]
 
         for desc, ref in references.items():
-            df_rank[desc] = table.observations(rank).map(lambda x: ref.get_refs_count(x, direct=True)) >= 1
+            df_rank[desc] = table.observations(rank).map(lambda x: ref.get_refs_count(x, direct=True))
+            df_rank.loc[df_rank[desc] == 0, desc] = np.nan
 
         if controls:
             for desc, ctrl in controls.items():
-                df_rank[desc] = table.observations(rank).map(lambda x: ctrl.get_refs_count(x, direct=True)) >= 1
+                control_table = table.get_subtable(samples=control_samples[desc], rank=rank)
+                freq_perc_control = control_table.gt(0).sum(axis=0) / control_table.shape[0]
+                df_rank[desc] = table.observations(rank).map(freq_perc_control).to_list()
 
-        df_rank = pd.DataFrame(df_rank.stack(), columns=["val"]).reset_index(1)
+        df_rank = pd.DataFrame(df_rank.stack(), columns=["ov"]).reset_index(1)
         df_rank.rename(columns={"level_1": "annot"}, inplace=True)
-        df_rank = df_rank[df_rank["val"]]  # keep only true entries
+
+        # add transformed values to fit same scale on heatmap
+        # Decontam reverse p-score normalized
+        if not df_rank[df_rank["annot"] == "decontam"].empty:
+            min_val = df_rank[df_rank["annot"] == "decontam"]["ov"].min()
+            max_val = df_rank[df_rank["annot"] == "decontam"]["ov"].max()
+            df_rank.loc[df_rank["annot"] == "decontam", "tv"] = 1 - ((df_rank[df_rank["annot"] == "decontam"]["ov"] - min_val) / (max_val - min_val))
+
+        # max references divided by max
+        for desc, ref in references.items():
+            if not df_rank[df_rank["annot"] == desc].empty:
+                max_val = df_rank[df_rank["annot"] == desc]["ov"].max()
+                df_rank.loc[df_rank["annot"] == desc, "tv"] = df_rank.loc[df_rank["annot"] == desc, "ov"] / max_val
+
+        # keep same percentage
+        if controls:
+            for desc, ctrl in controls.items():
+                if not df_rank.loc[df_rank["annot"] == desc].empty:
+                    df_rank.loc[df_rank["annot"] == desc, "tv"] = df_rank.loc[df_rank["annot"] == desc, "ov"]
+
         df_rank["rank"] = rank  # set rank
-
-        if "val" in df_rank.columns:
-            df_rank.drop(columns="val", inplace=True)  # drop boolean col
-
-        df_rank["factors"] = df_rank.index if i == 0 else ""
+        df_rank["factors"] = df_rank.index if i == 0 else ""  # initialize just for first rank (save space)
 
         # Concat in the main df
         df_annotations = pd.concat([df_annotations, df_rank], axis=0)
+
 
     print_df(df_annotations, "cds_p_annotations")
     return ColumnDataSource(df_annotations)

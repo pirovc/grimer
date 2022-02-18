@@ -505,10 +505,10 @@ def link_heatmap_widgets(ele,
             }else if (x_sort_select.value.startsWith("annot|")){
                 const annot = x_sort_select.value.replace("annot|","");
                 // create array with zeros, mark with one if annotation is present
-                sort_col = new Array(annot_obs.length); for (let i=0; i<annot_obs.length; ++i) sort_col[i] = 0;
+                sort_col = new Array(annot_obs.length); for (let i=0; i<annot_obs.length; ++i) sort_col[i] = NaN;
                 for (let i = 0; i < cds_p_annotations.data["index"].length; i++) {
                     if (cds_p_annotations.data["rank"][i]==rank && cds_p_annotations.data["annot"][i]==annot) {
-                        sort_col[annot_obs.indexOf(cds_p_annotations.data["index"][i])] = 1;
+                        sort_col[annot_obs.indexOf(cds_p_annotations.data["index"][i])] = cds_p_annotations.data["tv"][i];
                     }
                 }
             }

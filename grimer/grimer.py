@@ -198,7 +198,7 @@ def main(argv=sys.argv[1:]):
     # matrix: index (unique sample-ids), md0, md1, ..., md(max_metadata_cols) -> (metadata field, metadata values)
     cds_p_metadata = generate_cds_plot_metadata(metadata, max_metadata_cols) if metadata else None
     # stacked: index (repeated observations), rank, annot
-    cds_p_annotations = generate_cds_annotations(table, references, controls, decontam)
+    cds_p_annotations = generate_cds_annotations(table, references, controls, decontam, control_samples)
     # empty matrix {"x": [], "y": [], "c": []}
     cds_p_dendro_x, cds_p_dendro_y = generate_cds_plot_dendro() if not args.skip_dendrogram else [None, None]
     # stacked: index (repeated observations), other observation, rank, rho

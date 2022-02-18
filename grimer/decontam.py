@@ -29,6 +29,7 @@ class Decontam:
 
     def add_rank_empty(self, rank, idx):
         self.rank[rank] = pd.DataFrame(index=idx, columns=self.cols_rank + ["contam", "contam_2", "non.contam"])
+        self.rank[rank]["contaminant"] = False
 
     def get_data(self):
         return self.data.fillna(False)
