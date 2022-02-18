@@ -185,7 +185,7 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
 
                 # Add nan to keep missing ranks (different than tax.undefined_node [None] which will keep the name)
                 updated_nodes[np.nan] = np.nan
-                ranks_df[r] = ranks_df[r].map(lambda t: updated_nodes[t] if updated_nodes[t] != np.nan else t)
+                ranks_df[r] = ranks_df[r].map(lambda t: updated_nodes[t] if updated_nodes[t] is not None else t)
                 del updated_nodes[np.nan]
 
                 unmatched_nodes += list(updated_nodes.values()).count(tax.undefined_node)
@@ -625,7 +625,7 @@ def print_df(df, name: str=None):
         if isinstance(df, dict):
             if df:
                 print(len(df.keys()), "keys:", list(df.keys())[0], "...", list(df.keys())[-1])
-                print(list(df.values())[0], "...", list(df.values())[-1])
+                #print(list(df.values())[0], "...", list(df.values())[-1])
         else:
             #print(df.columns)
             print(df.head())

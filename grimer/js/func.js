@@ -50,7 +50,7 @@ function grimer_sort(factors, sort_col, sort_mode="numeric", desc=false, group_c
 		else if (sort_mode=="string" && desc==true)
 			idx.sort((a, b) => sort_string(sort_col[b],sort_col[a]));
 	}
-	
+
     var sorted_factors = new Array(idx.length);
     for (var i = 0; i < idx.length; ++i) sorted_factors[i] = factors[idx[i]];
     return sorted_factors;

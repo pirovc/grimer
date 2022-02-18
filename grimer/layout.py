@@ -82,18 +82,17 @@ def make_layout(ele, sizes, version, logo_path, title):
 
     row_heatmap = gridplot([[ele["heatmap"]["fig"], ele["dendroy"]["fig"], ele["metadata"]["fig"]],
                            [ele["dendrox"]["fig"]],
-                           [ele["annotations"]["fig"], ele["heatmap"]["wid"]["help_button"]]],
+                           [ele["annotations"]["fig"], None, ele["heatmap"]["wid"]["help_button"]]],
                            toolbar_location='right',
                            merge_tools=True)
 
     row_heatmap_widgets = row(column(ele["heatmap"]["wid"]["rank_select"],
                                      ele["heatmap"]["wid"]["toggle_labels"],
-                                     sizing_mode="stretch_height",
                                      width=300),
-                              row(column(ele["heatmap"]["wid"]["x_sort_select"],
-                                         ele["heatmap"]["wid"]["x_groupby_select"]),
-                                  column(ele["heatmap"]["wid"]["y_sort_select"],
-                                         Spacer()),
+                              row(column(ele["heatmap"]["wid"]["x_groupby_select"],
+                                         ele["heatmap"]["wid"]["x_sort_select"]),
+                                  column(ele["heatmap"]["wid"]["y_groupby_select"],
+                                         ele["heatmap"]["wid"]["y_sort_select"]),
                                   sizing_mode="stretch_width"),
                               column(ele["metadata"]["wid"]["metadata_multiselect"],
                                      ele["metadata"]["wid"]["toggle_legend"],

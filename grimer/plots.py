@@ -678,8 +678,16 @@ def plot_heatmap(table, cds_p_heatmap, tools_heatmap, transformation, dict_d_tax
                  fill_color={'field': 'tv', 'transform': color_mapper},
                  line_color=None)
 
-    color_bar = ColorBar(color_mapper=color_mapper, label_standoff=6, height=10, border_line_color=None, location="center", orientation="horizontal")
-    heatmap.add_layout(color_bar, 'above')
+    color_bar = ColorBar(color_mapper=color_mapper,
+                         label_standoff=2,
+                         width=6,
+                         height=200,
+                         border_line_color=None,
+                         location="center",
+                         orientation="vertical",
+                         major_label_text_align="left",
+                         major_label_text_font_size="9px")
+    heatmap.add_layout(color_bar, 'left')
 
     # Convert taxid ticks to taxa names on client-side
     heatmap.xaxis.formatter = FuncTickFormatter(args=dict(dict_d_taxname=dict_d_taxname), code='''
@@ -687,6 +695,7 @@ def plot_heatmap(table, cds_p_heatmap, tools_heatmap, transformation, dict_d_tax
     ''')
 
     heatmap.xaxis.group_label_orientation = "vertical"
+    heatmap.yaxis.group_label_orientation = "horizontal"
     heatmap.xaxis.major_label_orientation = "vertical"
     heatmap.xgrid.grid_line_color = None
     heatmap.ygrid.grid_line_color = None
@@ -711,33 +720,40 @@ def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, reference_name
         for lmethod in linkage_methods:
             cluster_options.append(("cluster|" + lmethod + "|" + lmetric, lmethod + "/" + lmetric))
 
-    x_sort_options = {}
-    x_sort_options["Default order"] = [("none", "none"), ("counts", "counts"), ("observations", "observations")]
-    x_sort_options["Sort by References"] = [("annot|" + r, r) for r in reference_names]
-    if controls_names:
-        x_sort_options["Sort by Controls"] = [("annot|" + c, c) for c in controls_names]
-    if decontam:
-        x_sort_options["Sort by DECONTAM"] = [("annot|decontam", "decontam")]
-
     x_groupby_options = {}
     x_groupby_options["Default"] = [("none", "none")]
     x_groupby_options["Clustering Method/Metric"] = cluster_options
-    x_groupby_options["Taxonomic rank"] = [("tax|" + r, r) for r in ranks]
+    x_groupby_options["Group by taxonomic rank"] = [("tax|" + r, r) for r in ranks]
+
+    x_sort_options = {}
+    x_sort_options["Default"] = [("none", "none"), ("counts", "counts"), ("observations", "observations")]
+    x_sort_options["References"] = [("annot|" + r, r) for r in reference_names]
+    if controls_names:
+        x_sort_options["Controls"] = [("annot|" + c, c) for c in controls_names]
+    if decontam:
+        x_sort_options["DECONTAM"] = [("annot|decontam", "decontam")]
+
+    y_groupby_options = {}
+    y_groupby_options["Default"] = [("none", "none")]
+    y_groupby_options["Clustering Method/Metric"] = cluster_options
+    categorical_md_data = metadata.get_data(metadata_type="categorical").columns.to_list()
+    if categorical_md_data:
+        y_groupby_options["Group by Categorical Metadata"] = [("group_metadata|" + md, md) for md in categorical_md_data]
 
     y_sort_options = {}
-    y_sort_options["Clustering Method/Metric"] = cluster_options
-    y_sort_options["Default order"] = [("none", "none"), ("counts", "counts"), ("samples", "samples")]
+    y_sort_options["Default"] = [("none", "none"), ("counts", "counts"), ("samples", "samples")]
     if metadata:
         numeric_md_data = metadata.get_data(metadata_type="numeric").columns.to_list()
         if numeric_md_data:
-            y_sort_options["Sort by Numeric Metadata"] = [("metadata_num|" + md, md) for md in numeric_md_data]
+            y_sort_options["Numeric Metadata"] = [("metadata_num|" + md, md) for md in numeric_md_data]
         categorical_md_data = metadata.get_data(metadata_type="categorical").columns.to_list()
         if categorical_md_data:
-            y_sort_options["Sort by Categorical Metadata"] = [("metadata_cat|" + md, md) for md in categorical_md_data]
+            y_sort_options["Categorical Metadata"] = [("metadata_cat|" + md, md) for md in categorical_md_data]
 
-    x_sort_select = Select(title="Observation sort:", value="none", options=x_sort_options)
     x_groupby_select = Select(title="Observation cluster/group by:", value="none", options=x_groupby_options)
-    y_sort_select = Select(title="Sample cluster/sort:", value="none", options=y_sort_options)
+    x_sort_select = Select(title="Observation sort:", value="none", options=x_sort_options)
+    y_groupby_select = Select(title="Sample cluster/group by:", value="none", options=y_groupby_options)
+    y_sort_select = Select(title="Sample sort:", value="none", options=y_sort_options)
 
     toggle_labels = CheckboxGroup(labels=["Show/Hide observations labels", "Show/Hide samples labels"], active=[])
 
@@ -756,8 +772,9 @@ The metadata and annotation plots are automatically sorted to reflect the cluste
 """
 
     return {"rank_select": rank_select,
-            "x_sort_select": x_sort_select,
             "x_groupby_select": x_groupby_select,
+            "x_sort_select": x_sort_select,
+            "y_groupby_select": y_groupby_select,
             "y_sort_select": y_sort_select,
             "toggle_labels": toggle_labels,
             "help_button": help_button(title="Heatmap/Clustering", text=help_text)}
@@ -769,12 +786,14 @@ def plot_dendrogram(heatmap, tools_heatmap, cds_p_dendro_x, cds_p_dendro_y):
                          tools="save",
                          height=80,
                          sizing_mode="stretch_width",
-                         tooltips=[("y", "$y{(0.00)}"), ("c", "$swatch:c")])
+                         #tooltips=[("y", "$y{(0.00)}"), ("c", "$swatch:c")],
+                         visible=False)
     dendroy_fig = figure(y_range=heatmap.y_range,
                          tools="save",
                          width=80,
                          height=heatmap.height,
-                         tooltips=[("x", "$x{(0.00)}"), ("c", "$swatch:c")])
+                         #tooltips=[("x", "$x{(0.00)}"), ("c", "$swatch:c")],
+                         visible=False)
 
     dendroy_fig.multi_line(xs="x", ys="y", color="c",
                            source=cds_p_dendro_y)
@@ -808,7 +827,7 @@ def plot_dendrogram(heatmap, tools_heatmap, cds_p_dendro_x, cds_p_dendro_y):
 
 def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metadata):
     # Get fixed headers from cds
-    cols = list(cds_p_metadata.data.keys())[1:]
+    cols = list(cds_p_metadata.data.keys())[2:]
 
     metadata_fig = figure(x_range=cols,
                           y_range=heatmap.y_range,
@@ -817,7 +836,6 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
                           width=300,
                           height=heatmap.height,
                           tooltips="")
-    metadata_fig.xaxis.major_label_orientation = 0.7
 
     metadata_fields = metadata.get_col_headers().to_list()
 
@@ -873,7 +891,7 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
     metadata_fig.add_tools(HoverTool(tooltips=tooltips, formatters=formatters))
 
     for col in cols:
-        metadata_fig.rect(x={"value": col}, y="index",
+        metadata_fig.rect(x={"value": col}, y="factors",
                           width=1, height=1,
                           source=cds_p_metadata,
                           fill_color={'field': col, 'transform': metadata_colormap},
@@ -891,11 +909,13 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
     metadata_fig.xaxis.major_label_orientation = "vertical"
     metadata_fig.xaxis.major_label_text_font_size = "11px"
     metadata_fig.xaxis.minor_tick_line_color = None
+    metadata_fig.xgrid.grid_line_color = None
 
     metadata_fig.yaxis.major_tick_line_color = None
     metadata_fig.yaxis.minor_tick_line_color = None
     metadata_fig.yaxis.major_label_text_font_size = '0pt'
     metadata_fig.yaxis.axis_line_color = None
+    metadata_fig.yaxis.group_text_font_size = "0px"
     metadata_fig.ygrid.grid_line_color = None
 
     metadata_multiselect = MultiSelect(title="Metadata to show (select max. " + str(len(cols)) + " columns):", value=[metadata_fields[0]], options=metadata_fields)
@@ -952,6 +972,7 @@ def plot_annotations(heatmap, tools_heatmap, cds_p_annotations, dict_d_taxname):
     annot_fig.yaxis.minor_tick_line_color = None
     annot_fig.xaxis.major_tick_line_color = None
     annot_fig.xaxis.major_label_text_font_size = "0px"
+    annot_fig.xaxis.group_text_font_size = "0px"
 
     return annot_fig
 

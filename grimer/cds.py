@@ -48,7 +48,7 @@ def generate_cds_annotations(table, references, controls, decontam):
     # columns -> rank, annot
 
     df_annotations = pd.DataFrame(columns=["rank", "annot", "factors"])
-    for rank in table.ranks():
+    for i,rank in enumerate(table.ranks()):
         # Generate a DataFrame to use as source in tables
         df_rank = pd.DataFrame(index=table.observations(rank))
 
@@ -70,7 +70,7 @@ def generate_cds_annotations(table, references, controls, decontam):
         if "val" in df_rank.columns:
             df_rank.drop(columns="val", inplace=True)  # drop boolean col
 
-        df_rank["factors"] = df_rank.index
+        df_rank["factors"] = df_rank.index if i == 0 else ""
 
         # Concat in the main df
         df_annotations = pd.concat([df_annotations, df_rank], axis=0)
@@ -236,10 +236,13 @@ def generate_cds_plot_metadata(metadata, max_metadata_cols):
     # md0, md1, ..., md(max_metadata_cols)
     # values (metadata field, metadata values)
 
-    df_plot_md = pd.DataFrame(index=metadata.data.index, columns=[str(i) for i in range(1, max_metadata_cols + 1)])
+    df_plot_md = pd.DataFrame(index=metadata.data.index, columns=["factors"] + [str(i) for i in range(1, max_metadata_cols + 1)])
+    df_plot_md["factors"] = df_plot_md.index
     # Fill in only first metadata field
     first_field = metadata.get_col_headers()[0]
+
     df_plot_md["1"] = [(first_field, format_js_toString(md_value)) for md_value in metadata.get_col(first_field)]
+
     print_df(df_plot_md, "cds_p_metadata")
     return ColumnDataSource(df_plot_md)
 
@@ -311,7 +314,7 @@ def generate_cds_heatmap(table, transformation, replace_zero_value, show_zeros):
     # tv -> transformed values (user choice: log10, clr, ...)
 
     df_heatmap = pd.DataFrame(columns=["obs", "rank", "ov", "tv", "factors_sample", "factors_obs"])
-    for rank in table.ranks():
+    for i, rank in enumerate(table.ranks()):
         stacked_rank_df = pd.DataFrame(table.data[rank].stack(), columns=["ov"]).reset_index(1)
         # Rename first col to obs
         stacked_rank_df.rename(columns={stacked_rank_df.columns[0]: "obs"}, inplace=True)
@@ -321,9 +324,11 @@ def generate_cds_heatmap(table, transformation, replace_zero_value, show_zeros):
         #Drop zeros based on original counts
         if not show_zeros:
             stacked_rank_df = stacked_rank_df[stacked_rank_df["ov"] > 0]
-        # initialize factors
-        stacked_rank_df["factors_sample"] = stacked_rank_df.index
-        stacked_rank_df["factors_obs"] = stacked_rank_df["obs"]
+        # initialize factors only for first rank
+        #stacked_rank_df["factors_sample"] = stacked_rank_df.index
+        #stacked_rank_df["factors_obs"] = stacked_rank_df["obs"]
+        stacked_rank_df["factors_sample"] = stacked_rank_df.index if i==0 else ""
+        stacked_rank_df["factors_obs"] = stacked_rank_df["obs"] if i==0 else ""
 
         df_heatmap = pd.concat([df_heatmap, stacked_rank_df], axis=0)
 

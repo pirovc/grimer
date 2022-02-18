@@ -421,6 +421,7 @@ def link_obstable_samplebars(ele,
 def link_heatmap_widgets(ele,
                          cds_d_samples,
                          cds_d_metadata,
+                         cds_p_metadata,
                          dict_d_hcluster_x,
                          dict_d_hcluster_y,
                          cds_p_dendro_x,
@@ -430,11 +431,14 @@ def link_heatmap_widgets(ele,
                          cds_p_annotations,
                          cds_p_obstable,
                          cds_p_heatmap,
-                         active_ranks):
+                         active_ranks,
+                         dict_d_taxname):
 
     x_dendro_callback = CustomJS(
         args=dict(rank_select=ele["heatmap"]["wid"]["rank_select"],
                   x_groupby_select=ele["heatmap"]["wid"]["x_groupby_select"],
+                  x_sort_select=ele["heatmap"]["wid"]["x_sort_select"],
+                  dendrox=ele["dendrox"]["fig"],
                   cds_p_dendro_x=cds_p_dendro_x,
                   dict_d_dedro_x=dict_d_dedro_x),
         code='''
@@ -443,8 +447,13 @@ def link_heatmap_widgets(ele,
             cds_p_dendro_x.data = {"x": dict_d_dedro_x[key+"|x"],
                                  "y": dict_d_dedro_x[key+"|y"],
                                  "c": dict_d_dedro_x[key+"|c"]};
+            x_sort_select.value="none";
+            x_sort_select.disabled=true;
+            dendrox.visible=true;
         }else{
             cds_p_dendro_x.data = {"x": [], "y": [], "c": []};
+            x_sort_select.disabled=false;
+            dendrox.visible=false;
         }
         ''')
 
@@ -457,9 +466,9 @@ def link_heatmap_widgets(ele,
                   dict_d_hcluster_x=dict_d_hcluster_x,
                   cds_p_annotations=cds_p_annotations,
                   cds_p_obstable=cds_p_obstable,
-                  cds_p_heatmap=cds_p_heatmap),
+                  cds_p_heatmap=cds_p_heatmap,
+                  dict_d_taxname=dict_d_taxname),
         code='''
-
         // selected rank
         const rank = rank_select.value;
 
@@ -470,28 +479,29 @@ def link_heatmap_widgets(ele,
                 obs_index.push(i);
             }
         }
+
         var annot_obs = obs_index.map( s => cds_p_obstable.data["index"][s] );
 
         var sorted_factors = [];
         var dict_factors = {};
         if (x_groupby_select.value.startsWith("cluster|")){
-            // Clustering - Get sorted elements based on rank|method|metric
-            sorted_factors = dict_d_hcluster_x[rank+"|"+x_groupby_select.value.replace("cluster|","")];
             // Default dict_factors
             for(let i = 0; i < annot_obs.length; i++){
                 dict_factors[annot_obs[i]] = annot_obs[i];
             }
+            // Clustering - Get sorted elements based on rank|method|metric
+            sorted_factors = dict_d_hcluster_x[rank+"|"+x_groupby_select.value.replace("cluster|","")];
         }else{
             // Define value from Sort by select
             var sort_col = [];
-            var sort_col_type = "string";
+            var sort_col_type = "numeric";
             if (x_sort_select.value=="none"){
-                sort_col = dict_d_hcluster_x["default|" + rank];
+                sort_col = obs_index;
             }else if (x_sort_select.value=="observations"){
                 sort_col = obs_index.map( s => cds_p_obstable.data["col|name"][s] );
+                sort_col_type = "string";
             }else if (x_sort_select.value=="counts"){
                 sort_col = obs_index.map( s => cds_p_obstable.data["col|total_counts"][s] );
-                sort_col_type = "numeric";
             }else if (x_sort_select.value.startsWith("annot|")){
                 const annot = x_sort_select.value.replace("annot|","");
                 // create array with zeros, mark with one if annotation is present
@@ -501,35 +511,33 @@ def link_heatmap_widgets(ele,
                         sort_col[annot_obs.indexOf(cds_p_annotations.data["index"][i])] = 1;
                     }
                 }
-                sort_col_type = "numeric";
             }
 
             if(x_groupby_select.value=="none"){
-                sorted_factors = grimer_sort(annot_obs, sort_col, sort_col_type, false);
                 // Default dict_factors
                 for(let i = 0; i < annot_obs.length; i++){
                     dict_factors[annot_obs[i]] = annot_obs[i];
                 }
+                sorted_factors = grimer_sort(annot_obs, sort_col, sort_col_type, false);
             }else if (x_groupby_select.value.startsWith("tax|")){
                 const group_rank = x_groupby_select.value.replace("tax|","");
-
-                // group entries without selected rank with space " "
-                var groupby_col =  obs_index.map(function(s) { return cds_p_obstable.data["tax|" + group_rank][s] == "" ? " " : cds_p_obstable.data["tax|" + group_rank][s]; });
-
                 // if grouping with a higher rank
                 if(active_ranks.indexOf(rank) > active_ranks.indexOf(group_rank)){
+                    // group entries without selected rank with space " "
+                    var groupby_col = obs_index.map(function(s) { return cds_p_obstable.data["tax|" + group_rank][s] == "" ? " " : dict_d_taxname[cds_p_obstable.data["tax|" + group_rank][s]]; });
+                    var factors = [];
                     for(let i = 0; i < annot_obs.length; i++){
                         dict_factors[annot_obs[i]] = [groupby_col[i], annot_obs[i]];
+                        factors.push([groupby_col[i], annot_obs[i]]);
                     }
-                    sorted_factors = grimer_sort(Object.values(dict_factors), sort_col, sort_col_type, false, groupby_col);
+                    sorted_factors = grimer_sort(factors, sort_col, sort_col_type, false, groupby_col);
                 }else{
-                    // normal sort
-                    sorted_factors = grimer_sort(annot_obs, sort_col, sort_col_type, false);
                     // Default dict_factors
                     for(let i = 0; i < annot_obs.length; i++){
                         dict_factors[annot_obs[i]] = annot_obs[i];
                     }
-
+                    // normal sort
+                    sorted_factors = grimer_sort(annot_obs, sort_col, sort_col_type, false);
                 }
             }
         }
@@ -552,22 +560,28 @@ def link_heatmap_widgets(ele,
         }
 
         heatmap.x_range.factors = sorted_factors;
-
         ''')
 
     y_dendro_callback = CustomJS(
         args=dict(rank_select=ele["heatmap"]["wid"]["rank_select"],
+                  y_groupby_select=ele["heatmap"]["wid"]["y_groupby_select"],
                   y_sort_select=ele["heatmap"]["wid"]["y_sort_select"],
+                  dendroy=ele["dendroy"]["fig"],
                   cds_p_dendro_y=cds_p_dendro_y,
                   dict_d_dedro_y=dict_d_dedro_y),
         code='''
-        if (y_sort_select.value.startsWith("cluster|")){
-            const key = rank_select.value+"|"+y_sort_select.value.replace("cluster|","");
+        if (y_groupby_select.value.startsWith("cluster|")){
+            const key = rank_select.value+"|"+y_groupby_select.value.replace("cluster|","");
             cds_p_dendro_y.data = {"x": dict_d_dedro_y[key+"|x"],
-                                 "y": dict_d_dedro_y[key+"|y"],
-                                 "c": dict_d_dedro_y[key+"|c"]};
+                                   "y": dict_d_dedro_y[key+"|y"],
+                                   "c": dict_d_dedro_y[key+"|c"]};
+            y_sort_select.value="none";
+            y_sort_select.disabled=true;
+            dendroy.visible=true;
         }else{
             cds_p_dendro_y.data = {"x": [], "y": [], "c": []};
+            y_sort_select.disabled=false;
+            dendroy.visible=false;
         }
         ''')
 
@@ -575,31 +589,78 @@ def link_heatmap_widgets(ele,
         args=dict(heatmap=ele["heatmap"]["fig"],
                   cds_d_samples=cds_d_samples,
                   cds_d_metadata=cds_d_metadata,
+                  cds_p_metadata=cds_p_metadata,
+                  cds_p_heatmap=cds_p_heatmap,
                   rank_select=ele["heatmap"]["wid"]["rank_select"],
                   y_sort_select=ele["heatmap"]["wid"]["y_sort_select"],
+                  y_groupby_select=ele["heatmap"]["wid"]["y_groupby_select"],
                   dict_d_hcluster_y=dict_d_hcluster_y),
         code='''
+        // selected rank
+        const rank = rank_select.value;
+        var annot_samples = cds_d_samples.data["index"];
+
         var sorted_factors = [];
-        if (y_sort_select.value=="none"){
-            // None
-            sorted_factors = dict_d_hcluster_y["default"];
-        }else if (y_sort_select.value.startsWith("cluster|")){
-            // Clustering
-            // Get sorted elements based on rank|method|metric
-            const key = rank_select.value+"|"+y_sort_select.value.replace("cluster|","");
-            sorted_factors = dict_d_hcluster_y[key];
+        var dict_factors = {};
+        if (y_groupby_select.value.startsWith("cluster|")){
+            // Clustering - Get sorted elements based on rank|method|metric
+            sorted_factors = dict_d_hcluster_y[rank+"|"+y_groupby_select.value.replace("cluster|","")];
+            // Default dict_factors
+            for(let i = 0; i < annot_samples.length; i++){
+                dict_factors[annot_samples[i]] = annot_samples[i];
+            }
         }else{
-            // Sorting
-            if (y_sort_select.value=="counts"){
-                sorted_factors = grimer_sort(cds_d_samples.data["index"], cds_d_samples.data["cnt|total"], "numeric", false);
+            // Define value from Sort by select
+            var sort_col = [];
+            var sort_col_type = "string";
+            if (y_sort_select.value=="none"){
+                sort_col = dict_d_hcluster_y["default"];
             }else if (y_sort_select.value=="samples"){
-                sorted_factors = grimer_sort(cds_d_samples.data["index"], cds_d_samples.data["index"], "string", false);
-            }else if (y_sort_select.value.startsWith("metadata_cat|")){
-                sorted_factors = grimer_sort(cds_d_samples.data["index"], cds_d_metadata.data[y_sort_select.value.replace("metadata_cat|","")], "string", false);
+                sort_col = annot_samples;
+            }else if (y_sort_select.value=="counts"){
+                sort_col = cds_d_samples.data["cnt|total"];
+                sort_col_type = "numeric";
             }else if (y_sort_select.value.startsWith("metadata_num|")){
-                sorted_factors = grimer_sort(cds_d_samples.data["index"], cds_d_metadata.data[y_sort_select.value.replace("metadata_num|","")], "numeric", false);
+                sort_col = cds_d_metadata.data[y_sort_select.value.replace("metadata_num|","")];
+                sort_col_type = "numeric";
+            }else if (y_sort_select.value.startsWith("metadata_cat|")){
+                sort_col = cds_d_metadata.data[y_sort_select.value.replace("metadata_cat|","")];
+            }
+
+            if(y_groupby_select.value=="none"){
+                sorted_factors = grimer_sort(annot_samples, sort_col, sort_col_type, false);
+                // Default dict_factors
+                for(let i = 0; i < annot_samples.length; i++){
+                    dict_factors[annot_samples[i]] = annot_samples[i];
+                }
+            }else if (y_groupby_select.value.startsWith("group_metadata|")){
+                const group_metadata = y_groupby_select.value.replace("group_metadata|","");
+
+                // group entries without metadata with space " "
+                var groupby_col = cds_d_metadata.data[group_metadata];
+
+                for(let i = 0; i < annot_samples.length; i++){
+                    dict_factors[annot_samples[i]] = [groupby_col[i], annot_samples[i]];
+                }
+                sorted_factors = grimer_sort(Object.values(dict_factors), sort_col, sort_col_type, false, groupby_col);
+
             }
         }
+
+
+        // update factors on heatmap col otherwise remove
+        for (let i = 0; i < cds_p_heatmap.data["index"].length; i++) {
+            if(cds_p_heatmap.data["rank"][i]==rank){
+                cds_p_heatmap.data["factors_sample"][i] = dict_factors[cds_p_heatmap.data["index"][i]];
+            }else{
+                cds_p_heatmap.data["factors_sample"][i] = "";
+            }
+        }
+
+        for (let i = 0; i < cds_p_metadata.data["index"].length; i++) {
+            cds_p_metadata.data["factors"][i] = dict_factors[cds_p_metadata.data["index"][i]];
+        }
+
         heatmap.y_range.factors = sorted_factors;
         ''')
 
@@ -625,10 +686,11 @@ def link_heatmap_widgets(ele,
         ''')
 
     ele["heatmap"]["wid"]["toggle_labels"].js_on_click(toggle_labels_callback)
-    ele["heatmap"]["wid"]["rank_select"].js_on_change('value', x_select_callback, x_dendro_callback, y_select_callback, y_dendro_callback)
+    ele["heatmap"]["wid"]["rank_select"].js_on_change('value', y_select_callback, x_select_callback, x_dendro_callback, y_dendro_callback)
     ele["heatmap"]["wid"]["x_sort_select"].js_on_change('value', x_select_callback, x_dendro_callback)
     ele["heatmap"]["wid"]["x_groupby_select"].js_on_change('value', x_select_callback, x_dendro_callback)
     ele["heatmap"]["wid"]["y_sort_select"].js_on_change('value', y_select_callback, y_dendro_callback)
+    ele["heatmap"]["wid"]["y_groupby_select"].js_on_change('value', y_select_callback, y_dendro_callback)
 
 
 def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols):

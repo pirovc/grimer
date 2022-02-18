@@ -55,7 +55,7 @@ def main(argv=sys.argv[1:]):
         elif args.tax == "ott":
             tax = OttTx(files=args.tax_files, extended_names=True)
     else:
-        print_log(" - No taxonomy set")
+        print_log("- No taxonomy set")
     print_log("")
 
     # Table of counts
@@ -352,6 +352,7 @@ def main(argv=sys.argv[1:]):
     link_heatmap_widgets(ele,
                          cds_d_samples,
                          cds_d_metadata,
+                         cds_p_metadata,
                          dict_d_hcluster_x,
                          dict_d_hcluster_y,
                          cds_p_dendro_x,
@@ -361,7 +362,8 @@ def main(argv=sys.argv[1:]):
                          cds_p_annotations,
                          cds_p_obstable,
                          cds_p_heatmap,
-                         table.ranks())
+                         table.ranks(),
+                         dict_d_taxname)
 
     link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols)
 
