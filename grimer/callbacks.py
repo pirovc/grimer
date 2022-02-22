@@ -114,10 +114,10 @@ def link_obstable_samplebars(ele,
                 var groupby_col2 = cds_d_metadata.data[groupby2_select.value.replace('metadata_cat|','')];
 
                 factors = groupby_col2.map(function(m, i) {
-                  return [m, groupby_col1[i], annot_samples[i]];
+                  return [groupby_col1[i], m, annot_samples[i]];
                 });
 
-                sorted_factors = grimer_sort(factors, sort_col, "numeric", false, groupby_col1, groupby_col2);
+                sorted_factors = grimer_sort(factors, sort_col, "numeric", false, groupby_col2, groupby_col1);
             }else{
                 sorted_factors = grimer_sort(factors, sort_col, "numeric", false, groupby_col1);
             }
@@ -935,11 +935,11 @@ def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, dict_d_sampleobs, cd
                     var groupby_col2 = cds_d_metadata.data[groupby2_select.value.replace('metadata_cat|','')];
 
                     factors = groupby_col2.map(function(m, i) {
-                      return [m, groupby_col1[i], annot_samples[i]];
+                      return [groupby_col1[i], m, annot_samples[i]];
                     });
 
                     // only selected_indices
-                    sorted_factors = grimer_sort(factors, sort_col, "numeric", false, groupby_col1, groupby_col2, selected_indices);
+                    sorted_factors = grimer_sort(factors, sort_col, "numeric", false, groupby_col2, groupby_col1, selected_indices);
                 }else{
                     sorted_factors = grimer_sort(factors, sort_col, "numeric", false, groupby_col1, [], selected_indices);
                 }

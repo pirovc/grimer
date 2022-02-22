@@ -53,7 +53,10 @@ def generate_cds_annotations(table, references, controls, decontam, control_samp
         df_rank = pd.DataFrame(index=table.observations(rank))
 
         if decontam:
-            df_rank["decontam"] = decontam.get_pvalues(rank, df_rank.index)[decontam.get_contaminants(rank, df_rank.index).values]
+            contaminants = decontam.get_contaminants(rank, df_rank.index).values
+            print(contaminants)
+            if contaminants.any():
+                df_rank["decontam"] = decontam.get_pvalues(rank, df_rank.index)[contaminants]
 
         for desc, ref in references.items():
             df_rank[desc] = table.observations(rank).map(lambda x: ref.get_refs_count(x, direct=True))

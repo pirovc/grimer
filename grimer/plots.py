@@ -899,7 +899,7 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
     # Show just first when loading
     metadata_fig.x_range.factors = ["1"]
 
-    for i, md_header in enumerate(metadata_fields):
+    for i, md_header in enumerate(legend_colorbars.keys()):
         # Start showing only first
         if i == 0:
             legend_colorbars[md_header].visible = True

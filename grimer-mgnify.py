@@ -26,6 +26,10 @@ files = filter(os.path.isfile, glob.glob(prefix + '*taxonomy_abundances*'))
 files = sorted(files, key=lambda x: os.stat(x).st_size)
 md = glob.glob(prefix + '*_metadata.tsv*')
 
+if args.grimer_params:
+    grimer_params = args.grimer_params.split(" ")
+else:
+    grimer_params = []
 grimer.grimer.main(["-i", files[-1],
                     "-m", md[-1],
                     "-c", 'config/default.yaml',
@@ -35,5 +39,4 @@ grimer.grimer.main(["-i", files[-1],
                     "-t", "ncbi",
                     "-o", prefix + ".html",
                     "--title", "MGnify study accession " + args.mgnify_study_accession,
-                    *args.grimer_params.split(" ")
-                    ])
+                    ] + grimer_params)
