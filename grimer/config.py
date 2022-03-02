@@ -27,6 +27,7 @@ class Config:
 
         table_group = parser.add_argument_group('Table options')
         table_group.add_argument('-f', '--level-separator', default=None, type=str, help="If provided, consider --input-table to be a hiearchical multi-level table where the observations headers are separated by the indicated separator characther (usually ';' or '|')")
+        table_group.add_argument('-y', '--values', default=None, type=str, help="Force 'count' or 'normalized' data parsing. Empty to auto-detect.")
         table_group.add_argument('-s', '--transpose', default=False, action='store_true', help="Transpose --input-table (if samples are listed on columns and observations on rows)")
         table_group.add_argument('-u', '--unassigned-header', nargs="*", type=str, default=None, help="Define one or more header names containing unsassinged/unclassified counts.")
         table_group.add_argument('--obs-replace', nargs="*", type=str, default=[], help="Replace values on table observations labels/headers (support regex). Example: '_' ' ' will replace underscore with spaces, '^.+__' '' will remove the matching regex.")

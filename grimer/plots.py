@@ -11,7 +11,7 @@ from bokeh.transform import cumsum, factor_cmap, transform
 from grimer.utils import format_js_toString, make_color_palette
 
 
-def plot_samplebars(cds_p_samplebars, max_total_count, ranks):
+def plot_samplebars(cds_p_samplebars, max_total_count, ranks, normalized):
     # Bar plots has 3 main stacks: selection, others, unassigned
     # stacks can be annotated with references and controls
     samplebars_fig = figure(x_range=FactorRange(factors=cds_p_samplebars.data["aux|factors"]),
@@ -89,7 +89,7 @@ def plot_samplebars(cds_p_samplebars, max_total_count, ranks):
     samplebars_fig.xaxis.subgroup_label_orientation = "vertical"
 
     samplebars_fig.xaxis.axis_label = "samples"
-    samplebars_fig.yaxis[0].axis_label = "# counts"
+    samplebars_fig.yaxis[0].axis_label = "# counts" if not normalized else "% counts"
     samplebars_fig.yaxis[1].axis_label = "% observations"
     samplebars_fig.yaxis[1].axis_label_text_color = "#606c38"
 
@@ -232,7 +232,7 @@ Samples can be grouped and sorted. When sorting by numeric metadata, labels will
             "help_button": help_button(title="Observation bars", text=help_text)}
 
 
-def plot_samplebars_widgets(ranks, metadata, reference_names, control_names, decontam):
+def plot_samplebars_widgets(ranks, metadata, reference_names, control_names, decontam, normalized):
     annotbar_rank_select = Select(title="Annotate bars at rank:", value=ranks[0], options=[r for r in ranks])
 
     annotbar_options = {}
@@ -243,8 +243,12 @@ def plot_samplebars_widgets(ranks, metadata, reference_names, control_names, dec
         annotbar_options["Decontam"] = ["decontam"]
     annotbar_select = Select(title="Annotate bars by:", value="assigned", options=annotbar_options)
 
-    y1_select = Select(title="Counts", value="#", options=["#", "%"], width=80)
-    y2_select = Select(title="Observations", value="%", options=["#", "%", "log10(#)", "log10(%)"], width=80)
+    if normalized:
+        y1_select = Select(title="Counts", value="%", options=["%"], width=80)
+        y2_select = Select(title="Observations", value="%", options=["%", "log10(%)"], width=80)
+    else:
+        y1_select = Select(title="Counts", value="#", options=["#", "%"], width=80)
+        y2_select = Select(title="Observations", value="%", options=["#", "%", "log10(#)", "log10(%)"], width=80)
 
     sort_options = {}
     sort_options["Default"] = [("input_order", "input order"), ("counts", "counts"), ("selected_annotation", "selected annotation")]
@@ -448,7 +452,7 @@ def plot_decontam(sizes, cds_p_decontam, cds_p_decontam_lines, min_obs_perc):
                           sizing_mode="stretch_width",
                           tools="save")
 
-    palette = make_color_palette(2)
+    palette = make_color_palette(2) #Control, Sample
     factors = list(sorted(set(cds_p_decontam.data["controls"]), reverse=True))
     # Add legend on top
     decontam_fig.add_layout(Legend(), 'above')
@@ -996,8 +1000,7 @@ def plot_correlation(cds_p_correlation, ranks, dict_d_taxname):
     taxids.update(cds_p_correlation.data["taxid"])
     corr_fig = figure(x_range=sorted(taxids, reverse=True),
                       y_range=sorted(taxids),
-                      tools="hover,save,reset,crosshair,tap,box_zoom",
-                      tooltips="",
+                      tools="save,reset,crosshair,tap,box_zoom",
                       sizing_mode="scale_height")
 
     # Start showing only first rank

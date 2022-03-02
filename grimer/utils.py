@@ -76,19 +76,19 @@ def parse_input_table(input_file, unassigned_header, transpose, sample_replace):
     print_log("- Trimming table")
     table_df = trim_table(table_df)
 
-    # Filter based on the table
+    # Filter based on the final table
     unassigned = unassigned.reindex(table_df.index)
     total = total.reindex(table_df.index)
 
     return table_df, total, unassigned
 
 
-def filter_input_table(table_df, total, min_frequency, max_frequency, min_count, max_count):
+def filter_input_table(table_df, total, min_frequency, max_frequency, min_count, max_count, normalized):
 
     if min_count:
         cnt = table_df.sum().sum()
         if min_count < 1:
-            table_df_norm = transform_table(table_df, total, "norm", 0)
+            table_df_norm = transform_table(table_df, total, "norm", 0) if not normalized else table_df
             table_df = table_df[table_df_norm >= min_count].fillna(0)
         elif min_count > 1:
             table_df = table_df[table_df >= min_count].fillna(0)
@@ -97,7 +97,7 @@ def filter_input_table(table_df, total, min_frequency, max_frequency, min_count,
     if max_count:
         cnt = table_df.sum().sum()
         if max_count < 1:
-            table_df_norm = transform_table(table_df, total, "norm", 0)
+            table_df_norm = transform_table(table_df, total, "norm", 0) if not normalized else table_df
             table_df = table_df[table_df_norm <= max_count].fillna(0)
         elif max_count > 1:
             table_df = table_df[table_df <= max_count].fillna(0)
@@ -314,7 +314,7 @@ def update_tax_nodes(nodes, tax):
     return updated_nodes
 
 
-def run_decontam(cfg, table, metadata, control_samples):
+def run_decontam(cfg, table, metadata, control_samples, normalized):
     df_decontam = pd.DataFrame(index=table.samples, columns=["concentration", "controls"])
     cfg_decontam = cfg["external"]["decontam"]
     tmp_output_prefix = "tmp_"
@@ -344,11 +344,13 @@ def run_decontam(cfg, table, metadata, control_samples):
             else:
                 print_log("Could not find " + cfg_decontam["frequency_metadata"] + " in the metadata. Skipping DECONTAM.")
                 return None
-        else:
+        elif not normalized:
             # Use total from table
-            print_log("WARNING: Using total counts as frequency for DECONTAM")
+            print_log("No concentration provided, using total counts as concentration (frequency for DECONTAM)")
             df_decontam["concentration"] = table.total
-
+        else:
+            print_log("Cannot run DECONTAM without concentration and normalized values")
+            return None
         # Print concentrations to file
         df_decontam["concentration"].to_csv(out_concentration, sep="\t", header=False, index=True)
 
@@ -385,15 +387,18 @@ def run_decontam(cfg, table, metadata, control_samples):
             return None
 
     decontam = Decontam(df_decontam)
-    
+
     # Run DECONTAM for each for each
     for rank in table.ranks():
 
         if len(table.observations(rank)) == 1:
             decontam.add_rank_empty(rank, table.observations(rank))
         else:
-            # normalized and write temporary table for each rank
-            transform_table(table.data[rank], table.total[table.data[rank].index], "norm", 0).to_csv(out_table, sep="\t", header=True, index=True)
+            # normalize and write temporary table for each rank
+            if not normalized:
+                transform_table(table.data[rank], table.total[table.data[rank].index], "norm", 0).to_csv(out_table, sep="\t", header=True, index=True)
+            else:
+                table.data[rank].to_csv(out_table, sep="\t", header=True, index=True)
 
             cmd = " ".join(["scripts/run_decontam.R",
                             "--resout " + tmp_output_prefix + "decontam_out.tsv",

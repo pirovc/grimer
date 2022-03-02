@@ -100,7 +100,7 @@ def generate_cds_annotations(table, references, controls, decontam, control_samp
     return ColumnDataSource(df_annotations)
 
 
-def generate_cds_obstable(table, tax, references, controls, control_samples, decontam):
+def generate_cds_obstable(table, tax, references, controls, control_samples, decontam, normalized):
     # index unique taxids
     # col|...  values to plot to columns in the datatable
     # tax|...  auxiliary lineage of taxa entries
@@ -119,9 +119,9 @@ def generate_cds_obstable(table, tax, references, controls, control_samples, dec
 
         # Frequency of taxa among all samples
         df_rank["col|frequency_perc"] = table.get_frequency_perc(rank)
+        df_rank["col|counts_perc_avg"] = table.get_counts_perc_avg_samples(rank)
         # Average percentage of counts among all samples
-        df_rank["col|counts_perc_avg"] = table.get_counts_perc_avg(rank)
-        df_rank["col|total_counts"] = table.get_total_counts(rank)
+        df_rank["col|total_counts"] = table.get_counts(rank)
 
         # If active - add decontam True/False results
         if decontam:
@@ -157,17 +157,16 @@ def generate_cds_obstable(table, tax, references, controls, control_samples, dec
     return ColumnDataSource(df_obstable)
 
 
-def generate_cds_sampletable(table):
+def generate_cds_sampletable(table, normalized):
     # index unique sample-ids
     # col|...  values to plot to columns in the datatable
 
     df_sampletable = pd.DataFrame(index=table.samples)
-    df_sampletable["col|total"] = table.total
-    assigned = table.total - table.unassigned
-    df_sampletable["col|assigned"] = assigned
-    df_sampletable["col|assigned_perc"] = assigned.divide(table.total, axis=0)
-    df_sampletable["col|unassigned"] = table.unassigned
-    df_sampletable["col|unassigned_perc"] = table.unassigned.divide(table.total, axis=0)
+    df_sampletable["col|total"] = table.get_total() if not normalized else 0
+    df_sampletable["col|assigned"] = table.get_assigned() if not normalized else 0
+    df_sampletable["col|assigned_perc"] = table.get_assigned_perc()
+    df_sampletable["col|unassigned"] = table.get_unassigned() if not normalized else 0
+    df_sampletable["col|unassigned_perc"] = table.get_unassigned_perc()
 
     # assigned by rank
     for rank in table.ranks():
@@ -188,11 +187,11 @@ def generate_cds_samplebars(table):
     df_bars = pd.DataFrame(index=table.samples)
     # factors: set the x-axis reference for plotting, it can be dinamically changed (with groups)
     df_bars["aux|factors"] = df_bars.index
-    df_bars["bar|unassigned"] = table.unassigned
+    df_bars["bar|unassigned"] = table.get_unassigned()
     # Initialized with "Assigned" of first rank
-    df_bars["bar|selected"] = table.data[table.ranks()[0]].sum(axis=1)
+    df_bars["bar|selected"] = table.get_subtable(table.ranks()[0]).sum(axis=1)
     # Total assigned - assigned to rank
-    df_bars["bar|others"] = (table.total - table.unassigned) - df_bars["bar|selected"]
+    df_bars["bar|others"] = (table.get_total() - table.get_unassigned()) - df_bars["bar|selected"]
     # Add empty cols for taxa values, to be dynamically inserted (None to avoid printing 0)
     for rank in table.ranks():
         df_bars["tax|" + rank] = None
@@ -465,7 +464,6 @@ def generate_cds_correlation(table, top_obs_corr, replace_zero_value):
             top_taxids = sorted(table.observations(rank))
             matrix = table.data[rank]
 
-        print(matrix)
         # No correlation with just one observation
         if len(matrix.columns) >= 2:
 
@@ -480,7 +478,6 @@ def generate_cds_correlation(table, top_obs_corr, replace_zero_value):
                 # to save half of the space
                 rho[np.triu_indices(rho.shape[0])] = np.nan
 
-            print(rho)
             stacked_rank_df = pd.DataFrame(rho, index=top_taxids, columns=top_taxids).stack(dropna=False).reset_index(1)
             stacked_rank_df.rename(columns={"level_1": "taxid"}, inplace=True)
             stacked_rank_df.rename(columns={0: "rho"}, inplace=True)
@@ -488,8 +485,6 @@ def generate_cds_correlation(table, top_obs_corr, replace_zero_value):
 
             # Drop NA for rho (missing values and upper triangular matrix)
             stacked_rank_df.dropna(subset=['rho'], inplace=True)
-
-            print(stacked_rank_df)
 
             df_corr = pd.concat([df_corr, stacked_rank_df], axis=0)
 

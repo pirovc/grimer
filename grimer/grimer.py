@@ -68,6 +68,19 @@ def main(argv=sys.argv[1:]):
         args.transpose = True
 
     table_df, total, unassigned = parse_input_table(args.input_file, args.unassigned_header, args.transpose, args.sample_replace)
+
+    if args.values == "count":
+        normalized = False
+    elif args.values == "normalized":
+        normalized = True
+    elif (table_df.sum(axis=1).round() == 100).all() or (table_df % 1 != 0).any().any():
+        normalized = True
+    else:
+        normalized = False
+
+    if normalized:
+        print_log("- Normalized values")
+
     if args.level_separator:
         ranked_tables, lineage = parse_multi_table(table_df, args.ranks, tax, args.level_separator, args.obs_replace)
     else:
@@ -77,8 +90,7 @@ def main(argv=sys.argv[1:]):
         print_log("Could not parse input table")
         return 1
 
-    table = Table(table_df.index, total, unassigned)
-    table.lineage = lineage
+    table = Table(table_df.index, total, unassigned, lineage, normalized)
 
     print_log("")
     print_log("Total valid samples: " + str(len(table.samples)))
@@ -91,7 +103,7 @@ def main(argv=sys.argv[1:]):
 
     for r, t in ranked_tables.items():
         print_log("--- " + r + " ---")
-        filtered_trimmed_t = trim_table(filter_input_table(t, total, args.min_frequency, args.max_frequency, args.min_count, args.max_count))
+        filtered_trimmed_t = trim_table(filter_input_table(t, total, args.min_frequency, args.max_frequency, args.min_count, args.max_count, normalized))
         if t.empty:
             print_log("No valid entries, skipping")
         else:
@@ -100,9 +112,10 @@ def main(argv=sys.argv[1:]):
             print_log("Total valid observations: " + str(len(table.observations(r))))
 
     print_log("")
-    print_log("Total assigned (sum): " + str(table.total.sum() - table.unassigned.sum()))
-    print_log("Total unassigned (sum): " + str(table.unassigned.sum()))
-    print_log("")
+    if not normalized:
+        print_log("Total assigned (counts): " + str(table.total.sum() - table.unassigned.sum()))
+        print_log("Total unassigned (counts): " + str(table.unassigned.sum()))
+        print_log("")
 
     # Zero replacement
     try:
@@ -147,7 +160,7 @@ def main(argv=sys.argv[1:]):
     # Run and load decontam results
     if args.decontam:
         print_log("- Running DECONTAM")
-        decontam = run_decontam(cfg, table, metadata, control_samples)
+        decontam = run_decontam(cfg, table, metadata, control_samples, normalized)
         print_log("")
     else:
         decontam = None
@@ -182,7 +195,7 @@ def main(argv=sys.argv[1:]):
     # _p_
     # df: index (unique observations), col|...,  tax|..., aux|ref
     # this cds an exeption and contains data to plot (col|) and auxiliary data (tax|)
-    cds_p_obstable = generate_cds_obstable(table, tax, references, controls, control_samples, decontam)
+    cds_p_obstable = generate_cds_obstable(table, tax, references, controls, control_samples, decontam, normalized)
     # df: index (unique sample-ids), aux|..., bar|..., tax|...
     cds_p_samplebars = generate_cds_samplebars(table)
     # stacked: index (repeated observations), rank, ref, direct, parent
@@ -206,7 +219,7 @@ def main(argv=sys.argv[1:]):
     # matrix: index (unique sample-ids), 0, 1, ..., top_obs_bars, unassigned, others, factors
     cds_p_obsbars = generate_cds_obsbars(table, args.top_obs_bars)
     # df: index (unique sample-ids), col|...
-    cds_p_sampletable = generate_cds_sampletable(table)
+    cds_p_sampletable = generate_cds_sampletable(table, normalized)
 
     # _d_
     # dict: {rank: {obs: {sample: count}}}
@@ -278,8 +291,8 @@ def main(argv=sys.argv[1:]):
 
     # samplebars
     ele["samplebars"] = {}
-    ele["samplebars"]["fig"], ele["samplebars"]["legend_obs"], ele["samplebars"]["legend_bars"] = plot_samplebars(cds_p_samplebars, max_total_count, table.ranks())
-    ele["samplebars"]["wid"] = plot_samplebars_widgets(table.ranks(), metadata, list(references.keys()), list(controls.keys()), decontam)
+    ele["samplebars"]["fig"], ele["samplebars"]["legend_obs"], ele["samplebars"]["legend_bars"] = plot_samplebars(cds_p_samplebars, max_total_count, table.ranks(), normalized)
+    ele["samplebars"]["wid"] = plot_samplebars_widgets(table.ranks(), metadata, list(references.keys()), list(controls.keys()), decontam, normalized)
 
     # sampletable
     ele["sampletable"] = {}
