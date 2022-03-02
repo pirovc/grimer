@@ -385,6 +385,7 @@ def run_decontam(cfg, table, metadata, control_samples):
             return None
 
     decontam = Decontam(df_decontam)
+    
     # Run DECONTAM for each for each
     for rank in table.ranks():
 

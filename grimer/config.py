@@ -52,7 +52,7 @@ class Config:
         heatmap_group.add_argument('--skip-dendrogram', default=False, action='store_true', help="Disable dendogram. Will create smaller files.")
 
         correlation_group = parser.add_argument_group('Correlation options')
-        correlation_group.add_argument('-x', '--top-obs-corr', type=int, default=20, help="Top abundant observations to build the correlationn matrix, based on the avg. percentage counts/sample. 0 for all")
+        correlation_group.add_argument('-x', '--top-obs-corr', type=int, default=50, help="Top abundant observations to build the correlationn matrix, based on the avg. percentage counts/sample. 0 for all")
 
         bars_group = parser.add_argument_group('Bars options')
         bars_group.add_argument('-j', '--top-obs-bars', type=int, default=20, help="Top abundant observations to show in the bars.")

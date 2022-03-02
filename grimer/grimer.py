@@ -274,7 +274,7 @@ def main(argv=sys.argv[1:]):
         ele["decontam"]["fig"] = plot_decontam(sizes, cds_p_decontam, cds_p_decontam_models, min_obs_perc)
     else:
         ele["decontam"]["fig"] = None
-    ele["decontam"]["wid"] = plot_decontam_widgets()
+    ele["decontam"]["wid"] = plot_decontam_widgets(sizes)
 
     # samplebars
     ele["samplebars"] = {}

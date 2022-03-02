@@ -32,8 +32,8 @@ def make_layout(ele, sizes, version, logo_path, title):
 
     if ele["decontam"]["fig"]:
         info_tabs.append(Panel(child=column(ele["decontam"]["fig"],
-                                            row(ele["decontam"]["wid"]["pvalue_text"],
-                                                ele["decontam"]["wid"]["pvalue_input"],
+                                            row(ele["decontam"]["wid"]["pscore_text"],
+                                                ele["decontam"]["wid"]["pscore_input"],
                                                 ele["decontam"]["wid"]["help_button"])
                                             ), title="DECONTAM"))
 
@@ -87,7 +87,7 @@ def make_layout(ele, sizes, version, logo_path, title):
                            merge_tools=True)
 
     row_heatmap_widgets = row(column(ele["heatmap"]["wid"]["rank_select"],
-                                     ele["heatmap"]["wid"]["toggle_labels"],
+                                     ele["heatmap"]["wid"]["toggle_label"],
                                      width=300),
                               row(column(ele["heatmap"]["wid"]["x_groupby_select"],
                                          ele["heatmap"]["wid"]["x_sort_select"]),
@@ -102,6 +102,7 @@ def make_layout(ele, sizes, version, logo_path, title):
     row_correlation = row(column(ele["correlation"]["wid"]["rank_select"],
                                  ele["correlation"]["wid"]["neg_slider"],
                                  ele["correlation"]["wid"]["pos_slider"],
+                                 ele["correlation"]["wid"]["toggle_label"],
                                  ele["correlation"]["wid"]["help_button"]),
                           ele["correlation"]["fig"])
 
@@ -112,8 +113,6 @@ def make_layout(ele, sizes, version, logo_path, title):
     main_panels.append(Panel(child=column(row_correlation, sizing_mode="stretch_width"), title="Correlation"))
     main_tab = Tabs(tabs=main_panels)
 
-    #loading_div = Div(style={"visibility": "hidden", "display": "flex", "position": "fixed", "z-index": "100", "width": "100%", "height": "100%", "background-color": "rgba(192, 192, 192, 0.5)", "background-image": "url('https://i.stack.imgur.com/MnyxU.gif')", "background-repeat": "no-repeat", "background-position": "center"})
-
     logo_base64 = base64.b64encode(open(logo_path, 'rb').read())  # encode to base64
     logo_base64 = logo_base64.decode()    # convert to string
     logo_div = Div(text='<img src="data:image/png;base64,' + logo_base64 + '">' + '<a target="_blank" style="color: black" href="https://github.com/pirovc/grimer">v' + version + '</a>', width=300, height=40, sizing_mode="fixed")
@@ -122,7 +121,5 @@ def make_layout(ele, sizes, version, logo_path, title):
     else:
         title_div = Spacer()
     final = column([row(logo_div, title_div), main_tab], sizing_mode="stretch_width")
-
-
 
     return final

@@ -216,8 +216,8 @@ def link_obstable_samplebars(ele,
             // activate only selected rank
             if(active_ranks[r]==selected_rank){
                 samplebars.renderers[r+3].visible=true;
-            }else{
-                samplebars.renderers[r+3].visible=false;
+            //}else{
+            //    samplebars.renderers[r+3].visible=false;
             }
         }
         ''')
@@ -302,7 +302,7 @@ def link_obstable_samplebars(ele,
                   cds_p_decontam=cds_p_decontam,
                   cds_p_decontam_models=cds_p_decontam_models,
                   cds_d_decontam=cds_d_decontam,
-                  pvalue_input=ele["decontam"]["wid"]["pvalue_input"]),
+                  pscore_input=ele["decontam"]["wid"]["pscore_input"]),
         code='''
         // selected row
         const row = cb_obj.indices[0];
@@ -323,11 +323,11 @@ def link_obstable_samplebars(ele,
         if (lines!=undefined){
             cds_p_decontam_models.data["y_cont"] = [lines[0], lines[1]];
             cds_p_decontam_models.data["y_noncont"] = [lines[2], lines[2]];
-            pvalue_input.value = lines[3].toString();
+            pscore_input.value = lines[3].toString();
         }else{
             cds_p_decontam_models.data["y_cont"] = [];
             cds_p_decontam_models.data["y_noncont"] = [];
-            pvalue_input.value = "";
+            pscore_input.value = "";
         }
         cds_p_decontam_models.change.emit();
         ''')
@@ -664,7 +664,7 @@ def link_heatmap_widgets(ele,
         heatmap.y_range.factors = sorted_factors;
         ''')
 
-    toggle_labels_callback = CustomJS(
+    toggle_label_callback = CustomJS(
         args=dict(cds_p_heatmap=cds_p_heatmap,
                   xaxis=ele["heatmap"]["fig"].xaxis[0],
                   yaxis=ele["heatmap"]["fig"].yaxis[0]),
@@ -685,7 +685,7 @@ def link_heatmap_widgets(ele,
         }
         ''')
 
-    ele["heatmap"]["wid"]["toggle_labels"].js_on_click(toggle_labels_callback)
+    ele["heatmap"]["wid"]["toggle_label"].js_on_click(toggle_label_callback)
     ele["heatmap"]["wid"]["rank_select"].js_on_change('value', y_select_callback, x_select_callback, x_dendro_callback, y_dendro_callback)
     ele["heatmap"]["wid"]["x_sort_select"].js_on_change('value', x_select_callback, x_dendro_callback)
     ele["heatmap"]["wid"]["x_groupby_select"].js_on_change('value', x_select_callback, x_dendro_callback)
@@ -801,9 +801,10 @@ def link_correlation_widgets(ele, cds_p_correlation):
                 factors.add(cds_p_correlation.data["taxid"][i]);
             }
         }
-        factors = [...factors].sort();
-        correlation.x_range.factors = factors;
-        correlation.y_range.factors = factors.reverse();
+        var sorted_factors = [...factors].sort();
+        correlation.y_range.factors = sorted_factors;
+        var rev_sorted_factors = [...sorted_factors].reverse();
+        correlation.x_range.factors = rev_sorted_factors;
         ''')
 
     filter_callback = CustomJS(
@@ -825,6 +826,23 @@ def link_correlation_widgets(ele, cds_p_correlation):
         cds_p_correlation.change.emit();
         ''')
 
+    toggle_label_callback = CustomJS(
+        args=dict(xaxis=ele["correlation"]["fig"].xaxis[0], yaxis=ele["correlation"]["fig"].yaxis[0]),
+        code='''
+        if(this.active.includes(0)){
+            xaxis.major_label_text_font_size = "10px";
+            xaxis.major_tick_line_color="black";
+            yaxis.major_label_text_font_size = "10px";
+            yaxis.major_tick_line_color="black";
+        }else{
+            xaxis.major_label_text_font_size = "0px";
+            xaxis.major_tick_line_color=null;
+            yaxis.major_label_text_font_size = "0px";
+            yaxis.major_tick_line_color=null;
+        }
+        ''')
+
+    ele["correlation"]["wid"]["toggle_label"].js_on_click(toggle_label_callback)
     ele["correlation"]["wid"]["pos_slider"].js_on_change('value', filter_callback)
     ele["correlation"]["wid"]["neg_slider"].js_on_change('value', filter_callback)
     ele["correlation"]["wid"]["rank_select"].js_on_change('value', rank_select_callback)

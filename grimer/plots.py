@@ -111,7 +111,7 @@ def plot_obsbars(cds_p_obsbars, dict_d_topobs, ranks, top_obs_bars, dict_d_taxna
         // value holds the column index
         var taxid = dict_d_topobs.data.dict_d_topobs[0][rank_select.value][value];
         if(taxid!=undefined){
-            return dict_d_taxname.data.dict_d_taxname[0][taxid]; 
+            return dict_d_taxname.data.dict_d_taxname[0][taxid];
         }else{
             return value;
         }
@@ -214,7 +214,7 @@ def plot_obsbars_widgets(ranks, metadata, dict_d_topobs, dict_d_taxname, top_obs
     groupby1_select = Select(title="1) Group samples by", value="none", options=groupby_options, sizing_mode="stretch_width")
     groupby2_select = Select(title="2) Group samples by", value="none", options=groupby_options, sizing_mode="stretch_width")
 
-    toggle_label = CheckboxGroup(labels=["Show/Hide samples labels"], active=[])
+    toggle_label = CheckboxGroup(labels=["Show samples labels"], active=[])
 
     help_text = """
 Observation bars showing proportions of top """ + str(top_obs_bars) + """ most abundant observations.
@@ -266,7 +266,7 @@ def plot_samplebars_widgets(ranks, metadata, reference_names, control_names, dec
     groupby1_select = Select(title="1) Group samples by", value="none", options=groupby_options, sizing_mode="stretch_width")
     groupby2_select = Select(title="2) Group samples by", value="none", options=groupby_options, sizing_mode="stretch_width")
 
-    toggle_label = CheckboxGroup(labels=["Show/Hide samples labels"], active=[])
+    toggle_label = CheckboxGroup(labels=["Show samples labels"], active=[])
 
     help_text = """
 Bars showing total counts (left y-axis) for each sample (x-axis).
@@ -449,60 +449,62 @@ def plot_decontam(sizes, cds_p_decontam, cds_p_decontam_lines, min_obs_perc):
                           tools="save")
 
     palette = make_color_palette(2)
-    factors = list(set(cds_p_decontam.data["controls"]))
-
+    factors = list(sorted(set(cds_p_decontam.data["controls"]), reverse=True))
     # Add legend on top
     decontam_fig.add_layout(Legend(), 'above')
-    decontam_fig.circle(x="concentration", y="counts",
-                        source=cds_p_decontam,
-                        color=factor_cmap('controls', palette=palette, factors=factors),
-                        legend_group="controls",
-                        size=3)
+    points = decontam_fig.circle(x="concentration", y="counts",
+                                 source=cds_p_decontam,
+                                 color=factor_cmap('controls', palette=palette, factors=factors),
+                                 legend_group="controls",
+                                 size=3)
 
-    # If there are controls, show legend
-    if len(factors) > 1:
-        decontam_fig.legend.margin = 0
-        decontam_fig.legend.border_line_width = 0
-        decontam_fig.legend.spacing = 0
-        decontam_fig.legend.padding = 0
-        decontam_fig.legend.orientation = "horizontal"
-        decontam_fig.legend.location = "bottom_right"
-    else:
-        decontam_fig.legend.visible = False
+    # Add tooltip just for points
+    decontam_fig.add_tools(HoverTool(renderers=[points], tooltips=[('Sample', '@index')]))
 
     decontam_fig.line(x="x",
                       y="y_cont",
                       source=cds_p_decontam_lines,
-                      color="red")
+                      color="red",
+                      legend_label="Cont.")
     decontam_fig.line(x="x",
                       y="y_noncont",
                       source=cds_p_decontam_lines,
                       color="black",
-                      line_dash="dashed")
+                      line_dash="dashed",
+                      legend_label="Non-cont.")
 
-    decontam_fig.xaxis.axis_label = 'DNA Concentration/Total counts'
-    decontam_fig.yaxis.axis_label = 'obs. counts'
+    decontam_fig.legend.margin = 0
+    decontam_fig.legend.border_line_width = 0
+    decontam_fig.legend.spacing = 0
+    decontam_fig.legend.padding = 0
+    decontam_fig.legend.orientation = "horizontal"
+    decontam_fig.legend.location = "bottom_right"
+
+    decontam_fig.xaxis.axis_label = 'Concentration'
+    decontam_fig.yaxis.axis_label = 'Counts'
     decontam_fig.y_range.start = min_obs_perc
     decontam_fig.y_range.end = 1
 
     return decontam_fig
 
 
-def plot_decontam_widgets():
-    pvalue_text = Paragraph(text="P-value")
-    pvalue_input = TextInput(value="", width=180, align='end')
+def plot_decontam_widgets(sizes):
+    pscore_text = Paragraph(text="P-score")
+    pscore_input = TextInput(value="", width=sizes["overview_top_panel_width_right"] - 150, align='end', disabled=True)
 
     help_text = """
-Plot to verify the DECONTAM [1] output. Proportion of counts (y-axis) against DNA Concentration (if provided) or Total number of counts (x-axis), both in log10 scale. If provided, controls samples are displayed in a different color.
+Plot to verify the DECONTAM [1] output. Proportion of counts of selected observation (y-axis) against DNA Concentration (if provided) or Total number of counts (x-axis) of each sample, both in log10 scale. If provided, controls samples are displayed in a different color.
 
 A indication of contamination is when counts are inversely proportional to DNA concentration. The red and black dotted lines are the expected models for contamination and non-contamination, respectively. A good indication for contamination is when the dots (excluding control samples) "fit" the red line model.
+
+The P-score statistic is not a P-value and it is not associated with any guarantees on the type 1 error rate [1]. Small scores indicate the contaminant model is a better fit, and high scores indicate that the non-contaminant model is a better fit.
 
 More details can be found in the [DECONTAM Introduction guide](https://benjjneb.github.io/decontam/vignettes/decontam_intro.html)
 
 [1] Davis, N. M. et al. Simple statistical identification and removal of contaminant sequences in marker-gene and metagenomics data. Microbiome (2018) 10.1186/s40168-018-0605-2.
 """
-    return {"pvalue_text": pvalue_text,
-            "pvalue_input": pvalue_input, 
+    return {"pscore_text": pscore_text,
+            "pscore_input": pscore_input,
             "help_button": help_button(title="DECONTAM", text=help_text, align="start")}
 
 
@@ -755,7 +757,7 @@ def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, reference_name
     y_groupby_select = Select(title="Sample cluster/group by:", value="none", options=y_groupby_options)
     y_sort_select = Select(title="Sample sort:", value="none", options=y_sort_options)
 
-    toggle_labels = CheckboxGroup(labels=["Show/Hide observations labels", "Show/Hide samples labels"], active=[])
+    toggle_label = CheckboxGroup(labels=["Show observations labels", "Show samples label"], active=[])
 
     help_text = """
 The heatmap shows [transformed] values from the input table (color bar on top). If taxonomy is provided, one heatmap for each taxonomic rank is generated.
@@ -776,7 +778,7 @@ The metadata and annotation plots are automatically sorted to reflect the cluste
             "x_sort_select": x_sort_select,
             "y_groupby_select": y_groupby_select,
             "y_sort_select": y_sort_select,
-            "toggle_labels": toggle_labels,
+            "toggle_label": toggle_label,
             "help_button": help_button(title="Heatmap/Clustering", text=help_text)}
 
 
@@ -927,7 +929,7 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
             return metadata_multiselect.value[tick-1];
         ''')
 
-    toggle_legend = CheckboxGroup(labels=["Show/Hide metadata legend"], active=[0])
+    toggle_legend = CheckboxGroup(labels=["Show metadata legend"], active=[0])
     return metadata_fig, {"metadata_multiselect": metadata_multiselect, "legend_colorbars": legend_colorbars, "toggle_legend": toggle_legend}
 
 
@@ -990,17 +992,22 @@ def plot_annotations(heatmap, tools_heatmap, cds_p_annotations, dict_d_taxname):
 
 def plot_correlation(cds_p_correlation, ranks, dict_d_taxname):
     taxids = set()
-    for i, rank in enumerate(cds_p_correlation.data["rank"]):
-        if rank == ranks[0]:
-            taxids.add(cds_p_correlation.data["index"][i])
-            taxids.add(cds_p_correlation.data["taxid"][i])
-
-    taxids = sorted(taxids)
-    corr_fig = figure(x_range=taxids,
-                      y_range=list(reversed(taxids)),
+    taxids.update(cds_p_correlation.data["index"])
+    taxids.update(cds_p_correlation.data["taxid"])
+    corr_fig = figure(x_range=sorted(taxids, reverse=True),
+                      y_range=sorted(taxids),
                       tools="hover,save,reset,crosshair,tap,box_zoom",
                       tooltips="",
                       sizing_mode="scale_height")
+
+    # Start showing only first rank
+    factors = set()
+    for i, rank in enumerate(cds_p_correlation.data["rank"]):
+        if rank == ranks[0]:
+            factors.add(cds_p_correlation.data["index"][i])
+            factors.add(cds_p_correlation.data["taxid"][i])
+    corr_fig.x_range.factors = sorted(factors, reverse=True)
+    corr_fig.y_range.factors = sorted(factors)
 
     # Need to pass dict_d_taxname inside a one column data
     taxid_name_custom = CustomJSHover(
@@ -1022,7 +1029,7 @@ def plot_correlation(cds_p_correlation, ranks, dict_d_taxname):
 
     rho_filter = IndexFilter()
     cds_view_correlation = CDSView(source=cds_p_correlation, filters=[rho_filter])
-    corr_fig.rect(x="taxid", y="index",
+    corr_fig.rect(x="index", y="taxid",
                   width=1, height=1,
                   source=cds_p_correlation,
                   view=cds_view_correlation,
@@ -1050,6 +1057,11 @@ def plot_correlation(cds_p_correlation, ranks, dict_d_taxname):
     corr_fig.yaxis.minor_tick_line_color = None
     corr_fig.xaxis.major_label_orientation = "vertical"
 
+    corr_fig.xaxis.major_tick_line_color = None
+    corr_fig.xaxis.major_label_text_font_size = "0px"
+    corr_fig.yaxis.major_tick_line_color = None
+    corr_fig.yaxis.major_label_text_font_size = "0px"
+
     return corr_fig, rho_filter
 
 
@@ -1057,6 +1069,7 @@ def plot_correlation_widgets(ranks, top_obs_corr):
     rank_select = Select(title="Taxonomic rank:", value=ranks[0], options=ranks)
     neg_slider = RangeSlider(start=-1, end=0, value=(-1, 0), step=.01, title="Negative correlation")
     pos_slider = RangeSlider(start=0, end=1, value=(0, 1), step=.01, title="Positive correlation")
+    toggle_label = CheckboxGroup(labels=["Show observations labels"], active=[])
 
     help_text = """
 Symmetric proportionality coefficient (rho correlation) [1,2] between the top """ + str(top_obs_corr) + """ most abundant observations, based on log-ratios (clr). Only half matrix is displayed, since the values are symmetric.
@@ -1071,6 +1084,7 @@ Symmetric proportionality coefficient (rho correlation) [1,2] between the top ""
     return {"rank_select": rank_select,
             "neg_slider": neg_slider,
             "pos_slider": pos_slider,
+            "toggle_label": toggle_label,
             "help_button": help_button(title="Correlation", text=help_text)}
 
 

@@ -54,9 +54,8 @@ def generate_cds_annotations(table, references, controls, decontam, control_samp
 
         if decontam:
             contaminants = decontam.get_contaminants(rank, df_rank.index).values
-            print(contaminants)
             if contaminants.any():
-                df_rank["decontam"] = decontam.get_pvalues(rank, df_rank.index)[contaminants]
+                df_rank["decontam"] = decontam.get_pscore(rank, df_rank.index)[contaminants]
 
         for desc, ref in references.items():
             df_rank[desc] = table.observations(rank).map(lambda x: ref.get_refs_count(x, direct=True))
@@ -289,7 +288,7 @@ def generate_cds_decontam(decontam, ranks):
     dict_coord_mod = {}
     for rank in ranks:
         df_valid_vals = decontam.rank[rank].dropna(subset=['contam'])
-        pval = decontam.get_pvalues(rank, df_valid_vals.index)
+        pval = decontam.get_pscore(rank, df_valid_vals.index)
         vals = list(zip(df_valid_vals["contam"], df_valid_vals["contam_2"], df_valid_vals["non.contam"], pval))
         dict_coord_mod.update(dict(zip(df_valid_vals.index, vals)))
 
@@ -460,12 +459,13 @@ def generate_cds_correlation(table, top_obs_corr, replace_zero_value):
     df_corr = pd.DataFrame(columns=["taxid", "rank", "rho"])
     for rank in table.ranks():
         if top_obs_corr:
-            top_taxids = table.get_top(rank, top_obs_corr)
+            top_taxids = sorted(table.get_top(rank, top_obs_corr))
             matrix = table.get_subtable(taxids=top_taxids, rank=rank)
         else:
             top_taxids = sorted(table.observations(rank))
             matrix = table.data[rank]
 
+        print(matrix)
         # No correlation with just one observation
         if len(matrix.columns) >= 2:
 
@@ -480,6 +480,7 @@ def generate_cds_correlation(table, top_obs_corr, replace_zero_value):
                 # to save half of the space
                 rho[np.triu_indices(rho.shape[0])] = np.nan
 
+            print(rho)
             stacked_rank_df = pd.DataFrame(rho, index=top_taxids, columns=top_taxids).stack(dropna=False).reset_index(1)
             stacked_rank_df.rename(columns={"level_1": "taxid"}, inplace=True)
             stacked_rank_df.rename(columns={0: "rho"}, inplace=True)
@@ -487,6 +488,8 @@ def generate_cds_correlation(table, top_obs_corr, replace_zero_value):
 
             # Drop NA for rho (missing values and upper triangular matrix)
             stacked_rank_df.dropna(subset=['rho'], inplace=True)
+
+            print(stacked_rank_df)
 
             df_corr = pd.concat([df_corr, stacked_rank_df], axis=0)
 

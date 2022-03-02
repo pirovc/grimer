@@ -37,7 +37,7 @@ class Decontam:
     def get_contaminants(self, rank, idx):
         return self.rank[rank].reindex(idx)["contaminant"]
 
-    def get_pvalues(self, rank, idx):
+    def get_pscore(self, rank, idx):
         return self.rank[rank].reindex(idx)["p"]
 
     def get_contaminant_list(self):
