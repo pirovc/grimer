@@ -636,17 +636,17 @@ def link_heatmap_widgets(ele,
             }else if (y_groupby_select.value.startsWith("group_metadata|")){
                 const group_metadata = y_groupby_select.value.replace("group_metadata|","");
 
-                // group entries without metadata with space " "
-                var groupby_col = cds_d_metadata.data[group_metadata];
+                // group entries and replace empty with space " "
+                var groupby_col = cds_d_metadata.data[group_metadata].map(function(m) { return m == "" ? " " : m; });
 
+                var factors = [];
                 for(let i = 0; i < annot_samples.length; i++){
                     dict_factors[annot_samples[i]] = [groupby_col[i], annot_samples[i]];
+                    factors.push([groupby_col[i], annot_samples[i]]);
                 }
-                sorted_factors = grimer_sort(Object.values(dict_factors), sort_col, sort_col_type, false, groupby_col);
-
+                sorted_factors = grimer_sort(factors, sort_col, sort_col_type, false, groupby_col);
             }
         }
-
 
         // update factors on heatmap col otherwise remove
         for (let i = 0; i < cds_p_heatmap.data["index"].length; i++) {
@@ -722,7 +722,6 @@ def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols
                 metadata_heatmap_xaxis.major_label_orientation = 0.7;
         }
 
-        console.log(metadata_heatmap_xaxis)
         for(var s=0; s < max_metadata_cols; ++s){
             if (s<metadata_multiselect.value.length){
                 var selected = metadata_multiselect.value[s];
