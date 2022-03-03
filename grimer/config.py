@@ -15,7 +15,7 @@ class Config:
         parser = argparse.ArgumentParser(description='grimer')
 
         parser.add_argument('-i', '--input-file', required=True, type=str, help="Main input table with counts (Observation table, Count table, Contingency Tables, ...) or .biom file. By default rows contain observations and columns contain samples (use --tranpose if your file is reversed). First column and first row are used as headers.")
-        parser.add_argument('-c', '--config', required=True, type=str, help="Configuration file")
+        parser.add_argument('-c', '--config', type=str, help="Configuration file")
         parser.add_argument('-m', '--metadata', type=str, help="Input metadata file in simple tabular format. Sample identifiers will be matched with ones provided by --input-table. QIIME 2 metadata format is also accepted, with categorical and numerical fields.")
         parser.add_argument('-t', '--tax', type=str, default=None, help="Define taxonomy to use. By default, do not use any taxonomy.", choices=["ncbi", "gtdb", "silva", "greengenes", "ott"])
         parser.add_argument('-b', '--tax-files', nargs="*", type=str, default=None, help="Taxonomy files. If not provided, will automatically be downloaded.")

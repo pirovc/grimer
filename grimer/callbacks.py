@@ -657,8 +657,10 @@ def link_heatmap_widgets(ele,
             }
         }
 
-        for (let i = 0; i < cds_p_metadata.data["index"].length; i++) {
-            cds_p_metadata.data["factors"][i] = dict_factors[cds_p_metadata.data["index"][i]];
+        if (cds_p_metadata){
+            for (let i = 0; i < cds_p_metadata.data["index"].length; i++) {
+                cds_p_metadata.data["factors"][i] = dict_factors[cds_p_metadata.data["index"][i]];
+            }
         }
 
         heatmap.y_range.factors = sorted_factors;
@@ -696,6 +698,7 @@ def link_heatmap_widgets(ele,
 def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols):
     metadata_multiselect_callback = CustomJS(
         args=dict(metadata_heatmap=ele["metadata"]["fig"],
+                  metadata_heatmap_xaxis=ele["metadata"]["fig"].xaxis[0],
                   metadata_multiselect=ele["metadata"]["wid"]["metadata_multiselect"],
                   legend_colorbars=ele["metadata"]["wid"]["legend_colorbars"],
                   toggle_legend=ele["metadata"]["wid"]["toggle_legend"],
@@ -704,11 +707,20 @@ def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols
                   cds_d_metadata=cds_d_metadata),
         code='''
         const index_len = cds_d_metadata.data["index"].length;
+
         var x_factors = [];
         var empty_y_values = new Array(index_len);
         for (var i = 0; i < index_len; ++i) empty_y_values[i]=["", ""];
         // hide all legends
         for (let md_header in legend_colorbars) legend_colorbars[md_header].visible = false;
+
+        // set legend orientation
+        if(metadata_multiselect.value.length==1)
+            metadata_heatmap_xaxis.major_label_orientation = "horizontal";
+        else
+            metadata_heatmap_xaxis.major_label_orientation = 0.7;
+
+        console.log(metadata_heatmap_xaxis)
         for(var s=0; s < max_metadata_cols; ++s){
             if (s<metadata_multiselect.value.length){
                 var selected = metadata_multiselect.value[s];

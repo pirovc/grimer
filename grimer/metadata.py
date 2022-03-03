@@ -7,9 +7,13 @@ class Metadata:
     valid_types = ["categorical", "numeric"]
     default_type = "categorical"
 
-    def __init__(self, metadata_file, samples: list=[]):
-        # Read metadata and let pandas guess dtypes, index as str
-        self.data = pd.read_table(metadata_file, sep='\t', header=0, skiprows=0, index_col=0, dtype={0: str})
+    def __init__(self, metadata_file: str="", metadata_table: pd.DataFrame=None, samples: list=[]):
+        if metadata_file:
+            # Read metadata and let pandas guess dtypes, index as str
+            self.data = pd.read_table(metadata_file, sep='\t', header=0, skiprows=0, index_col=0, dtype={0: str})
+        else:
+            # Metadata from table (biom file)
+            self.data = metadata_table
 
         # Enforce string index
         self.data.index = self.data.index.astype('str')

@@ -33,8 +33,10 @@ def main(argv=sys.argv[1:]):
     _debug = args.debug
 
     # Config file
-    with open(args.config, 'r') as file:
-        cfg = yaml.safe_load(file)
+    cfg = {}
+    if args.config:
+        with open(args.config, 'r') as file:
+            cfg = yaml.safe_load(file)
 
     # Taxonomy
     tax = None
@@ -58,17 +60,22 @@ def main(argv=sys.argv[1:]):
         print_log("- No taxonomy set")
     print_log("")
 
-    # Table of counts
-    print_log("- Parsing table")
+    # Ranks
     if not args.ranks:
         args.ranks = [Config.default_rank_name]
 
+    # Table of counts
+    print_log("- Parsing table")
+
+    # Specific params if biom file is provided
     if args.input_file.endswith(".biom"):
         args.level_separator = ";"
         args.transpose = True
 
+    # Read and return full table with separated total and unassigned counts (sharing same index)
     table_df, total, unassigned = parse_input_table(args.input_file, args.unassigned_header, args.transpose, args.sample_replace)
 
+    # Define if table is already normalized (0-100) or has count data
     if args.values == "count":
         normalized = False
     elif args.values == "normalized":
@@ -77,10 +84,10 @@ def main(argv=sys.argv[1:]):
         normalized = True
     else:
         normalized = False
-
     if normalized:
-        print_log("- Normalized values")
+        print_log("- Table parsed with normalized values")
 
+    # Split table into ranks. Ranks are either in the headers in multi level tables or will be created for a one level table
     if args.level_separator:
         ranked_tables, lineage = parse_multi_table(table_df, args.ranks, tax, args.level_separator, args.obs_replace)
     else:
@@ -127,21 +134,25 @@ def main(argv=sys.argv[1:]):
 
     # Metadata
     max_metadata_cols = args.metadata_cols
+    print_log("- Parsing metadata")
+    metadata = None
     if args.metadata:
-        print_log("- Parsing metadata")
-        metadata = Metadata(args.metadata, samples=table.samples.to_list())
-        if metadata.data.empty:
-            metadata = None
-            print_log("No valid metadata")
-        else:
-            print_log("Samples: " + str(metadata.data.shape[0]))
-            print_log("Numeric Fields: " + str(metadata.get_data("numeric").shape[1]))
-            print_log("Categorical Fields: " + str(metadata.get_data("categorical").shape[1]))
-            if len(metadata.get_col_headers()) < args.metadata_cols:
-                max_metadata_cols = len(metadata.get_col_headers())
-        print_log("")
-    else:
+        metadata = Metadata(metadata_file=args.metadata, samples=table.samples.to_list())
+    elif args.input_file.endswith(".biom"):
+        biom_in = biom.load_table(args.input_file)
+        if biom_in.metadata() is not None:
+            metadata = Metadata(metadata_table=biom_in.metadata_to_dataframe(axis="sample"), samples=table.samples.to_list())
+
+    if metadata is None or metadata.data.empty:
         metadata = None
+        print_log("No valid metadata")
+    else:
+        print_log("Samples: " + str(metadata.data.shape[0]))
+        print_log("Numeric Fields: " + str(metadata.get_data("numeric").shape[1]))
+        print_log("Categorical Fields: " + str(metadata.get_data("categorical").shape[1]))
+        if len(metadata.get_col_headers()) < args.metadata_cols:
+            max_metadata_cols = len(metadata.get_col_headers())
+    print_log("")
 
     # References (only possible with ncbi identifiers)
     references = {}
@@ -158,22 +169,24 @@ def main(argv=sys.argv[1:]):
         print_log("")
 
     # Run and load decontam results
+    decontam = None
     if args.decontam:
         print_log("- Running DECONTAM")
         decontam = run_decontam(cfg, table, metadata, control_samples, normalized)
         print_log("")
-    else:
-        decontam = None
 
     # Mgnify
-    if args.mgnify and "mgnify" in cfg["external"]:
-        print_log("- Parsing MGNify")
-        mgnify = MGnify(cfg["external"]["mgnify"], ranks=table.ranks() if args.ranks != [Config.default_rank_name] else [])
-        if tax:
-            mgnify.update_taxids(update_tax_nodes([tuple(x) for x in mgnify.data[["rank", "taxa"]].to_numpy()], tax))
-        print_log("")
-    else:
-        mgnify = None
+    mgnify = None
+    if args.mgnify:
+        if cfg and "mgnify" in cfg["external"]:
+            print_log("- Parsing MGNify")
+            mgnify = MGnify(cfg["external"]["mgnify"], ranks=table.ranks() if args.ranks != [Config.default_rank_name] else [])
+            if tax:
+                mgnify.update_taxids(update_tax_nodes([tuple(x) for x in mgnify.data[["rank", "taxa"]].to_numpy()], tax))
+            print_log("")
+        else:
+            print("Configuration file not found. Skipping MGnify")
+            print_log("")
 
     # Hiearchical clustering
     print_log("- Running hiearchical clustering")
@@ -314,6 +327,7 @@ def main(argv=sys.argv[1:]):
         ele["metadata"]["fig"] = Spacer()
         ele["metadata"]["wid"]["metadata_multiselect"] = Spacer()
         ele["metadata"]["wid"]["legend_colorbars"] = Spacer()
+        ele["metadata"]["wid"]["toggle_legend"] = Spacer()
 
     # annotations
     ele["annotations"] = {}

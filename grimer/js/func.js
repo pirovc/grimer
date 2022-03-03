@@ -19,8 +19,10 @@ function grimer_sort(factors, sort_col, sort_mode="numeric", desc=false, group_c
     // Generate numerical index to sort arrays
     var idx = new Array(factors.length);
     for (var i = 0; i < idx.length; ++i) idx[i] = i;
-    //If numeric, replace NaN with sortable value (false)
-	if (sort_mode=="numeric") sort_col = sort_col.map(function(v){ return isNaN(v) ? false : v })
+    //If numeric, replace NaN with sortable value (-Infinity) to be at the end of the sorted array
+	if (sort_mode=="numeric"){
+		sort_col = sort_col.map(function(v){ return isNaN(v) ? -Infinity : v })
+	}
 
 	if(group_col1.length && group_col2.length){
 		if (sort_mode=="numeric" && desc==false)

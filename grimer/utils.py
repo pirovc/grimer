@@ -11,7 +11,7 @@ from grimer.decontam import Decontam
 from grimer.reference import Reference
 
 # Bokeh
-from bokeh.palettes import Blues, Category10, Category20, Colorblind, Dark2, linear_palette, Magma256, Reds, Turbo256
+from bokeh.palettes import Category10, Category20, Colorblind, linear_palette, Turbo256
 
 #biom
 import biom
@@ -315,6 +315,11 @@ def update_tax_nodes(nodes, tax):
 
 
 def run_decontam(cfg, table, metadata, control_samples, normalized):
+
+    if not cfg:
+        print("Configuration file not found. Skipping DECONTAM")
+        return None
+
     df_decontam = pd.DataFrame(index=table.samples, columns=["concentration", "controls"])
     cfg_decontam = cfg["external"]["decontam"]
     tmp_output_prefix = "tmp_"

@@ -95,7 +95,6 @@ def generate_cds_annotations(table, references, controls, decontam, control_samp
         # Concat in the main df
         df_annotations = pd.concat([df_annotations, df_rank], axis=0)
 
-
     print_df(df_annotations, "cds_p_annotations")
     return ColumnDataSource(df_annotations)
 

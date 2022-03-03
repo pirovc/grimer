@@ -742,9 +742,10 @@ def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, reference_name
     y_groupby_options = {}
     y_groupby_options["Default"] = [("none", "none")]
     y_groupby_options["Clustering Method/Metric"] = cluster_options
-    categorical_md_data = metadata.get_data(metadata_type="categorical").columns.to_list()
-    if categorical_md_data:
-        y_groupby_options["Group by Categorical Metadata"] = [("group_metadata|" + md, md) for md in categorical_md_data]
+    if metadata:
+        categorical_md_data = metadata.get_data(metadata_type="categorical").columns.to_list()
+        if categorical_md_data:
+            y_groupby_options["Group by Categorical Metadata"] = [("group_metadata|" + md, md) for md in categorical_md_data]
 
     y_sort_options = {}
     y_sort_options["Default"] = [("none", "none"), ("counts", "counts"), ("samples", "samples")]
@@ -912,7 +913,7 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
         metadata_fig.add_layout(legend_colorbars[md_header], 'right')
 
     metadata_fig.xaxis.axis_label = "metadata"
-    metadata_fig.xaxis.major_label_orientation = "vertical"
+    metadata_fig.xaxis.major_label_orientation = "horizontal" #"vertical"
     metadata_fig.xaxis.major_label_text_font_size = "11px"
     metadata_fig.xaxis.minor_tick_line_color = None
     metadata_fig.xgrid.grid_line_color = None
