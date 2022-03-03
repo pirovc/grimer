@@ -698,7 +698,7 @@ def link_heatmap_widgets(ele,
 def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols):
     metadata_multiselect_callback = CustomJS(
         args=dict(metadata_heatmap=ele["metadata"]["fig"],
-                  metadata_heatmap_xaxis=ele["metadata"]["fig"].xaxis[0],
+                  metadata_heatmap_xaxis=ele["metadata"]["fig"].xaxis[0] if cds_p_metadata else None,
                   metadata_multiselect=ele["metadata"]["wid"]["metadata_multiselect"],
                   legend_colorbars=ele["metadata"]["wid"]["legend_colorbars"],
                   toggle_legend=ele["metadata"]["wid"]["toggle_legend"],
@@ -715,10 +715,12 @@ def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols
         for (let md_header in legend_colorbars) legend_colorbars[md_header].visible = false;
 
         // set legend orientation
-        if(metadata_multiselect.value.length==1)
-            metadata_heatmap_xaxis.major_label_orientation = "horizontal";
-        else
-            metadata_heatmap_xaxis.major_label_orientation = 0.7;
+        if(metadata_heatmap_xaxis){
+            if(metadata_multiselect.value.length==1)
+                metadata_heatmap_xaxis.major_label_orientation = "horizontal";
+            else
+                metadata_heatmap_xaxis.major_label_orientation = 0.7;
+        }
 
         console.log(metadata_heatmap_xaxis)
         for(var s=0; s < max_metadata_cols; ++s){

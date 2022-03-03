@@ -139,9 +139,13 @@ def main(argv=sys.argv[1:]):
     if args.metadata:
         metadata = Metadata(metadata_file=args.metadata, samples=table.samples.to_list())
     elif args.input_file.endswith(".biom"):
-        biom_in = biom.load_table(args.input_file)
-        if biom_in.metadata() is not None:
-            metadata = Metadata(metadata_table=biom_in.metadata_to_dataframe(axis="sample"), samples=table.samples.to_list())
+        try:
+            biom_in = biom.load_table(args.input_file)
+            if biom_in.metadata() is not None:
+                metadata = Metadata(metadata_table=biom_in.metadata_to_dataframe(axis="sample"), samples=table.samples.to_list())
+        except:
+            metadata = None
+            print_log("Error parsing metadata from BIOM file")
 
     if metadata is None or metadata.data.empty:
         metadata = None
