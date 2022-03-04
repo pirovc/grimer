@@ -8,14 +8,14 @@ from bokeh.palettes import Blues, Dark2, Magma256, Reds
 from bokeh.plotting import figure
 from bokeh.transform import cumsum, factor_cmap, transform
 
-from grimer.utils import format_js_toString, make_color_palette
+from grimer.func import format_js_toString, make_color_palette
 
 
-def plot_samplebars(cds_p_samplebars, max_total_count, ranks, normalized):
+def plot_samplebars(cds_p_samplebars, table):
     # Bar plots has 3 main stacks: selection, others, unassigned
     # stacks can be annotated with references and controls
     samplebars_fig = figure(x_range=FactorRange(factors=cds_p_samplebars.data["aux|factors"]),
-                            y_range=Range1d(start=0, end=max_total_count),
+                            y_range=Range1d(start=0, end=table.get_total().max()),
                             plot_height=400,
                             sizing_mode="stretch_width",
                             tools="box_zoom,reset,save")
@@ -42,9 +42,9 @@ def plot_samplebars(cds_p_samplebars, max_total_count, ranks, normalized):
     samplebars_fig.add_layout(LinearAxis(y_range_name="obs"), 'right')
 
     # Plot obs ranks
-    obs_palette = make_color_palette(len(ranks), palette=Dark2)
+    obs_palette = make_color_palette(len(table.ranks()), palette=Dark2)
     legend_obs_items = []
-    for i, rank in enumerate(ranks):
+    for i, rank in enumerate(table.ranks()):
         ren = samplebars_fig.scatter(x="aux|factors", y="tax|" + rank,
                                      y_range_name="obs",
                                      name="tax|" + rank,  # to work with hover properly
@@ -55,7 +55,7 @@ def plot_samplebars(cds_p_samplebars, max_total_count, ranks, normalized):
         legend_obs_items.append((rank, [ren]))
 
     # Legend counts (vbars)
-    legend_bars_items = [(f, [vbar_ren[i]]) for i, f in enumerate([ranks[0] + "|assigned"] + fixed_bar_options[1:])]
+    legend_bars_items = [(f, [vbar_ren[i]]) for i, f in enumerate([table.ranks()[0] + "|assigned"] + fixed_bar_options[1:])]
     legend_bars = Legend(items=legend_bars_items)
     legend_bars.margin = 0
     legend_bars.border_line_width = 0
@@ -89,7 +89,7 @@ def plot_samplebars(cds_p_samplebars, max_total_count, ranks, normalized):
     samplebars_fig.xaxis.subgroup_label_orientation = "vertical"
 
     samplebars_fig.xaxis.axis_label = "samples"
-    samplebars_fig.yaxis[0].axis_label = "# counts" if not normalized else "% counts"
+    samplebars_fig.yaxis[0].axis_label = "# counts" if not table.normalized else "% counts"
     samplebars_fig.yaxis[1].axis_label = "% observations"
     samplebars_fig.yaxis[1].axis_label_text_color = "#606c38"
 
@@ -232,13 +232,15 @@ Samples can be grouped and sorted. When sorting by numeric metadata, labels will
             "help_button": help_button(title="Observation bars", text=help_text)}
 
 
-def plot_samplebars_widgets(ranks, metadata, reference_names, control_names, decontam, normalized):
+def plot_samplebars_widgets(ranks, metadata, references, controls, decontam, normalized):
     annotbar_rank_select = Select(title="Annotate bars at rank:", value=ranks[0], options=[r for r in ranks])
 
     annotbar_options = {}
     annotbar_options["Default"] = ["assigned"]
-    annotbar_options["References"] = [r for r in reference_names]
-    annotbar_options["Controls"] = [c for c in control_names]
+    if references is not None:
+        annotbar_options["References"] = [r for r in references.keys()]
+    if controls is not None:
+        annotbar_options["Controls"] = [c for c in controls.keys()]
     if decontam:
         annotbar_options["Decontam"] = ["decontam"]
     annotbar_select = Select(title="Annotate bars by:", value="assigned", options=annotbar_options)
@@ -295,7 +297,7 @@ Raw counts and observations (#) can be normalized (%) and/or log transformed (lo
             "help_button": help_button(title="Sample bars", text=help_text)}
 
 
-def plot_obstable(sizes, cds_p_obstable, ranks, reference_names, control_names):
+def plot_obstable(sizes, cds_m_obstable, ranks, references, controls):
     # General filter for widgets
     widgets_filter = IndexFilter()
 
@@ -304,7 +306,7 @@ def plot_obstable(sizes, cds_p_obstable, ranks, reference_names, control_names):
     # Create table with view for each rank
     for rank in ranks:
         rank_filter = GroupFilter(column_name='col|rank', group=rank)
-        cds_view = CDSView(source=cds_p_obstable, filters=[rank_filter, widgets_filter])
+        cds_view = CDSView(source=cds_m_obstable, filters=[rank_filter, widgets_filter])
 
         table_cols = []
         table_cols.append(TableColumn(field="col|name", title="Name"))
@@ -312,13 +314,16 @@ def plot_obstable(sizes, cds_p_obstable, ranks, reference_names, control_names):
         table_cols.append(TableColumn(field="col|counts_perc_avg", title="Avg. counts/sample", default_sort="descending", formatter=NumberFormatter(format="0.00%")))
         table_cols.append(TableColumn(field="col|total_counts", title="Total counts", default_sort="descending"))
 
-        for ctrl_name in control_names:
-            table_cols.append(TableColumn(field="col|" + ctrl_name, title="(F) " + ctrl_name, default_sort="descending", formatter=NumberFormatter(format="0.00%")))
+        if references is not None:
+            for ref_name in references.keys():
+                table_cols.append(TableColumn(field="col|" + ref_name, title=ref_name, default_sort="descending"))
 
-        for ref_name in reference_names:
-            table_cols.append(TableColumn(field="col|" + ref_name, title=ref_name, default_sort="descending"))
+        if controls is not None:
+            for ctrl_name in controls.keys():
+                table_cols.append(TableColumn(field="col|" + ctrl_name, title="(F) " + ctrl_name, default_sort="descending", formatter=NumberFormatter(format="0.00%")))
 
-        if "col|decontam" in cds_p_obstable.data:
+
+        if "col|decontam" in cds_m_obstable.data:
             table_cols.append(TableColumn(field="col|decontam", title="DECONTAM", default_sort="descending"))
 
         datatable = DataTable(height=sizes["overview_top_panel_height"],
@@ -329,7 +334,7 @@ def plot_obstable(sizes, cds_p_obstable, ranks, reference_names, control_names):
                               #selectable="checkbox",
                               frozen_columns=1,
                               columns=table_cols,
-                              source=cds_p_obstable,
+                              source=cds_m_obstable,
                               view=cds_view)
 
         obstable_tabs.append(Panel(child=datatable, title=rank))
@@ -573,7 +578,8 @@ def plot_references(sizes, table, cds_p_references, dict_d_taxname):
 
 
 def plot_references_widgets(sizes, references):
-    references_select = Select(value=list(references.keys())[0] if references else None, width=sizes["overview_top_panel_width_right"] - 70, options=list(references.keys()))
+    ref_names = list(references.keys()) if references is not None else []
+    references_select = Select(value=ref_names[0] if ref_names else None, width=sizes["overview_top_panel_width_right"] - 70, options=ref_names)
     help_text = """
 Plot of number of occurences of provided references for each observation and its lineage.
 
@@ -717,7 +723,7 @@ def plot_heatmap(table, cds_p_heatmap, tools_heatmap, transformation, dict_d_tax
     return heatmap
 
 
-def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, reference_names, controls_names, metadata, decontam):
+def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, references, controls, metadata, decontam):
 
     rank_select = Select(title="Taxonomic rank:", value=ranks[0], options=ranks)
 
@@ -733,9 +739,10 @@ def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, reference_name
 
     x_sort_options = {}
     x_sort_options["Default"] = [("none", "none"), ("counts", "counts"), ("observations", "observations")]
-    x_sort_options["References"] = [("annot|" + r, r) for r in reference_names]
-    if controls_names:
-        x_sort_options["Controls"] = [("annot|" + c, c) for c in controls_names]
+    if references is not None:
+        x_sort_options["References"] = [("annot|" + r, r) for r in references.keys()]
+    if controls is not None:
+        x_sort_options["Controls"] = [("annot|" + c, c) for c in controls.keys()]
     if decontam:
         x_sort_options["DECONTAM"] = [("annot|decontam", "decontam")]
 

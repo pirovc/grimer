@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 
 class Table:
-    def __init__(self, samples, total, unassigned, lineage, normalized):
+    def __init__(self, samples, total, unassigned, lineage, normalized, zerorep):
         # Ordered dict to keep rank insert order
         self.data = OrderedDict()
         self.lineage = lineage
@@ -10,6 +10,7 @@ class Table:
         self.total = total
         self.unassigned = unassigned
         self.normalized = normalized
+        self.zerorep = zerorep
 
     def __repr__(self):
         args = ['{}={}'.format(k, repr(v)) for (k, v) in vars(self).items()]
@@ -23,6 +24,9 @@ class Table:
 
     def ranks(self):
         return list(self.data.keys())
+
+    def get_min_valid_count_perc(self):
+        return min([self.get_counts_perc(rank)[self.get_counts_perc(rank) > 0].min().min() for rank in self.ranks()])
 
     def get_total(self):
         return self.total

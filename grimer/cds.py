@@ -4,7 +4,7 @@ import numpy as np
 from math import pi
 
 #Internal
-from grimer.utils import print_df, transform_table, print_log, pairwise_rho, format_js_toString
+from grimer.func import print_df, transform_table, print_log, pairwise_rho, format_js_toString
 
 #Bokeh
 from bokeh.models import ColumnDataSource
@@ -27,13 +27,14 @@ def generate_cds_plot_references(table, tax, references):
     # index -> observations (repeated)
     # columns -> "rank", "ref", "direct", "parent"
     clist = []
-    for rank in table.ranks():
-        for obs in table.observations(rank):
-            for desc, ref in references.items():
-                direct = ref.get_refs_count(obs, direct=True)
-                parent = ref.get_refs_count(obs, parents=True)
-                if direct + parent > 0:
-                    clist.append([obs, rank, desc, direct, parent])
+    if references is not None:
+        for rank in table.ranks():
+            for obs in table.observations(rank):
+                for desc, ref in references.items():
+                    direct = ref.get_refs_count(obs, direct=True)
+                    parent = ref.get_refs_count(obs, parents=True)
+                    if direct + parent > 0:
+                        clist.append([obs, rank, desc, direct, parent])
 
     df_references = pd.DataFrame(clist, columns=["obs", "rank", "ref", "direct", "parent"])
     df_references.set_index('obs', inplace=True)
@@ -57,11 +58,12 @@ def generate_cds_annotations(table, references, controls, decontam, control_samp
             if contaminants.any():
                 df_rank["decontam"] = decontam.get_pscore(rank, df_rank.index)[contaminants]
 
-        for desc, ref in references.items():
-            df_rank[desc] = table.observations(rank).map(lambda x: ref.get_refs_count(x, direct=True))
-            df_rank.loc[df_rank[desc] == 0, desc] = np.nan
+        if references is not None:
+            for desc, ref in references.items():
+                df_rank[desc] = table.observations(rank).map(lambda x: ref.get_refs_count(x, direct=True))
+                df_rank.loc[df_rank[desc] == 0, desc] = np.nan
 
-        if controls:
+        if controls is not None:
             for desc, ctrl in controls.items():
                 control_table = table.get_subtable(samples=control_samples[desc], rank=rank)
                 freq_perc_control = control_table.gt(0).sum(axis=0) / control_table.shape[0]
@@ -78,13 +80,14 @@ def generate_cds_annotations(table, references, controls, decontam, control_samp
             df_rank.loc[df_rank["annot"] == "decontam", "tv"] = 1 - ((df_rank[df_rank["annot"] == "decontam"]["ov"] - min_val) / (max_val - min_val))
 
         # max references divided by max
-        for desc, ref in references.items():
-            if not df_rank[df_rank["annot"] == desc].empty:
-                max_val = df_rank[df_rank["annot"] == desc]["ov"].max()
-                df_rank.loc[df_rank["annot"] == desc, "tv"] = df_rank.loc[df_rank["annot"] == desc, "ov"] / max_val
+        if references is not None:
+            for desc, ref in references.items():
+                if not df_rank[df_rank["annot"] == desc].empty:
+                    max_val = df_rank[df_rank["annot"] == desc]["ov"].max()
+                    df_rank.loc[df_rank["annot"] == desc, "tv"] = df_rank.loc[df_rank["annot"] == desc, "ov"] / max_val
 
         # keep same percentage
-        if controls:
+        if controls is not None:
             for desc, ctrl in controls.items():
                 if not df_rank.loc[df_rank["annot"] == desc].empty:
                     df_rank.loc[df_rank["annot"] == desc, "tv"] = df_rank.loc[df_rank["annot"] == desc, "ov"]
@@ -99,7 +102,7 @@ def generate_cds_annotations(table, references, controls, decontam, control_samp
     return ColumnDataSource(df_annotations)
 
 
-def generate_cds_obstable(table, tax, references, controls, control_samples, decontam, normalized):
+def generate_cds_obstable(table, tax, references, controls, control_samples, decontam):
     # index unique taxids
     # col|...  values to plot to columns in the datatable
     # tax|...  auxiliary lineage of taxa entries
@@ -127,11 +130,12 @@ def generate_cds_obstable(table, tax, references, controls, control_samples, dec
             df_rank["col|decontam"] = decontam.get_contaminants(rank, df_rank.index)
 
         # Add a column for each Annotation source
-        for desc, ref in references.items():
-            df_rank["col|" + desc] = table.observations(rank).map(lambda x: ref.get_refs_count(x, direct=True)).to_list()
+        if references is not None:
+            for desc, ref in references.items():
+                df_rank["col|" + desc] = table.observations(rank).map(lambda x: ref.get_refs_count(x, direct=True)).to_list()
 
         # Add a column for each Control source
-        if controls:
+        if controls is not None:
             # calculate frequency for each group of control provided
             for desc, ctrl in controls.items():
                 control_table = table.get_subtable(samples=control_samples[desc], rank=rank)
@@ -152,19 +156,19 @@ def generate_cds_obstable(table, tax, references, controls, control_samples, dec
         # Concat in the main df
         df_obstable = pd.concat([df_obstable, df_rank], axis=0)
 
-    print_df(df_obstable, "cds_p_obstable")
+    print_df(df_obstable, "cds_m_obstable")
     return ColumnDataSource(df_obstable)
 
 
-def generate_cds_sampletable(table, normalized):
+def generate_cds_sampletable(table):
     # index unique sample-ids
     # col|...  values to plot to columns in the datatable
 
     df_sampletable = pd.DataFrame(index=table.samples)
-    df_sampletable["col|total"] = table.get_total() if not normalized else 0
-    df_sampletable["col|assigned"] = table.get_assigned() if not normalized else 0
+    df_sampletable["col|total"] = table.get_total() if not table.normalized else 0
+    df_sampletable["col|assigned"] = table.get_assigned() if not table.normalized else 0
     df_sampletable["col|assigned_perc"] = table.get_assigned_perc()
-    df_sampletable["col|unassigned"] = table.get_unassigned() if not normalized else 0
+    df_sampletable["col|unassigned"] = table.get_unassigned() if not table.normalized else 0
     df_sampletable["col|unassigned_perc"] = table.get_unassigned_perc()
 
     # assigned by rank
@@ -218,8 +222,10 @@ def generate_cds_samples(table, references, controls, decontam):
         df_samples["cnt|" + rank + "|assigned"] = table.data[rank].sum(axis=1)
 
     # Add counts specific to sources
-    source_list = [references.items()]
-    if controls:
+    source_list = []
+    if references is not None:
+        source_list.append(references.items())
+    if controls is not None:
         source_list.append(controls.items())
 
     for sources in source_list:
@@ -324,7 +330,7 @@ def generate_dict_sampleobs(table):
     return dict_sampleobs
 
 
-def generate_cds_heatmap(table, transformation, replace_zero_value, show_zeros):
+def generate_cds_heatmap(table, transformation, show_zeros):
     # Stacked matrix of raw counts + transformed value
     # index -> sample-ids (repeated)
     # obs
@@ -338,7 +344,7 @@ def generate_cds_heatmap(table, transformation, replace_zero_value, show_zeros):
         # Rename first col to obs
         stacked_rank_df.rename(columns={stacked_rank_df.columns[0]: "obs"}, inplace=True)
         stacked_rank_df["rank"] = rank
-        tv = transform_table(table.data[rank], table.total, transformation, replace_zero_value)
+        tv = transform_table(table.data[rank], table.total, transformation, table.zerorep)
         stacked_rank_df["tv"] = tv.stack().values
         #Drop zeros based on original counts
         if not show_zeros:
@@ -431,61 +437,36 @@ def generate_dict_refs(table, references):
     for rank in table.ranks():
         used_ids.update(table.observations(rank))
 
-    for i in used_ids:
-        for sname, s in references.items():
-            for ref, descs in s.get_refs_desc(i, direct=True).items():
-                for desc in descs:
-                    # Only add items if they have a reference to it
-                    if i not in d_refs:
-                        d_refs[i] = {}
-                    if sname not in d_refs[i]:
-                        d_refs[i][sname] = {}
-                    if desc not in d_refs[i][sname]:
-                        d_refs[i][sname][desc] = []
-                    d_refs[i][sname][desc].append(ref)
+    if references is not None:
+        for i in used_ids:
+            for sname, s in references.items():
+                for ref, descs in s.get_refs_desc(i, direct=True).items():
+                    for desc in descs:
+                        # Only add items if they have a reference to it
+                        if i not in d_refs:
+                            d_refs[i] = {}
+                        if sname not in d_refs[i]:
+                            d_refs[i][sname] = {}
+                        if desc not in d_refs[i][sname]:
+                            d_refs[i][sname][desc] = []
+                        d_refs[i][sname][desc].append(ref)
 
     print_df(d_refs, "dict_d_refs")
     return d_refs
 
 
-def generate_cds_correlation(table, top_obs_corr, replace_zero_value):
-    # index (repeated taxids)
-    # other taxid
-    # rank
-    # rho
-
+def generate_cds_correlation(table, corr):
     df_corr = pd.DataFrame(columns=["taxid", "rank", "rho"])
     for rank in table.ranks():
-        if top_obs_corr:
-            top_taxids = sorted(table.get_top(rank, top_obs_corr))
-            matrix = table.get_subtable(taxids=top_taxids, rank=rank)
-        else:
-            top_taxids = sorted(table.observations(rank))
-            matrix = table.data[rank]
+        stacked_rank_df = pd.DataFrame(corr[rank]["rho"], index=corr[rank]["observations"], columns=corr[rank]["observations"]).stack(dropna=False).reset_index(1)
+        stacked_rank_df.rename(columns={"level_1": "taxid"}, inplace=True)
+        stacked_rank_df.rename(columns={0: "rho"}, inplace=True)
+        stacked_rank_df["rank"] = rank
 
-        # No correlation with just one observation
-        if len(matrix.columns) >= 2:
+        # Drop NA for rho (missing values and upper triangular matrix)
+        stacked_rank_df.dropna(subset=['rho'], inplace=True)
 
-            rho = pairwise_rho(transform_table(matrix, 0, "clr", replace_zero_value).values)
-
-            if len(matrix.columns) == 2:
-                # If there are only 2 observations, return in a float
-                # re-format in a matrix shape
-                rho = np.array([[np.nan, np.nan], [rho[1, 0], np.nan]])
-            else:
-                # fill upper triangular matrix (mirrored values) with nan to be ignored by pandas
-                # to save half of the space
-                rho[np.triu_indices(rho.shape[0])] = np.nan
-
-            stacked_rank_df = pd.DataFrame(rho, index=top_taxids, columns=top_taxids).stack(dropna=False).reset_index(1)
-            stacked_rank_df.rename(columns={"level_1": "taxid"}, inplace=True)
-            stacked_rank_df.rename(columns={0: "rho"}, inplace=True)
-            stacked_rank_df["rank"] = rank
-
-            # Drop NA for rho (missing values and upper triangular matrix)
-            stacked_rank_df.dropna(subset=['rho'], inplace=True)
-
-            df_corr = pd.concat([df_corr, stacked_rank_df], axis=0)
+        df_corr = pd.concat([df_corr, stacked_rank_df], axis=0)
 
     print_df(df_corr, "cds_p_correlation")
     return ColumnDataSource(df_corr)

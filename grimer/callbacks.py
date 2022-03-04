@@ -2,7 +2,7 @@ from bokeh.models import CustomJS
 
 
 def link_obstable_samplebars(ele,
-                             cds_p_obstable,
+                             cds_m_obstable,
                              cds_p_samplebars,
                              cds_d_samples,
                              dict_d_sampleobs,
@@ -139,7 +139,7 @@ def link_obstable_samplebars(ele,
         args=dict(y2_select=ele["samplebars"]["wid"]["y2_select"],
                   cds_p_samplebars=cds_p_samplebars,
                   cds_d_samples=cds_d_samples,
-                  cds_p_obstable=cds_p_obstable,
+                  cds_m_obstable=cds_m_obstable,
                   dict_d_sampleobs=dict_d_sampleobs,
                   y_range=ele["samplebars"]["fig"].extra_y_ranges['obs'],
                   min_obs_perc=min_obs_perc,
@@ -147,7 +147,7 @@ def link_obstable_samplebars(ele,
                   active_ranks=active_ranks),
         code='''
         // get selected row from obstable [0 to get just the first]
-        var row = cds_p_obstable.selected.indices[0];
+        var row = cds_m_obstable.selected.indices[0];
         if (row!=undefined){
             // get totals
             const total = cds_d_samples.data["cnt|total"];
@@ -156,7 +156,7 @@ def link_obstable_samplebars(ele,
                 // get rank
                 let rank = active_ranks[r];
                 // get taxid of the rank
-                let taxid = cds_p_obstable.data["tax|"+rank][row];
+                let taxid = cds_m_obstable.data["tax|"+rank][row];
                 // for each sample
                 for (var i = 0; i < cds_d_samples.length; i++) {
                     let sample = cds_d_samples.data["index"][i];
@@ -197,19 +197,19 @@ def link_obstable_samplebars(ele,
     ''')
 
     change_text_legend_obs_callback = CustomJS(
-        args=dict(cds_p_obstable=cds_p_obstable,
+        args=dict(cds_m_obstable=cds_m_obstable,
                   legend_obs=ele["samplebars"]["legend_obs"],
                   samplebars=ele["samplebars"]["fig"],
                   active_ranks=active_ranks),
         code='''
         // selected row
         const row = cb_obj.indices[0];
-        const selected_rank = cds_p_obstable.data['col|rank'][row];
+        const selected_rank = cds_m_obstable.data['col|rank'][row];
 
         for(let r = 0; r < active_ranks.length; r++){
-            let taxid = cds_p_obstable.data["tax|"+active_ranks[r]][row];
+            let taxid = cds_m_obstable.data["tax|"+active_ranks[r]][row];
             if (taxid){
-                legend_obs.items[r].label = active_ranks[r] + "|" + cds_p_obstable.data['col|name'][cds_p_obstable.data['index'].indexOf(taxid)];
+                legend_obs.items[r].label = active_ranks[r] + "|" + cds_m_obstable.data['col|name'][cds_m_obstable.data['index'].indexOf(taxid)];
             }else{
                 legend_obs.items[r].label = active_ranks[r];
             }
@@ -232,7 +232,7 @@ def link_obstable_samplebars(ele,
 
     load_infopanel = CustomJS(
         args=dict(infopanel=ele["infopanel"]["textarea"],
-                  cds_p_obstable=cds_p_obstable,
+                  cds_m_obstable=cds_m_obstable,
                   dict_d_refs=dict_d_refs,
                   dict_d_taxname=dict_d_taxname,
                   active_ranks=active_ranks),
@@ -240,9 +240,9 @@ def link_obstable_samplebars(ele,
         // selected row
         var row = cb_obj.indices[0];
 
-        const name = cds_p_obstable.data['col|name'][row];
-        const rank = cds_p_obstable.data['col|rank'][row];
-        const taxid = cds_p_obstable.data['index'][row];
+        const name = cds_m_obstable.data['col|name'][row];
+        const rank = cds_m_obstable.data['col|rank'][row];
+        const taxid = cds_m_obstable.data['index'][row];
 
         var text = "";
         text+="[ Obs ]";
@@ -260,7 +260,7 @@ def link_obstable_samplebars(ele,
 
         var lineage = "";
         for(let r = 0; r < active_ranks.length; r++){
-            var obs_lin = cds_p_obstable.data["tax|" + active_ranks[r]][row];
+            var obs_lin = cds_m_obstable.data["tax|" + active_ranks[r]][row];
             if(taxid!=name){
                 if(dict_d_taxname[obs_lin])
                     lineage+=dict_d_taxname[obs_lin]+" | ";
@@ -297,7 +297,7 @@ def link_obstable_samplebars(ele,
 
     decontam_callback = CustomJS(
         args=dict(cds_d_samples=cds_d_samples,
-                  cds_p_obstable=cds_p_obstable,
+                  cds_m_obstable=cds_m_obstable,
                   dict_d_sampleobs=dict_d_sampleobs,
                   cds_p_decontam=cds_p_decontam,
                   cds_p_decontam_models=cds_p_decontam_models,
@@ -306,8 +306,8 @@ def link_obstable_samplebars(ele,
         code='''
         // selected row
         const row = cb_obj.indices[0];
-        const taxid = cds_p_obstable.data["index"][row];
-        const rank = cds_p_obstable.data["col|rank"][row];
+        const taxid = cds_m_obstable.data["index"][row];
+        const rank = cds_m_obstable.data["col|rank"][row];
         const total = cds_d_samples.data["cnt|total"];
         for(let i = 0; i < cds_p_decontam.length; i++){
             let sample = cds_p_decontam.data["index"][i];
@@ -336,14 +336,14 @@ def link_obstable_samplebars(ele,
         args=dict(mgnify_fig=ele["mgnify"]["fig"],
                   biome_spinner=ele["mgnify"]["wid"]["biome_spinner"],
                   mgnify_filter=ele["mgnify"]["filter"],
-                  cds_p_obstable=cds_p_obstable,
+                  cds_m_obstable=cds_m_obstable,
                   cds_p_mgnify=cds_p_mgnify),
         code='''
         // selected row
-        const row = cds_p_obstable.selected.indices[0];
+        const row = cds_m_obstable.selected.indices[0];
         const indices = [];
         if (row!=undefined){
-            const taxid = cds_p_obstable.data["index"][row];
+            const taxid = cds_m_obstable.data["index"][row];
             for(let i = 0; i < cds_p_mgnify.length; i++){
                 if(cds_p_mgnify.data["taxa"][i]==taxid &&
                    cds_p_mgnify.data["level"][i]==biome_spinner.value.toString()){
@@ -359,19 +359,19 @@ def link_obstable_samplebars(ele,
         args=dict(references_fig=ele["references"]["fig"],
                   references_filter=ele["references"]["filter"],
                   references_select=ele["references"]["wid"]["references_select"],
-                  cds_p_obstable=cds_p_obstable,
+                  cds_m_obstable=cds_m_obstable,
                   cds_p_references=cds_p_references,
                   active_ranks=active_ranks),
         code='''
         // selected row
-        const row = cds_p_obstable.selected.indices[0];
+        const row = cds_m_obstable.selected.indices[0];
         const indices = [];
         if (row!=undefined){
             for(let i = 0; i < cds_p_references.length; i++){
                 // for each rank
                 for(let r = 0; r < active_ranks.length; r++){
                     // get taxid of the rank
-                    let rank_obs = cds_p_obstable.data["tax|"+active_ranks[r]][row];
+                    let rank_obs = cds_m_obstable.data["tax|"+active_ranks[r]][row];
                     if(cds_p_references.data["obs"][i]==rank_obs &&
                        cds_p_references.data["rank"][i]==active_ranks[r] &&
                        cds_p_references.data["ref"][i]==references_select.value){
@@ -404,7 +404,7 @@ def link_obstable_samplebars(ele,
     if ele["references"]["filter"]:
         obstable_callbacks.append(references_callback)
 
-    cds_p_obstable.selected.js_on_change('indices', *obstable_callbacks)
+    cds_m_obstable.selected.js_on_change('indices', *obstable_callbacks)
 
     ele["samplebars"]["wid"]["sort_select"].js_on_change('value', sort_groupby_callback)
     ele["samplebars"]["wid"]["groupby1_select"].js_on_change('value', sort_groupby_callback)
@@ -429,7 +429,7 @@ def link_heatmap_widgets(ele,
                          dict_d_dedro_x,
                          dict_d_dedro_y,
                          cds_p_annotations,
-                         cds_p_obstable,
+                         cds_m_obstable,
                          cds_p_heatmap,
                          active_ranks,
                          dict_d_taxname):
@@ -465,22 +465,22 @@ def link_heatmap_widgets(ele,
                   x_groupby_select=ele["heatmap"]["wid"]["x_groupby_select"],
                   dict_d_hcluster_x=dict_d_hcluster_x,
                   cds_p_annotations=cds_p_annotations,
-                  cds_p_obstable=cds_p_obstable,
+                  cds_m_obstable=cds_m_obstable,
                   cds_p_heatmap=cds_p_heatmap,
                   dict_d_taxname=dict_d_taxname),
         code='''
         // selected rank
         const rank = rank_select.value;
 
-        // get index to access data from observations from cds_p_obstable
+        // get index to access data from observations from cds_m_obstable
         var obs_index = [];
-        for (let i = 0; i < cds_p_obstable.data["index"].length; i++) {
-            if(cds_p_obstable.data["col|rank"][i]==rank){
+        for (let i = 0; i < cds_m_obstable.data["index"].length; i++) {
+            if(cds_m_obstable.data["col|rank"][i]==rank){
                 obs_index.push(i);
             }
         }
 
-        var annot_obs = obs_index.map( s => cds_p_obstable.data["index"][s] );
+        var annot_obs = obs_index.map( s => cds_m_obstable.data["index"][s] );
 
         var sorted_factors = [];
         var dict_factors = {};
@@ -498,10 +498,10 @@ def link_heatmap_widgets(ele,
             if (x_sort_select.value=="none"){
                 sort_col = obs_index;
             }else if (x_sort_select.value=="observations"){
-                sort_col = obs_index.map( s => cds_p_obstable.data["col|name"][s] );
+                sort_col = obs_index.map( s => cds_m_obstable.data["col|name"][s] );
                 sort_col_type = "string";
             }else if (x_sort_select.value=="counts"){
-                sort_col = obs_index.map( s => cds_p_obstable.data["col|total_counts"][s] );
+                sort_col = obs_index.map( s => cds_m_obstable.data["col|total_counts"][s] );
             }else if (x_sort_select.value.startsWith("annot|")){
                 const annot = x_sort_select.value.replace("annot|","");
                 // create array with zeros, mark with one if annotation is present
@@ -524,7 +524,7 @@ def link_heatmap_widgets(ele,
                 // if grouping with a higher rank
                 if(active_ranks.indexOf(rank) > active_ranks.indexOf(group_rank)){
                     // group entries without selected rank with space " "
-                    var groupby_col = obs_index.map(function(s) { return cds_p_obstable.data["tax|" + group_rank][s] == "" ? " " : dict_d_taxname[cds_p_obstable.data["tax|" + group_rank][s]]; });
+                    var groupby_col = obs_index.map(function(s) { return cds_m_obstable.data["tax|" + group_rank][s] == "" ? " " : dict_d_taxname[cds_m_obstable.data["tax|" + group_rank][s]]; });
                     var factors = [];
                     for(let i = 0; i < annot_obs.length; i++){
                         dict_factors[annot_obs[i]] = [groupby_col[i], annot_obs[i]];
@@ -756,11 +756,11 @@ def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols
         ele["metadata"]["wid"]["toggle_legend"].js_on_click(metadata_multiselect_callback)
 
 
-def link_obstable_filter(ele, cds_p_obstable, active_ranks):
+def link_obstable_filter(ele, cds_m_obstable, active_ranks):
     filter_callback = CustomJS(
-        args=dict(cds_p_obstable=cds_p_obstable,
+        args=dict(cds_m_obstable=cds_m_obstable,
                   active_ranks=active_ranks,
-                  widgets_filter=ele["obstable"]["widgets_filter"],
+                  filter=ele["obstable"]["filter"],
                   frequency_spinner=ele["obstable"]["wid"]["frequency_spinner"],
                   counts_perc_avg_spinner=ele["obstable"]["wid"]["counts_perc_avg_spinner"],
                   total_counts_spinner=ele["obstable"]["wid"]["total_counts_spinner"],
@@ -768,21 +768,21 @@ def link_obstable_filter(ele, cds_p_obstable, active_ranks):
                   ),
         code='''
         const indices = [];
-        for (var i = 0; i < cds_p_obstable.length; i++) {
-            if (cds_p_obstable.data['col|frequency_perc'][i] < (frequency_spinner.value/100)){
+        for (var i = 0; i < cds_m_obstable.length; i++) {
+            if (cds_m_obstable.data['col|frequency_perc'][i] < (frequency_spinner.value/100)){
                 continue;
             }
-            if (cds_p_obstable.data['col|counts_perc_avg'][i] < (counts_perc_avg_spinner.value/100)){
+            if (cds_m_obstable.data['col|counts_perc_avg'][i] < (counts_perc_avg_spinner.value/100)){
                 continue;
             }
-            if (cds_p_obstable.data['col|total_counts'][i] < (total_counts_spinner.value)){
+            if (cds_m_obstable.data['col|total_counts'][i] < (total_counts_spinner.value)){
                 continue;
             }
             if (name_multichoice.value.length > 0 ){
                 var found = false;
                 for(let r = 0; r < active_ranks.length; r++){
                     // Compare all names on multichoice (array) against cell
-                    if (name_multichoice.value.indexOf(cds_p_obstable.data["tax|"+active_ranks[r]][i]) >= 0){
+                    if (name_multichoice.value.indexOf(cds_m_obstable.data["tax|"+active_ranks[r]][i]) >= 0){
                         found = true;
                         break;
                     }
@@ -793,8 +793,8 @@ def link_obstable_filter(ele, cds_p_obstable, active_ranks):
             }
             indices.push(i);
         }
-        widgets_filter.indices = indices;
-        cds_p_obstable.change.emit();
+        filter.indices = indices;
+        cds_m_obstable.change.emit();
     ''')
     ele["obstable"]["wid"]["frequency_spinner"].js_on_change('value', filter_callback)
     ele["obstable"]["wid"]["counts_perc_avg_spinner"].js_on_change('value', filter_callback)
@@ -821,7 +821,7 @@ def link_correlation_widgets(ele, cds_p_correlation):
         ''')
 
     filter_callback = CustomJS(
-        args=dict(rho_filter=ele["correlation"]["rho_filter"],
+        args=dict(filter=ele["correlation"]["filter"],
                   neg_slider=ele["correlation"]["wid"]["neg_slider"],
                   pos_slider=ele["correlation"]["wid"]["pos_slider"],
                   cds_p_correlation=cds_p_correlation),
@@ -835,7 +835,7 @@ def link_correlation_widgets(ele, cds_p_correlation):
                 indices.push(i)
             }
         }
-        rho_filter.indices = indices;
+        filter.indices = indices;
         cds_p_correlation.change.emit();
         ''')
 

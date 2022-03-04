@@ -3,21 +3,16 @@ _debug = False
 
 #General
 import argparse
-import yaml
+import sys
 
 #Internal
-from grimer.table import Table
-from grimer.metadata import Metadata
-from grimer.mgnify import MGnify
 from grimer.callbacks import *
 from grimer.cds import *
 from grimer.config import Config
 from grimer.layout import *
 from grimer.plots import *
-from grimer.utils import *
+from grimer.func import *
 
-# MultiTax
-from multitax import *
 
 #Bokeh
 from bokeh.io import save
@@ -25,194 +20,83 @@ from bokeh.plotting import output_file
 
 
 def main(argv=sys.argv[1:]):
+    """
+    GRIMER steps
+    1) Load data/analysis: parse configuration, load files and run analysis into data objects
+        e.g. args.input_file to Table() and decontam
+    2) Generata data sources: Convert objects and analysis int cds/dict
+        e.g. table to cds_m_obstable
+    3) Plot figures and elements based on cds/dict (and some objects)
+        e.g cds_m_obstable to ele["obstable"]["fig"]
+    4) Link javascript callbacks between elements and cds/dict
+    5) Put elements into layout and generate report
+    """
 
+    # Parse CLI arguments
     args = Config(argv)
     print_logo_cli(Config.version)
-
+    # Setup global _debug variable to be used by other files with #from grimer.grimer import _debug
     global _debug
     _debug = args.debug
 
-    # Config file
-    cfg = {}
-    if args.config:
-        with open(args.config, 'r') as file:
-            cfg = yaml.safe_load(file)
-
-    # Taxonomy
+    # 1) Load data/analysis
+    cfg = None
     tax = None
-    if args.tax:
-        if args.tax_files:
-            print_log("- Parsing taxonomy")
-        else:
-            print_log("- Downloading and parsing taxonomy")
-        print_log(args.tax)
-        if args.tax == "ncbi":
-            tax = NcbiTx(files=args.tax_files, extended_names=True)
-        elif args.tax == "gtdb":
-            tax = GtdbTx(files=args.tax_files)
-        elif args.tax == "silva":
-            tax = SilvaTx(files=args.tax_files)
-        elif args.tax == "greengenes":
-            tax = GreengenesTx(files=args.tax_files)
-        elif args.tax == "ott":
-            tax = OttTx(files=args.tax_files, extended_names=True)
-    else:
-        print_log("- No taxonomy set")
-    print_log("")
-
-    # Ranks
-    if not args.ranks:
-        args.ranks = [Config.default_rank_name]
-
-    # Table of counts
-    print_log("- Parsing table")
-
-    # Specific params if biom file is provided
-    if args.input_file.endswith(".biom"):
-        args.level_separator = ";"
-        args.transpose = True
-
-    # Read and return full table with separated total and unassigned counts (sharing same index)
-    table_df, total, unassigned = parse_input_table(args.input_file, args.unassigned_header, args.transpose, args.sample_replace)
-
-    # Define if table is already normalized (0-100) or has count data
-    if args.values == "count":
-        normalized = False
-    elif args.values == "normalized":
-        normalized = True
-    elif (table_df.sum(axis=1).round() == 100).all() or (table_df % 1 != 0).any().any():
-        normalized = True
-    else:
-        normalized = False
-    if normalized:
-        print_log("- Table parsed with normalized values")
-
-    # Split table into ranks. Ranks are either in the headers in multi level tables or will be created for a one level table
-    if args.level_separator:
-        ranked_tables, lineage = parse_multi_table(table_df, args.ranks, tax, args.level_separator, args.obs_replace)
-    else:
-        ranked_tables, lineage = parse_single_table(table_df, args.ranks, tax, Config.default_rank_name)
-
-    if not ranked_tables:
-        print_log("Could not parse input table")
-        return 1
-
-    table = Table(table_df.index, total, unassigned, lineage, normalized)
-
-    print_log("")
-    print_log("Total valid samples: " + str(len(table.samples)))
-    # Check for long sample headers, break some plots
-    long_sample_headers = [h for h in table_df.index if len(h) > 70]
-    if long_sample_headers:
-        print_log("Long sample labels/headers detected, plots may break: ")
-        print_log("\n".join(long_sample_headers))
-    print_log("")
-
-    for r, t in ranked_tables.items():
-        print_log("--- " + r + " ---")
-        filtered_trimmed_t = trim_table(filter_input_table(t, total, args.min_frequency, args.max_frequency, args.min_count, args.max_count, normalized))
-        if t.empty:
-            print_log("No valid entries, skipping")
-        else:
-            # Trim table for empty zeros rows/cols
-            table.add_rank(r, filtered_trimmed_t)
-            print_log("Total valid observations: " + str(len(table.observations(r))))
-
-    print_log("")
-    if not normalized:
-        print_log("Total assigned (counts): " + str(table.total.sum() - table.unassigned.sum()))
-        print_log("Total unassigned (counts): " + str(table.unassigned.sum()))
-        print_log("")
-
-    # Zero replacement
-    try:
-        replace_zero_value = table_df[table_df.gt(0)].min().min() / int(args.replace_zeros)
-    except:
-        replace_zero_value = float(args.replace_zeros)
-    if replace_zero_value == 1 and args.transformation == "log":
-        replace_zero_value = 0.999999  # Do not allow value 1 using log
-
-    # Metadata
-    max_metadata_cols = args.metadata_cols
-    print_log("- Parsing metadata")
+    table = None
     metadata = None
-    if args.metadata:
-        metadata = Metadata(metadata_file=args.metadata, samples=table.samples.to_list())
-    elif args.input_file.endswith(".biom"):
-        try:
-            biom_in = biom.load_table(args.input_file)
-            if biom_in.metadata() is not None:
-                metadata = Metadata(metadata_table=biom_in.metadata_to_dataframe(axis="sample"), samples=table.samples.to_list())
-        except:
-            metadata = None
-            print_log("Error parsing metadata from BIOM file")
+    references = None
+    controls = None
+    control_samples = None
+    hcluster = None
+    dendro = None
+    corr = None
 
-    if metadata is None or metadata.data.empty:
-        metadata = None
-        print_log("No valid metadata")
-    else:
-        print_log("Samples: " + str(metadata.data.shape[0]))
-        print_log("Numeric Fields: " + str(metadata.get_data("numeric").shape[1]))
-        print_log("Categorical Fields: " + str(metadata.get_data("categorical").shape[1]))
-        if len(metadata.get_col_headers()) < args.metadata_cols:
-            max_metadata_cols = len(metadata.get_col_headers())
-    print_log("")
+    print_log("- Parsing configuration file")
+    cfg = parse_config_file(args.config)
 
-    # References (only possible with ncbi identifiers)
-    references = {}
-    if "references" in cfg and args.tax == "ncbi":
-        print_log("- Parsing references")
-        references = parse_references(cfg, tax, table.ranks())
-        print_log("")
+    print_log("- Parsing taxonomy")
+    tax = parse_taxonomy(args.tax, args.tax_files)
 
-    controls, control_samples = [{}, {}]
-    if "controls" in cfg:
-        print_log("- Parsing controls")
-        # Controls
-        controls, control_samples = parse_controls(cfg, table)
-        print_log("")
+    print_log("- Parsing input table")
+    table = parse_table(args, tax)
 
-    # Run and load decontam results
-    decontam = None
-    if args.decontam:
-        print_log("- Running DECONTAM")
-        decontam = run_decontam(cfg, table, metadata, control_samples, normalized)
-        print_log("")
+    print_log("- Parsing metadata")
+    metadata = parse_metadata(args, table)
 
-    # Mgnify
-    mgnify = None
-    if args.mgnify:
-        if cfg and "mgnify" in cfg["external"]:
-            print_log("- Parsing MGNify")
-            mgnify = MGnify(cfg["external"]["mgnify"], ranks=table.ranks() if args.ranks != [Config.default_rank_name] else [])
-            if tax:
-                mgnify.update_taxids(update_tax_nodes([tuple(x) for x in mgnify.data[["rank", "taxa"]].to_numpy()], tax))
-            print_log("")
-        else:
-            print("Configuration file not found. Skipping MGnify")
-            print_log("")
+    print_log("- Parsing references")
+    references = parse_references(cfg, tax, args.tax, table.ranks())
 
-    # Hiearchical clustering
+    print_log("- Parsing controls")
+    controls, control_samples = parse_controls(cfg, table)
+
+    print_log("- Parsing MGnify database")
+    mgnify = parse_mgnify(args.mgnify, cfg, tax, table.ranks())
+
+    print_log("- Running DECONTAM")
+    decontam = run_decontam(cfg, table, metadata, control_samples)
+
     print_log("- Running hiearchical clustering")
-    hcluster, dendro = run_hclustering(table, args.linkage_methods, args.linkage_metrics, args.transformation, replace_zero_value, args.skip_dendrogram, args.optimal_ordering)
-    print_log("")
+    hcluster, dendro = run_hclustering(table, args.linkage_methods, args.linkage_metrics, args.transformation, args.skip_dendrogram, args.optimal_ordering)
 
-    # save max/min values to control ranges
-    max_total_count = table.total.max()
-    min_obs_perc = min([table.get_counts_perc(rank)[table.get_counts_perc(rank) > 0].min().min() for rank in table.ranks()])
+    print_log("- Running correlation")
+    corr = run_correlation(table, args.top_obs_corr)
 
-    print_log("- Generating GRIMER report")
-    ############ cds (ColumnDataSource) and dict containers: data structures loaded and parsed by bokehjs
-    ############ "cds" for matrix like dataframes with fixed column sizes
-    ############ "dict" for variable column sizes
-    ############ _p_ : plot -> direct source of figures
-    ############ _d_ : data -> auxiliar containers to be used/shared among plots
-    ############               usually by copying and/or transforming values into a _p_ container
+    # 2) Generata data sources:
+    # cds (ColumnDataSource) and dict containers: data structures loaded and parsed by bokehjs
+    # "cds" for matrix like dataframes with fixed column sizes
+    # "dict" for variable column sizes
+    # _p_ : plot -> direct source of figures either pre-loaded or empty
+    # _d_ : data -> auxiliar containers to be used/shared among plots
+    #               usually by copying and/or transforming values into a _p_ container
+    # _m_ : mixed -> contain both plot and data properties
+
+    print_log("- Generating data sources")
+
+    # _m_
+    # df: index (unique observations), col|...,  tax|..., aux|ref
+    cds_m_obstable = generate_cds_obstable(table, tax, references, controls, control_samples, decontam)
 
     # _p_
-    # df: index (unique observations), col|...,  tax|..., aux|ref
-    # this cds an exeption and contains data to plot (col|) and auxiliary data (tax|)
-    cds_p_obstable = generate_cds_obstable(table, tax, references, controls, control_samples, decontam, normalized)
     # df: index (unique sample-ids), aux|..., bar|..., tax|...
     cds_p_samplebars = generate_cds_samplebars(table)
     # stacked: index (repeated observations), rank, ref, direct, parent
@@ -224,23 +108,21 @@ def main(argv=sys.argv[1:]):
     # stacked: index (taxa, level, lineage), count, perc
     cds_p_mgnify = generate_cds_mgnify(mgnify, table, tax) if mgnify else None
     # stacked: index (repeated sample-ids), obs, rank, ov, tv
-    cds_p_heatmap = generate_cds_heatmap(table, args.transformation, replace_zero_value, args.show_zeros)
-    # matrix: index (unique sample-ids), md0, md1, ..., md(max_metadata_cols) -> (metadata field, metadata values)
-    cds_p_metadata = generate_cds_plot_metadata(metadata, max_metadata_cols) if metadata else None
+    cds_p_heatmap = generate_cds_heatmap(table, args.transformation, args.show_zeros)
+    # matrix: index (unique sample-ids), md0, md1, ..., md(args.metadata_cols) -> (metadata field, metadata values)
+    cds_p_metadata = generate_cds_plot_metadata(metadata, args.metadata_cols) if metadata else None
     # stacked: index (repeated observations), rank, annot
     cds_p_annotations = generate_cds_annotations(table, references, controls, decontam, control_samples)
     # empty matrix {"x": [], "y": [], "c": []}
     cds_p_dendro_x, cds_p_dendro_y = generate_cds_plot_dendro() if not args.skip_dendrogram else [None, None]
     # stacked: index (repeated observations), other observation, rank, rho
-    cds_p_correlation = generate_cds_correlation(table, args.top_obs_corr, replace_zero_value)
+    cds_p_correlation = generate_cds_correlation(table, corr)
     # matrix: index (unique sample-ids), 0, 1, ..., top_obs_bars, unassigned, others, factors
     cds_p_obsbars = generate_cds_obsbars(table, args.top_obs_bars)
     # df: index (unique sample-ids), col|...
-    cds_p_sampletable = generate_cds_sampletable(table, normalized)
+    cds_p_sampletable = generate_cds_sampletable(table)
 
     # _d_
-    # dict: {rank: {obs: {sample: count}}}
-    dict_d_sampleobs = generate_dict_sampleobs(table)
     # df: index (unique sample-ids), aux|..., cnt|...,
     cds_d_samples = generate_cds_samples(table, references, controls, decontam)
     # matrix: index (unique sample-ids) x columns (metadata fields) -> metadata values
@@ -259,6 +141,8 @@ def main(argv=sys.argv[1:]):
     dict_d_topobs = generate_dict_topobs(table, args.top_obs_bars)
     # {taxid: {source: {desc: [refs]}}
     dict_d_refs = generate_dict_refs(table, references)
+    # dict: {rank: {obs: {sample: count}}}
+    dict_d_sampleobs = generate_dict_sampleobs(table)
 
     ############ PLOT ELEMENTS (Figures, Widgets, ...)
     ############ "fig": main figure
@@ -270,12 +154,16 @@ def main(argv=sys.argv[1:]):
     sizes["overview_top_panel_width_left"] = 250
     sizes["overview_top_panel_width_right"] = 450
 
+    # Elements to plot
+    # ele[name]["fig"] -> main figure/element
+    # ele[name]["filter"] -> filter to the figure
+    # ele[name]["wid"][widget1] -> widgets to the figure
     ele = {}
 
     # obstable
     ele["obstable"] = {}
-    ele["obstable"]["fig"], ele["obstable"]["widgets_filter"] = plot_obstable(sizes, cds_p_obstable, table.ranks(), references.keys(), controls.keys())
-    ele["obstable"]["wid"] = plot_obstable_widgets(sizes, dict_d_taxname, max(cds_p_obstable.data["col|total_counts"]))
+    ele["obstable"]["fig"], ele["obstable"]["filter"] = plot_obstable(sizes, cds_m_obstable, table.ranks(), references, controls)
+    ele["obstable"]["wid"] = plot_obstable_widgets(sizes, dict_d_taxname, max(cds_m_obstable.data["col|total_counts"]))
 
     # infopanel
     ele["infopanel"] = {}
@@ -301,15 +189,15 @@ def main(argv=sys.argv[1:]):
     ele["decontam"] = {}
     ele["decontam"]["wid"] = {}
     if decontam:
-        ele["decontam"]["fig"] = plot_decontam(sizes, cds_p_decontam, cds_p_decontam_models, min_obs_perc)
+        ele["decontam"]["fig"] = plot_decontam(sizes, cds_p_decontam, cds_p_decontam_models, table.get_min_valid_count_perc())
     else:
         ele["decontam"]["fig"] = None
     ele["decontam"]["wid"] = plot_decontam_widgets(sizes)
 
     # samplebars
     ele["samplebars"] = {}
-    ele["samplebars"]["fig"], ele["samplebars"]["legend_obs"], ele["samplebars"]["legend_bars"] = plot_samplebars(cds_p_samplebars, max_total_count, table.ranks(), normalized)
-    ele["samplebars"]["wid"] = plot_samplebars_widgets(table.ranks(), metadata, list(references.keys()), list(controls.keys()), decontam, normalized)
+    ele["samplebars"]["fig"], ele["samplebars"]["legend_obs"], ele["samplebars"]["legend_bars"] = plot_samplebars(cds_p_samplebars, table)
+    ele["samplebars"]["wid"] = plot_samplebars_widgets(table.ranks(), metadata, references, controls, decontam, table.normalized)
 
     # sampletable
     ele["sampletable"] = {}
@@ -320,7 +208,7 @@ def main(argv=sys.argv[1:]):
     tools_heatmap = "hover,save,box_zoom,reset,crosshair,box_select"
     ele["heatmap"] = {}
     ele["heatmap"]["fig"] = plot_heatmap(table, cds_p_heatmap, tools_heatmap, args.transformation, dict_d_taxname)
-    ele["heatmap"]["wid"] = plot_heatmap_widgets(table.ranks(), args.linkage_methods, args.linkage_metrics, list(references.keys()), list(controls.keys()), metadata, decontam)
+    ele["heatmap"]["wid"] = plot_heatmap_widgets(table.ranks(), args.linkage_methods, args.linkage_metrics, references, controls, metadata, decontam)
 
     # metadata (heatmap)
     ele["metadata"] = {}
@@ -351,7 +239,7 @@ def main(argv=sys.argv[1:]):
 
     # correlation
     ele["correlation"] = {}
-    ele["correlation"]["fig"], ele["correlation"]["rho_filter"] = plot_correlation(cds_p_correlation, table.ranks(), dict_d_taxname)
+    ele["correlation"]["fig"], ele["correlation"]["filter"] = plot_correlation(cds_p_correlation, table.ranks(), dict_d_taxname)
     ele["correlation"]["wid"] = plot_correlation_widgets(table.ranks(), args.top_obs_corr)
 
     # obsbars
@@ -361,10 +249,10 @@ def main(argv=sys.argv[1:]):
 
     ############ JAVASCRIPT LINKING
 
-    link_obstable_filter(ele, cds_p_obstable, table.ranks())
+    link_obstable_filter(ele, cds_m_obstable, table.ranks())
 
     link_obstable_samplebars(ele,
-                             cds_p_obstable,
+                             cds_m_obstable,
                              cds_p_samplebars,
                              cds_d_samples,
                              dict_d_sampleobs,
@@ -374,8 +262,8 @@ def main(argv=sys.argv[1:]):
                              cds_d_decontam,
                              cds_p_references,
                              table.ranks(),
-                             min_obs_perc,
-                             max_total_count,
+                             table.get_min_valid_count_perc(),
+                             table.get_total().max(),
                              cds_p_mgnify,
                              dict_d_refs,
                              dict_d_taxname)
@@ -391,12 +279,12 @@ def main(argv=sys.argv[1:]):
                          dict_d_dedro_x,
                          dict_d_dedro_y,
                          cds_p_annotations,
-                         cds_p_obstable,
+                         cds_m_obstable,
                          cds_p_heatmap,
                          table.ranks(),
                          dict_d_taxname)
 
-    link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols)
+    link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, args.metadata_cols)
 
     link_correlation_widgets(ele, cds_p_correlation)
 
