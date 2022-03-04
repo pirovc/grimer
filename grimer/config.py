@@ -18,7 +18,7 @@ class Config:
         parser.add_argument('-c', '--config', type=str, help="Configuration file")
         parser.add_argument('-m', '--metadata-file', type=str, help="Input metadata file in simple tabular format. Sample identifiers will be matched with ones provided by --input-table. QIIME 2 metadata format is also accepted, with categorical and numerical fields.")
         parser.add_argument('-t', '--tax', type=str, default=None, help="Define taxonomy to use. By default, do not use any taxonomy.", choices=["ncbi", "gtdb", "silva", "greengenes", "ott"])
-        parser.add_argument('-b', '--tax-files', nargs="*", type=str, default=None, help="Taxonomy files. If not provided, will automatically be downloaded.")
+        parser.add_argument('-b', '--tax-files', nargs="*", type=str, default=[], help="Taxonomy files. If not provided, will automatically be downloaded.")
         parser.add_argument('-z', '--replace-zeros', type=str, default="1000", help="INT (add 'smallest count'/INT to every raw count), FLOAT (add FLOAT to every raw count). Default: 1000")
         parser.add_argument('-r', '--ranks', nargs="*", default=[Config.default_rank_name], type=str, help="Taxonomic ranks to generate visualizations. Use '" + Config.default_rank_name + "' to use entries from the table directly. Default: " + Config.default_rank_name)
         parser.add_argument('-l', '--title', type=str, default="", help="Title to display on the header of the report.")

@@ -2,7 +2,6 @@
 _debug = False
 
 #General
-import argparse
 import sys
 
 #Internal
@@ -13,7 +12,6 @@ from grimer.layout import *
 from grimer.plots import *
 from grimer.func import *
 
-
 #Bokeh
 from bokeh.io import save
 from bokeh.plotting import output_file
@@ -21,15 +19,15 @@ from bokeh.plotting import output_file
 
 def main(argv=sys.argv[1:]):
     """
-    GRIMER steps
+    GRIMER code overview
     1) Load data/analysis: parse configuration, load files and run analysis into data objects
         e.g. args.input_file to Table() and decontam
     2) Generata data sources: Convert objects and analysis int cds/dict
         e.g. table to cds_m_obstable
-    3) Plot figures and elements based on cds/dict (and some objects)
+    3) Plot elements: plot figures and widgets based on cds/dict (and some objects)
         e.g cds_m_obstable to ele["obstable"]["fig"]
-    4) Link javascript callbacks between elements and cds/dict
-    5) Put elements into layout and generate report
+    4) Link javascript: link data sources and javascript custom callbacks
+    5) Draw layout: Put elements into layout scheme and generate report
     """
 
     # Parse CLI arguments
@@ -73,7 +71,7 @@ def main(argv=sys.argv[1:]):
     mgnify = parse_mgnify(args.mgnify, cfg, tax, table.ranks())
 
     print_log("- Running DECONTAM")
-    decontam = run_decontam(cfg, table, metadata, control_samples)
+    decontam = run_decontam(args.decontam, cfg, table, metadata, control_samples)
 
     print_log("- Running hiearchical clustering")
     hcluster, dendro = run_hclustering(table, args.linkage_methods, args.linkage_metrics, args.transformation, args.skip_dendrogram, args.optimal_ordering)
@@ -91,64 +89,60 @@ def main(argv=sys.argv[1:]):
     # _m_ : mixed -> contain both plot and data properties
 
     print_log("- Generating data sources")
-
     # _m_
     # df: index (unique observations), col|...,  tax|..., aux|ref
-    cds_m_obstable = generate_cds_obstable(table, tax, references, controls, control_samples, decontam)
-
+    cds_m_obstable = cds_obstable(table, tax, references, controls, control_samples, decontam)
     # _p_
     # df: index (unique sample-ids), aux|..., bar|..., tax|...
-    cds_p_samplebars = generate_cds_samplebars(table)
+    cds_p_samplebars = cds_samplebars(table)
     # stacked: index (repeated observations), rank, ref, direct, parent
-    cds_p_references = generate_cds_plot_references(table, tax, references)
+    cds_p_references = cds_plot_references(table, tax, references)
     # matrix: index (unique sample-ids), concentrations, controls, counts
-    cds_p_decontam = generate_cds_plot_decontam(decontam) if decontam else None
+    cds_p_decontam = cds_plot_decontam(decontam) if decontam else None
     # {x: [min,max], y_cont: [None,None], y_noncont: [None,None]}
-    cds_p_decontam_models = generate_cds_plot_decontam_models(decontam) if decontam else None
+    cds_p_decontam_models = cds_plot_decontam_models(decontam) if decontam else None
     # stacked: index (taxa, level, lineage), count, perc
-    cds_p_mgnify = generate_cds_mgnify(mgnify, table, tax) if mgnify else None
+    cds_p_mgnify = cds_mgnify(mgnify, table, tax) if mgnify else None
     # stacked: index (repeated sample-ids), obs, rank, ov, tv
-    cds_p_heatmap = generate_cds_heatmap(table, args.transformation, args.show_zeros)
+    cds_p_heatmap = cds_heatmap(table, args.transformation, args.show_zeros)
     # matrix: index (unique sample-ids), md0, md1, ..., md(args.metadata_cols) -> (metadata field, metadata values)
-    cds_p_metadata = generate_cds_plot_metadata(metadata, args.metadata_cols) if metadata else None
+    cds_p_metadata = cds_plot_metadata(metadata, args.metadata_cols) if metadata else None
     # stacked: index (repeated observations), rank, annot
-    cds_p_annotations = generate_cds_annotations(table, references, controls, decontam, control_samples)
+    cds_p_annotations = cds_annotations(table, references, controls, decontam, control_samples)
     # empty matrix {"x": [], "y": [], "c": []}
-    cds_p_dendro_x, cds_p_dendro_y = generate_cds_plot_dendro() if not args.skip_dendrogram else [None, None]
+    cds_p_dendro_x, cds_p_dendro_y = cds_plot_dendro() if not args.skip_dendrogram else [None, None]
     # stacked: index (repeated observations), other observation, rank, rho
-    cds_p_correlation = generate_cds_correlation(table, corr)
+    cds_p_correlation = cds_correlation(table, corr)
     # matrix: index (unique sample-ids), 0, 1, ..., top_obs_bars, unassigned, others, factors
-    cds_p_obsbars = generate_cds_obsbars(table, args.top_obs_bars)
+    cds_p_obsbars = cds_obsbars(table, args.top_obs_bars)
     # df: index (unique sample-ids), col|...
-    cds_p_sampletable = generate_cds_sampletable(table)
-
+    cds_p_sampletable = cds_sampletable(table)
     # _d_
     # df: index (unique sample-ids), aux|..., cnt|...,
-    cds_d_samples = generate_cds_samples(table, references, controls, decontam)
+    cds_d_samples = cds_samples(table, references, controls, decontam)
     # matrix: index (unique sample-ids) x columns (metadata fields) -> metadata values
-    cds_d_metadata = generate_cds_metadata(metadata) if metadata else None
+    cds_d_metadata = cds_metadata(metadata) if metadata else None
     # {taxid: (contam_y1, contam_y2, non_contam_y, pval)}
-    cds_d_decontam = generate_cds_decontam(decontam, table.ranks()) if decontam else None
+    cds_d_decontam = cds_decontam(decontam, table.ranks()) if decontam else None
     # key = rank + "|" + method + "|" + metric
     # y: {"default": sorted sample-ids, key: sorted sample-ids, ...}
     # x: {"default|rank": sorted sample-ids, key: sorted sample-ids, ...}
-    dict_d_hcluster_x, dict_d_hcluster_y = generate_dict_hcluster(table, hcluster)
+    dict_d_hcluster_x, dict_d_hcluster_y = dict_hcluster(table, hcluster)
     # {key+"|x": x-values, key+"|y": y-values , key+"|c": colors}
-    dict_d_dedro_x, dict_d_dedro_y = generate_dict_dendro(table, dendro) if not args.skip_dendrogram else [None, None]
+    dict_d_dedro_x, dict_d_dedro_y = dict_dendro(table, dendro) if not args.skip_dendrogram else [None, None]
     # {taxid: name}
-    dict_d_taxname = generate_dict_taxname(tax, [txid for rank in table.ranks() for txid in table.observations(rank)])
+    dict_d_taxname = dict_taxname(tax, [txid for rank in table.ranks() for txid in table.observations(rank)])
     # {rank: [taxid1,taxid2, ..., taxid(top_obs_bars)]}
-    dict_d_topobs = generate_dict_topobs(table, args.top_obs_bars)
+    dict_d_topobs = dict_topobs(table, args.top_obs_bars)
     # {taxid: {source: {desc: [refs]}}
-    dict_d_refs = generate_dict_refs(table, references)
+    dict_d_refs = dict_refs(table, references)
     # dict: {rank: {obs: {sample: count}}}
-    dict_d_sampleobs = generate_dict_sampleobs(table)
+    dict_d_sampleobs = dict_sampleobs(table)
 
-    ############ PLOT ELEMENTS (Figures, Widgets, ...)
-    ############ "fig": main figure
-    ############ "wid": widgets
+    # 3) Plot elements
+    print_log("- Plotting elements")
 
-    # Layout and plot sizes
+    # Defined fixed layout and plot sizes
     sizes = {}
     sizes["overview_top_panel_height"] = 300
     sizes["overview_top_panel_width_left"] = 250
@@ -247,10 +241,10 @@ def main(argv=sys.argv[1:]):
     ele["obsbars"]["wid"] = plot_obsbars_widgets(table.ranks(), metadata, dict_d_topobs, dict_d_taxname, args.top_obs_bars)
     ele["obsbars"]["fig"], ele["obsbars"]["legend"] = plot_obsbars(cds_p_obsbars, dict_d_topobs, table.ranks(), args.top_obs_bars, dict_d_taxname, ele["obsbars"]["wid"]["rank_select"])
 
-    ############ JAVASCRIPT LINKING
+    #4) Link javascript:
+    print_log("- Linking javascript")
 
     link_obstable_filter(ele, cds_m_obstable, table.ranks())
-
     link_obstable_samplebars(ele,
                              cds_m_obstable,
                              cds_p_samplebars,
@@ -267,7 +261,6 @@ def main(argv=sys.argv[1:]):
                              cds_p_mgnify,
                              dict_d_refs,
                              dict_d_taxname)
-
     link_heatmap_widgets(ele,
                          cds_d_samples,
                          cds_d_metadata,
@@ -283,11 +276,8 @@ def main(argv=sys.argv[1:]):
                          cds_p_heatmap,
                          table.ranks(),
                          dict_d_taxname)
-
     link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, args.metadata_cols)
-
     link_correlation_widgets(ele, cds_p_correlation)
-
     link_obsbars_widgets(ele,
                          cds_p_obsbars,
                          dict_d_topobs,
@@ -297,11 +287,10 @@ def main(argv=sys.argv[1:]):
                          dict_d_taxname,
                          cds_d_metadata,
                          cds_p_sampletable)
-
     link_sampletable_select(ele, cds_p_sampletable, cds_d_metadata)
 
-    ############ LAYOUT
-
+    # 5) Draw layout
+    print_log("- Drawing layout")
     # Define path of running script to get static files
     script_dir, _ = os.path.split(__file__)
     logo_path = os.path.join(script_dir, "img", "logo.png")
@@ -320,6 +309,7 @@ def main(argv=sys.argv[1:]):
         mode = "cdn"  # configure to load Bokeh JS and CSS from https://cdn.bokeh.org
 
     # setup output file and JS mode
+    print_log("- Saving report")
     output_file(args.output_html, title="GRIMER" if not args.title else "GRIMER - " + args.title, mode=mode)
     save(final_layout, template=template)
     print_log("File: " + args.output_html)

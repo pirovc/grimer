@@ -31,35 +31,49 @@ import scipy.cluster.hierarchy as sch
 
 
 def parse_config_file(config):
-    """
-    parse yaml configuration file
-    """
     cfg = None
     if config:
-        with open(config, 'r') as file:
-            cfg = yaml.safe_load(file)
+        try:
+            with open(config, 'r') as file:
+                cfg = yaml.safe_load(file)
+        except Exception as e:
+            print_log("Failed loading configuration file [" + config + "], skipping")
+            print_log(str(e))
+    else:
+        print_log("Not provided, skipping")
     return cfg
 
 
 def parse_taxonomy(taxonomy, tax_files):
     tax = None
-    if taxonomy == "ncbi":
-        tax = NcbiTx(files=tax_files, extended_names=True)
-    elif taxonomy == "gtdb":
-        tax = GtdbTx(files=tax_files)
-    elif taxonomy == "silva":
-        tax = SilvaTx(files=tax_files)
-    elif taxonomy == "greengenes":
-        tax = GreengenesTx(files=tax_files)
-    elif taxonomy == "ott":
-        tax = OttTx(files=tax_files, extended_names=True)
+    if taxonomy is not None:
+        try:
+            if not tax_files:
+                print_log("Downloading taxonomy")
+            if taxonomy == "ncbi":
+                tax = NcbiTx(files=tax_files, extended_names=True)
+            elif taxonomy == "gtdb":
+                tax = GtdbTx(files=tax_files)
+            elif taxonomy == "silva":
+                tax = SilvaTx(files=tax_files)
+            elif taxonomy == "greengenes":
+                tax = GreengenesTx(files=tax_files)
+            elif taxonomy == "ott":
+                tax = OttTx(files=tax_files, extended_names=True)
+            else:
+                raise
+        except Exception as e:
+            print_log("Failed loading " + taxonomy + " taxonomy, skipping")
+            print_log(str(e))
+    else:
+        print_log("Not provided, skipping")
     return tax
 
 
 def parse_table(args, tax):
     table = None
 
-    # Specific params if biom file is provided
+    # Specific default params if biom file is provided
     if args.input_file.endswith(".biom"):
         if not args.level_separator:
             args.level_separator = ";"
@@ -128,7 +142,6 @@ def parse_table(args, tax):
 
 def parse_metadata(args, table):
     metadata = None
-
     if args.metadata_file:
         metadata = Metadata(metadata_file=args.metadata_file, samples=table.samples.to_list())
     elif args.input_file.endswith(".biom"):
@@ -137,44 +150,47 @@ def parse_metadata(args, table):
             if biom_in.metadata() is not None:
                 metadata = Metadata(metadata_table=biom_in.metadata_to_dataframe(axis="sample"), samples=table.samples.to_list())
         except:
-            metadata = None
-            print_log("Error parsing metadata from BIOM file")
+            print_log("Error parsing metadata from BIOM file, skipping")
+            return None
 
-    if metadata is None or metadata.data.empty:
-        metadata = None
-        print_log("No valid metadata")
-    else:
-        print_log("Samples: " + str(metadata.data.shape[0]))
-        print_log("Numeric Fields: " + str(metadata.get_data("numeric").shape[1]))
-        print_log("Categorical Fields: " + str(metadata.get_data("categorical").shape[1]))
-        if len(metadata.get_col_headers()) < args.metadata_cols:
-            args.metadata_cols = len(metadata.get_col_headers())
-    print_log("")
+    if metadata.data.empty:
+        print_log("No valid metadata, skipping")
+        return None
+
+    print_log("Samples: " + str(metadata.data.shape[0]))
+    print_log("Numeric Fields: " + str(metadata.get_data("numeric").shape[1]))
+    print_log("Categorical Fields: " + str(metadata.get_data("categorical").shape[1]))
+    if len(metadata.get_col_headers()) < args.metadata_cols:
+        args.metadata_cols = len(metadata.get_col_headers())
 
     return metadata
 
 
 def parse_references(cfg, tax, taxonomy, ranks):
     references = None
-    if "references" in cfg and taxonomy == "ncbi":
-        references = {}
-        for desc, sf in cfg["references"].items():
-            references[desc] = Reference(file=sf)
-            if tax:
-                # Update taxids / get taxid from name
-                references[desc].update_taxids(update_tax_nodes(references[desc].ids, tax))
-                for i in list(references[desc].ids.keys()):
-                    # lineage of all parent nodes (without itself)
-                    for l in tax.lineage(i)[:-1]:
-                        references[desc].add_parent(l, i)
+    if cfg is not None and "references" in cfg:
+        if taxonomy == "ncbi":
+            references = {}
+            for desc, sf in cfg["references"].items():
+                references[desc] = Reference(file=sf)
+                if tax:
+                    # Update taxids / get taxid from name
+                    references[desc].update_taxids(update_tax_nodes(references[desc].ids, tax))
+                    for i in list(references[desc].ids.keys()):
+                        # lineage of all parent nodes (without itself)
+                        for l in tax.lineage(i)[:-1]:
+                            references[desc].add_parent(l, i)
+        else:
+            print_log("References only possible with ncbi taxonomy, skipping")
+    else:
+        print_log("No references defined in the configuration file, skipping")
     return references
 
 
 def parse_controls(cfg, table):
     controls = None
     control_samples = None
-
-    if "controls" in cfg:
+    if cfg is not None and "controls" in cfg:
         controls = {}
         control_samples = {}
         for desc, cf in cfg["controls"].items():
@@ -191,6 +207,8 @@ def parse_controls(cfg, table):
                 # Add control observations as a reference
                 controls[desc] = Reference(ids=obs)
                 control_samples[desc] = list(valid_samples)
+    else:
+        print_log("No controls defined in the configuration file, skipping")
 
     return controls, control_samples
 
@@ -198,16 +216,18 @@ def parse_controls(cfg, table):
 def parse_mgnify(run_mgnify, cfg, tax, ranks):
     mgnify = None
     if run_mgnify:
-        if cfg and "mgnify" in cfg["external"]:
-            print_log("- Parsing MGNify")
-            mgnify = MGnify(cfg["external"]["mgnify"], ranks=ranks)
+        if cfg is not None and "mgnify" in cfg["external"]:
+            try:
+                mgnify = MGnify(cfg["external"]["mgnify"], ranks=ranks)
+            except Exception as e:
+                print_log("Failed parsing MGnify database file [" + cfg["external"]["mgnify"] + "], skipping")
+                print_log(str(e))
             if tax:
                 mgnify.update_taxids(update_tax_nodes([tuple(x) for x in mgnify.data[["rank", "taxa"]].to_numpy()], tax))
-            print_log("")
         else:
-            print("Configuration file not found. Skipping MGnify")
-            print_log("")
-
+            print_log("Not defined in the configuration file, skipping")
+    else:
+        print_log("Not activated, skipping")
     return mgnify
 
 
@@ -259,7 +279,7 @@ def parse_input_file(input_file, unassigned_header, transpose, sample_replace):
 
     # Replace text on sample labels
     if sample_replace:
-        print_log("Replacing sample label values:")
+        print_log("Replacing sample values:")
         before_replace = table_df.head(1).index
         #get index as series to use replace method
         new_index = table_df.reset_index()["index"].replace(regex=dict(zip(sample_replace[::2], sample_replace[1::2])))
@@ -290,8 +310,7 @@ def parse_input_file(input_file, unassigned_header, transpose, sample_replace):
     if unassigned.sum() == 0:
         print_log("No unassigned entries defined")
 
-    print_log("")
-    print_log("- Trimming table")
+    print_log("Trimming table")
     table_df = trim_table(table_df)
 
     # Filter based on the final table
@@ -367,7 +386,7 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
 
     # For every pair of replace arguments
     if obs_replace:
-        print_log("Replacing values:")
+        print_log("Replacing observation values:")
         before_replace = ranks_df.dropna().head(1).values[0]
         ranks_df.replace(regex=dict(zip(obs_replace[::2], obs_replace[1::2])), inplace=True)
         for b, a in zip(before_replace, ranks_df.dropna().head(1).values[0]):
@@ -388,7 +407,7 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
     ranks_df.rename(columns=parsed_ranks, inplace=True)
 
     # Update taxids
-    if tax:
+    if tax is not None:
         unmatched_nodes = 0
         for i, r in parsed_ranks.items():
             rank_nodes = ranks_df[r].dropna().unique()
@@ -437,11 +456,12 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
 def parse_single_table(table_df, ranks, tax, default_rank_name):
 
     # Update taxids
-    if tax:
+    if tax is not None:
         updated_nodes = update_tax_nodes(table_df.columns, tax)
         unmatched_nodes = list(updated_nodes.values()).count(tax.undefined_node)
         if unmatched_nodes:
             print_log(str(unmatched_nodes) + " observations not found in taxonomy")
+
         for node, upd_node in updated_nodes.items():
             if upd_node is not None and upd_node != node:
                 # If updated node is a merge on an existing taxid, sum values
@@ -532,10 +552,14 @@ def update_tax_nodes(nodes, tax):
     return updated_nodes
 
 
-def run_decontam(cfg, table, metadata, control_samples):
-    decontam = None
-    if not cfg:
-        print("Configuration file not found. Skipping DECONTAM")
+def run_decontam(run_decontam, cfg, table, metadata, control_samples):
+
+    if not run_decontam:
+        print_log("Not activated, skipping")
+        return None
+
+    if cfg is None:
+        print_log("Not defined in the configuration file, skipping")
         return None
 
     df_decontam = pd.DataFrame(index=table.samples, columns=["concentration", "controls"])
@@ -555,24 +579,24 @@ def run_decontam(cfg, table, metadata, control_samples):
                 df_decontam["concentration"] = pd.read_table(cfg_decontam["frequency_file"], sep='\t', header=None, skiprows=0, index_col=0).reindex(table.samples)
                 # If any entry is unknown, input is incomplete
                 if df_decontam["concentration"].isnull().values.any():
-                    print_log("File " + cfg_decontam["frequency_file"] + " is incomplete (Missing: " + ",".join(df_decontam[df_decontam.isnull().any(axis=1)].index.to_list()) + ") Skipping DECONTAM.")
+                    print_log("File " + cfg_decontam["frequency_file"] + " is incomplete (Missing: " + ",".join(df_decontam[df_decontam.isnull().any(axis=1)].index.to_list()) + "), skipping")
                     return None
             else:
-                print_log("File " + cfg_decontam["frequency_file"] + " not found. Skipping DECONTAM.")
+                print_log("File " + cfg_decontam["frequency_file"] + " not found, skipping")
                 return None
         elif "frequency_metadata" in cfg_decontam:
             if cfg_decontam["frequency_metadata"] in metadata.get_col_headers():
                 # Get concentrations from metadata
                 df_decontam["concentration"] = metadata.get_col(cfg_decontam["frequency_metadata"])
             else:
-                print_log("Could not find " + cfg_decontam["frequency_metadata"] + " in the metadata. Skipping DECONTAM.")
+                print_log("Could not find " + cfg_decontam["frequency_metadata"] + " in the metadata, skipping.")
                 return None
         elif not table.normalized:
             # Use total from table
             print_log("No concentration provided, using total counts as concentration (frequency for DECONTAM)")
             df_decontam["concentration"] = table.total
         else:
-            print_log("Cannot run DECONTAM without concentration and normalized values")
+            print_log("Cannot run DECONTAM without defined concentration and normalized input values, skipping")
             return None
         # Print concentrations to file
         df_decontam["concentration"].to_csv(out_concentration, sep="\t", header=False, index=True)
@@ -606,14 +630,12 @@ def run_decontam(cfg, table, metadata, control_samples):
             print("\n".join(df_decontam.index[df_decontam["controls"]]), file=outf)
             outf.close()
         else:
-            print("Could not find valid control entries. Skipping DECONTAM")
+            print("Could not find valid control entries, skipping")
             return None
 
     decontam = Decontam(df_decontam)
-
     # Run DECONTAM for each for each
     for rank in table.ranks():
-
         if len(table.observations(rank)) == 1:
             decontam.add_rank_empty(rank, table.observations(rank))
         else:
@@ -638,6 +660,7 @@ def run_decontam(cfg, table, metadata, control_samples):
     for file in [out_table, out_concentration, out_controls, tmp_output_prefix + "decontam_out.tsv", tmp_output_prefix + "decontam_mod.tsv"]:
         if os.path.isfile(file):
             os.remove(file)
+
     return decontam
 
 
@@ -716,6 +739,17 @@ def dendro_lines_color(dendro, axis):
         return icoord, dcoord, colors
 
 
+def pairwise_vlr(mat):
+    cov = np.cov(mat.T, ddof=1)
+    diagonal = np.diagonal(cov)
+    return -2 * cov + diagonal[:, np.newaxis] + diagonal
+
+
+def pairwise_rho(mat):
+    variances = np.var(mat, axis=0, ddof=1)
+    return 1 - (pairwise_vlr(mat) / np.add.outer(variances, variances))
+
+
 def include_scripts(scripts):
     # Insert global js functions and css and return template
     template = "{% block postamble %}"
@@ -726,16 +760,6 @@ def include_scripts(scripts):
             template += "</" + t + ">"
     template += "{% endblock %}"
     return template
-
-def pairwise_vlr(mat):
-    cov = np.cov(mat.T, ddof=1)
-    diagonal = np.diagonal(cov)
-    return -2 * cov + diagonal[:, np.newaxis] + diagonal
-
-
-def pairwise_rho(mat):
-    variances = np.var(mat, axis=0, ddof=1)
-    return 1 - (pairwise_vlr(mat) / np.add.outer(variances, variances))
 
 
 def format_js_toString(val):

@@ -10,7 +10,7 @@ from grimer.func import print_df, transform_table, print_log, pairwise_rho, form
 from bokeh.models import ColumnDataSource
 
 
-def generate_dict_taxname(tax, taxids):
+def dict_taxname(tax, taxids):
     """
     mapping taxids to names
     (or names to names if taxid is not used)
@@ -22,7 +22,7 @@ def generate_dict_taxname(tax, taxids):
     return id_name
 
 
-def generate_cds_plot_references(table, tax, references):
+def cds_plot_references(table, tax, references):
     # Stacked list of references, accounting for lineage matches
     # index -> observations (repeated)
     # columns -> "rank", "ref", "direct", "parent"
@@ -43,7 +43,7 @@ def generate_cds_plot_references(table, tax, references):
     return ColumnDataSource(df_references)
 
 
-def generate_cds_annotations(table, references, controls, decontam, control_samples):
+def cds_annotations(table, references, controls, decontam, control_samples):
     # Stacked matrix of true annotations (omit false)
     # index -> taxids
     # columns -> rank, annot
@@ -102,7 +102,7 @@ def generate_cds_annotations(table, references, controls, decontam, control_samp
     return ColumnDataSource(df_annotations)
 
 
-def generate_cds_obstable(table, tax, references, controls, control_samples, decontam):
+def cds_obstable(table, tax, references, controls, control_samples, decontam):
     # index unique taxids
     # col|...  values to plot to columns in the datatable
     # tax|...  auxiliary lineage of taxa entries
@@ -160,7 +160,7 @@ def generate_cds_obstable(table, tax, references, controls, control_samples, dec
     return ColumnDataSource(df_obstable)
 
 
-def generate_cds_sampletable(table):
+def cds_sampletable(table):
     # index unique sample-ids
     # col|...  values to plot to columns in the datatable
 
@@ -181,7 +181,7 @@ def generate_cds_sampletable(table):
     return ColumnDataSource(df_sampletable)
 
 
-def generate_cds_samplebars(table):
+def cds_samplebars(table):
     # index unique sample-ids
     # aux| auxiliary values (not plotted)
     # bar| values plotted as bars (sample counts)
@@ -203,7 +203,7 @@ def generate_cds_samplebars(table):
     return ColumnDataSource(df_bars)
 
 
-def generate_cds_samples(table, references, controls, decontam):
+def cds_samples(table, references, controls, decontam):
     # index unique sample-ids
     # aux| auxiliary values (not plotted)
     # cnt| count values to be copied/traansformed to bars
@@ -247,7 +247,7 @@ def generate_cds_samples(table, references, controls, decontam):
     return ColumnDataSource(df_samples)
 
 
-def generate_cds_metadata(metadata):
+def cds_metadata(metadata):
     # index -> sample-ids
     # columns -> metadata fields
     # values -> metadata values
@@ -256,7 +256,7 @@ def generate_cds_metadata(metadata):
     return ColumnDataSource(df_md)
 
 
-def generate_cds_plot_metadata(metadata, max_metadata_cols):
+def cds_plot_metadata(metadata, max_metadata_cols):
     # index (unique sample-ids)
     # md0, md1, ..., md(max_metadata_cols)
     # values (metadata field, metadata values)
@@ -272,7 +272,7 @@ def generate_cds_plot_metadata(metadata, max_metadata_cols):
     return ColumnDataSource(df_plot_md)
 
 
-def generate_cds_plot_decontam(decontam):
+def cds_plot_decontam(decontam):
     # index unique sample-ids
     # concentrations from decontam inputs
     # controls from decontam inputs
@@ -284,7 +284,7 @@ def generate_cds_plot_decontam(decontam):
     return ColumnDataSource(df_decontam)
 
 
-def generate_cds_decontam(decontam, ranks):
+def cds_decontam(decontam, ranks):
     """
     cds based on a dict with valid values to plot model lines
     {taxid: (contam_y1, contam_y2, non_contam_y, pval)}
@@ -300,7 +300,7 @@ def generate_cds_decontam(decontam, ranks):
     return ColumnDataSource(dict_coord_mod)
 
 
-def generate_cds_plot_decontam_models(decontam):
+def cds_plot_decontam_models(decontam):
     """
     cds based on a dict with 3 pairs of values to plot. x is shared among y_cont and y_noncont
     # {x: [min,max], y_cont: [None,None], y_noncont: [None,None]}
@@ -314,7 +314,7 @@ def generate_cds_plot_decontam_models(decontam):
     return ColumnDataSource(dict_decontam_models)
 
 
-def generate_dict_sampleobs(table):
+def dict_sampleobs(table):
     # dict with raw counts (not storing zeros)
     # dict_sampleobs[rank][obs][sample] = count
     dict_sampleobs = {}
@@ -330,7 +330,7 @@ def generate_dict_sampleobs(table):
     return dict_sampleobs
 
 
-def generate_cds_heatmap(table, transformation, show_zeros):
+def cds_heatmap(table, transformation, show_zeros):
     # Stacked matrix of raw counts + transformed value
     # index -> sample-ids (repeated)
     # obs
@@ -362,7 +362,7 @@ def generate_cds_heatmap(table, transformation, show_zeros):
     return ColumnDataSource(df_heatmap)
 
 
-def generate_dict_hcluster(table, hcluster):
+def dict_hcluster(table, hcluster):
     # keys -> combination of hclusters
     # values -> sorted sample-ids
 
@@ -387,7 +387,7 @@ def generate_dict_hcluster(table, hcluster):
     return leaves_x, leaves_y
 
 
-def generate_cds_plot_dendro():
+def cds_plot_dendro():
     # Empty CDS {"x": [], "y": [], "c": []}
     dendro_x = {"x": [], "y": [], "c": []}
     dendro_y = {"x": [], "y": [], "c": []}
@@ -396,7 +396,7 @@ def generate_cds_plot_dendro():
     return ColumnDataSource(dendro_x), ColumnDataSource(dendro_y)
 
 
-def generate_dict_dendro(table, dendro):
+def dict_dendro(table, dendro):
     # dict_d_dedro_x and dict_d_dedro_y:
     # key -> key + "|x" , key + "|y" , key + "|c"
     # value -> list of lists (x and y) or list (c)
@@ -419,7 +419,7 @@ def generate_dict_dendro(table, dendro):
     return dict_d_dedro_x, dict_d_dedro_y
 
 
-def generate_dict_topobs(table, top_obs_bars):
+def dict_topobs(table, top_obs_bars):
     dict_top_taxa = {}
     for rank in table.ranks():
         dict_top_taxa[rank] = table.get_top(rank, top_obs_bars)
@@ -427,7 +427,7 @@ def generate_dict_topobs(table, top_obs_bars):
     return dict_top_taxa
 
 
-def generate_dict_refs(table, references):
+def dict_refs(table, references):
     # dict with information about sources and references
     # references can be repeated among descriptions, sources and taxids
     # {taxid: {source: {desc: [refs]}}
@@ -455,7 +455,7 @@ def generate_dict_refs(table, references):
     return d_refs
 
 
-def generate_cds_correlation(table, corr):
+def cds_correlation(table, corr):
     df_corr = pd.DataFrame(columns=["taxid", "rank", "rho"])
     for rank in table.ranks():
         stacked_rank_df = pd.DataFrame(corr[rank]["rho"], index=corr[rank]["observations"], columns=corr[rank]["observations"]).stack(dropna=False).reset_index(1)
@@ -472,7 +472,7 @@ def generate_cds_correlation(table, corr):
     return ColumnDataSource(df_corr)
 
 
-def generate_cds_obsbars(table, top_obs_bars):
+def cds_obsbars(table, top_obs_bars):
     # index (unique sample-ids)
     # cols: 1, 2, ..., top_obs_bars, unassigned, others, factors
 
@@ -495,7 +495,7 @@ def generate_cds_obsbars(table, top_obs_bars):
     return ColumnDataSource(df_obsbars)
 
 
-def generate_cds_mgnify(mgnify, table, tax):
+def cds_mgnify(mgnify, table, tax):
     # index (taxa, level, lineage)
     # count for each combination of index
 
