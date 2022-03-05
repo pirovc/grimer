@@ -38,6 +38,7 @@ def main(argv=sys.argv[1:]):
     _debug = args.debug
 
     # 1) Load data/analysis
+    # If not parsed, skipped or error, var is None
     cfg = None
     tax = None
     table = None
@@ -106,7 +107,7 @@ def main(argv=sys.argv[1:]):
     # {x: [min,max], y_cont: [None,None], y_noncont: [None,None]}
     cds_p_decontam_models = cds_plot_decontam_models(decontam) if decontam else None
     # stacked: index (taxa, level, lineage), count, perc
-    cds_p_mgnify = cds_mgnify(mgnify, table, tax) if mgnify else None
+    cds_p_mgnify = cds_mgnify(mgnify, table, tax) if mgnify is not None else None
     # stacked: index (repeated sample-ids), obs, rank, ov, tv
     cds_p_heatmap = cds_heatmap(table, args.transformation, args.show_zeros)
     # matrix: index (unique sample-ids), md0, md1, ..., md(args.metadata_cols) -> (metadata field, metadata values)

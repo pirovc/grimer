@@ -503,7 +503,7 @@ def cds_mgnify(mgnify, table, tax):
 
     # Match uids (taxid or names) from input and keep only found elements
     uids = [txid for rank in table.ranks() for txid in table.observations(rank)]
-    df_tmp = mgnify.data[mgnify.data['taxa'].isin(uids)]
+    df_tmp = mgnify[mgnify['taxa'].isin(uids)]
 
     # reset index to properly concate later with biome lineages
     df_tmp.reset_index(drop=True, inplace=True)

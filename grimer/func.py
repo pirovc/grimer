@@ -11,7 +11,6 @@ import yaml
 from grimer.decontam import Decontam
 from grimer.metadata import Metadata
 from grimer.reference import Reference
-from grimer.mgnify import MGnify
 from grimer.table import Table
 
 # Bokeh
@@ -219,12 +218,21 @@ def parse_mgnify(run_mgnify, cfg, tax, ranks):
     if run_mgnify:
         if cfg is not None and "mgnify" in cfg["external"]:
             try:
-                mgnify = MGnify(cfg["external"]["mgnify"], ranks=ranks)
+                mgnify = pd.read_table(cfg["external"]["mgnify"], header=None, names=["rank", "taxa", "biome", "count"])
             except Exception as e:
                 print_log("Failed parsing MGnify database file [" + cfg["external"]["mgnify"] + "], skipping")
                 print_log(str(e))
+            # Filter to keep only used ranks, if provided
+            if ranks:
+                mgnify = mgnify.loc[mgnify['rank'].isin(ranks)]
+                mgnify.reset_index(drop=True, inplace=True)
+            # Convert taxids if tax is provided
             if tax:
-                mgnify.update_taxids(update_tax_nodes([tuple(x) for x in mgnify.data[["rank", "taxa"]].to_numpy()], tax))
+                updated_nodes = update_tax_nodes([tuple(x) for x in mgnify.data[["rank", "taxa"]].to_numpy()], tax)
+                mgnify["taxa"] = mgnify[["rank", "taxa"]].apply(lambda rt: updated_nodes[(rt[0], rt[1])] if updated_nodes[(rt[0], rt[1])] is not None else rt[1], axis=1)
+            if mgnify.empty:
+                mgnify = None
+                print_log("No matches with MGnify database, skipping")
         else:
             print_log("Not defined in the configuration file, skipping")
     else:
