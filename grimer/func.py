@@ -71,8 +71,6 @@ def parse_taxonomy(taxonomy, tax_files):
 
 
 def parse_table(args, tax):
-    table = None
-
     # Specific default params if biom file is provided
     if args.input_file.endswith(".biom"):
         if not args.level_separator:
@@ -81,6 +79,9 @@ def parse_table(args, tax):
 
     # Read and return full table with separated total and unassigned counts (sharing same index)
     table_df, total, unassigned = parse_input_file(args.input_file, args.unassigned_header, args.transpose, args.sample_replace)
+
+    if table_df.empty:
+        raise Exception("Error parsing input file")
 
     # Define if table is already normalized (0-100) or has count data
     if args.values == "count":
@@ -107,8 +108,7 @@ def parse_table(args, tax):
         ranked_tables, lineage = parse_single_table(table_df, args.ranks, tax, Config.default_rank_name)
 
     if not ranked_tables:
-        print_log("Could not parse input table")
-        return 1
+        raise Exception("Error parsing input file")
 
     table = Table(table_df.index, total, unassigned, lineage, normalized, replace_zero_value)
 
@@ -132,9 +132,10 @@ def parse_table(args, tax):
             print_log("Total valid observations: " + str(len(table.observations(r))))
 
     print_log("")
+
     if not normalized:
-        print_log("Total assigned (counts): " + str(table.total.sum() - table.unassigned.sum()))
-        print_log("Total unassigned (counts): " + str(table.unassigned.sum()))
+        print_log("Total assigned (counts): " + str(table.get_total().sum() - table.get_unassigned().sum()))
+        print_log("Total unassigned (counts): " + str(table.get_unassigned().sum()))
         print_log("")
 
     return table
@@ -594,7 +595,7 @@ def run_decontam(run_decontam, cfg, table, metadata, control_samples):
         elif not table.normalized:
             # Use total from table
             print_log("No concentration provided, using total counts as concentration (frequency for DECONTAM)")
-            df_decontam["concentration"] = table.total
+            df_decontam["concentration"] = table.get_total()
         else:
             print_log("Cannot run DECONTAM without defined concentration and normalized input values, skipping")
             return None
@@ -641,7 +642,7 @@ def run_decontam(run_decontam, cfg, table, metadata, control_samples):
         else:
             # normalize and write temporary table for each rank
             if not table.normalized:
-                transform_table(table.data[rank], table.total[table.data[rank].index], "norm", 0).to_csv(out_table, sep="\t", header=True, index=True)
+                transform_table(table.data[rank], table.get_total()[table.data[rank].index], "norm", 0).to_csv(out_table, sep="\t", header=True, index=True)
             else:
                 table.data[rank].to_csv(out_table, sep="\t", header=True, index=True)
 
@@ -671,7 +672,7 @@ def run_hclustering(table, linkage_methods, linkage_metrics, transformation, ski
     for rank in table.ranks():
 
         # Get .values of transform, numpy array
-        matrix = transform_table(table.data[rank], table.total, transformation, table.zerorep).values
+        matrix = transform_table(table.data[rank], table.get_total(), transformation, table.zerorep).values
 
         hcluster[rank] = {}
         dendro[rank] = {}

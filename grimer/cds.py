@@ -4,7 +4,7 @@ import numpy as np
 from math import pi
 
 #Internal
-from grimer.func import print_df, transform_table, print_log, pairwise_rho, format_js_toString
+from grimer.func import print_df, transform_table, print_log, format_js_toString
 
 #Bokeh
 from bokeh.models import ColumnDataSource
@@ -173,7 +173,7 @@ def cds_sampletable(table):
 
     # assigned by rank
     for rank in table.ranks():
-        df_sampletable["col|" + rank] = table.data[rank].sum(axis=1).divide(table.total, axis=0)
+        df_sampletable["col|" + rank] = table.data[rank].sum(axis=1).divide(table.get_total(), axis=0)
 
     df_sampletable.fillna(0, inplace=True)
 
@@ -211,11 +211,11 @@ def cds_samples(table, references, controls, decontam):
     df_samples = pd.DataFrame(index=table.samples)
     # index to retrieve default input order
     df_samples["aux|input_order"] = range(df_samples.shape[0], 0, -1)
-    df_samples["cnt|total"] = table.total
-    df_samples["cnt|unassigned"] = table.unassigned
+    df_samples["cnt|total"] = table.get_total()
+    df_samples["cnt|unassigned"] = table.get_unassigned()
 
     # Keep total number of assignemnts for calculations
-    df_samples["cnt|assigned"] = table.total - table.unassigned
+    df_samples["cnt|assigned"] = table.get_total() - table.get_unassigned()
 
     # Add specific rank assignements
     for rank in table.ranks():
@@ -344,7 +344,7 @@ def cds_heatmap(table, transformation, show_zeros):
         # Rename first col to obs
         stacked_rank_df.rename(columns={stacked_rank_df.columns[0]: "obs"}, inplace=True)
         stacked_rank_df["rank"] = rank
-        tv = transform_table(table.data[rank], table.total, transformation, table.zerorep)
+        tv = transform_table(table.data[rank], table.get_total(), transformation, table.zerorep)
         stacked_rank_df["tv"] = tv.stack().values
         #Drop zeros based on original counts
         if not show_zeros:
@@ -486,9 +486,9 @@ def cds_obsbars(table, top_obs_bars):
         df_obsbars[str(ncol)] = 0
         ncol += 1
     # Other account for filtered taxa (not on top) and left over percentage for the rank without assignment
-    df_obsbars["others"] = table.total - table.unassigned - df_obsbars.sum(axis=1)
-    df_obsbars["unassigned"] = table.unassigned
-    df_obsbars = transform_table(df_obsbars, table.total, "norm", 0) * 100
+    df_obsbars["others"] = table.get_total() - table.get_unassigned() - df_obsbars.sum(axis=1)
+    df_obsbars["unassigned"] = table.get_unassigned()
+    df_obsbars = transform_table(df_obsbars, table.get_total(), "norm", 0) * 100
     df_obsbars["factors"] = df_obsbars.index.to_list()
 
     print_df(df_obsbars, "cds_p_obsbars")

@@ -53,16 +53,20 @@ def main(argv=sys.argv[1:]):
     cfg = parse_config_file(args.config)
 
     print_log("- Parsing taxonomy")
-    tax = parse_taxonomy(args.tax, args.tax_files)
+    tax = parse_taxonomy(args.taxonomy, args.tax_files)
 
     print_log("- Parsing input table")
-    table = parse_table(args, tax)
+    try:
+        table = parse_table(args, tax)
+    except Exception as e:
+        print(e)
+        return 1
 
     print_log("- Parsing metadata")
     metadata = parse_metadata(args, table)
 
     print_log("- Parsing references")
-    references = parse_references(cfg, tax, args.tax, table.ranks())
+    references = parse_references(cfg, tax, args.taxonomy, table.ranks())
 
     print_log("- Parsing controls")
     controls, control_samples = parse_controls(cfg, table)
@@ -295,7 +299,7 @@ def main(argv=sys.argv[1:]):
     script_dir, _ = os.path.split(__file__)
     logo_path = os.path.join(script_dir, "img", "logo.png")
 
-    final_layout = make_layout(ele, sizes, Config.version, logo_path, args.title)
+    final_layout = make_layout(ele, sizes, Config.version, logo_path, args.title, args.output_plots)
 
     template = include_scripts({os.path.join(script_dir, "js", "func.js"): "script",
                                 os.path.join(script_dir, "js", "popup.js"): "script",
