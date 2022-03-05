@@ -982,8 +982,7 @@ def link_obsbars_widgets(ele, cds_p_obsbars, dict_d_topobs, dict_d_sampleobs, cd
             }
 
             // Change value of the factors on the obsbars cds
-            cds_p_obsbars.data["factors"] = factors; 
-
+            cds_p_obsbars.data["factors"] = factors;
         }
 
         // Plot sorted factors

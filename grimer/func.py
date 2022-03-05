@@ -228,7 +228,7 @@ def parse_mgnify(run_mgnify, cfg, tax, ranks):
                 mgnify.reset_index(drop=True, inplace=True)
             # Convert taxids if tax is provided
             if tax:
-                updated_nodes = update_tax_nodes([tuple(x) for x in mgnify.data[["rank", "taxa"]].to_numpy()], tax)
+                updated_nodes = update_tax_nodes([tuple(x) for x in mgnify[["rank", "taxa"]].to_numpy()], tax)
                 mgnify["taxa"] = mgnify[["rank", "taxa"]].apply(lambda rt: updated_nodes[(rt[0], rt[1])] if updated_nodes[(rt[0], rt[1])] is not None else rt[1], axis=1)
             if mgnify.empty:
                 mgnify = None

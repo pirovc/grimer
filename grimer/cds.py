@@ -352,8 +352,8 @@ def cds_heatmap(table, transformation, show_zeros):
         # initialize factors only for first rank
         #stacked_rank_df["factors_sample"] = stacked_rank_df.index
         #stacked_rank_df["factors_obs"] = stacked_rank_df["obs"]
-        stacked_rank_df["factors_sample"] = stacked_rank_df.index if i==0 else ""
-        stacked_rank_df["factors_obs"] = stacked_rank_df["obs"] if i==0 else ""
+        stacked_rank_df["factors_sample"] = stacked_rank_df.index if i == 0 else ""
+        stacked_rank_df["factors_obs"] = stacked_rank_df["obs"] if i == 0 else ""
 
         df_heatmap = pd.concat([df_heatmap, stacked_rank_df], axis=0)
 
@@ -534,7 +534,7 @@ def cds_mgnify(mgnify, table, tax):
 
         # Calculate angle for each taxa/level for wedges
         total_taxa_level = df_biome.groupby("taxa").sum().to_dict()["count"]
-        df_biome["angle"] = (df_biome['count'] / df_biome['taxa'].map(total_taxa_level)) * (2*pi)
+        df_biome["angle"] = (df_biome['count'] / df_biome['taxa'].map(total_taxa_level)) * (2 * pi)
 
         # Group to the final df
         df_mgnify = pd.concat([df_mgnify, df_biome], axis=0, ignore_index=True)

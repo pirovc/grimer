@@ -1,12 +1,12 @@
 import markdown
 
 # Bokeh
-from bokeh.models import AdaptiveTicker, Button, CategoricalColorMapper, CDSView, CheckboxGroup, ColorBar, ColumnDataSource, CustomJS, CustomJSHover, CustomJSTransform, FactorRange, FixedTicker, FuncTickFormatter, HoverTool, Legend, LegendItem, LinearAxis, LinearColorMapper, MultiChoice, MultiSelect, NumberFormatter, Panel, Paragraph, PrintfTickFormatter, Range1d, RangeSlider, Select, Spacer, Spinner, Tabs, TextAreaInput, TextInput
+from bokeh.models import AdaptiveTicker, Button, CategoricalColorMapper, CDSView, CheckboxGroup, ColorBar, ColumnDataSource, CustomJS, CustomJSHover, FactorRange, FixedTicker, FuncTickFormatter, HoverTool, Legend, LegendItem, LinearAxis, LinearColorMapper, MultiChoice, MultiSelect, NumberFormatter, Panel, Paragraph, Range1d, RangeSlider, Select, Spacer, Spinner, Tabs, TextAreaInput, TextInput
 from bokeh.models.filters import IndexFilter, GroupFilter
 from bokeh.models.widgets import DataTable, TableColumn
 from bokeh.palettes import Blues, Dark2, Magma256, Reds
 from bokeh.plotting import figure
-from bokeh.transform import cumsum, factor_cmap, transform
+from bokeh.transform import cumsum, factor_cmap
 
 from grimer.func import format_js_toString, make_color_palette
 
@@ -195,7 +195,7 @@ def plot_obsbars_widgets(ranks, metadata, dict_d_topobs, dict_d_taxname, top_obs
     sort_options["Default"].append(("col|others", "others"))
     sort_options["Default"].append(("col|unassigned", "unassigned"))
 
-    sort_options["Observation"] = [("col|" + str(i), str(i+1)) for i in range(top_obs_bars)]
+    sort_options["Observation"] = [("col|" + str(i), str(i + 1)) for i in range(top_obs_bars)]
 
     sort_options["Numeric Metadata"] = []
     if metadata:
@@ -322,7 +322,6 @@ def plot_obstable(sizes, cds_m_obstable, ranks, references, controls):
             for ctrl_name in controls.keys():
                 table_cols.append(TableColumn(field="col|" + ctrl_name, title="(F) " + ctrl_name, default_sort="descending", formatter=NumberFormatter(format="0.00%")))
 
-
         if "col|decontam" in cds_m_obstable.data:
             table_cols.append(TableColumn(field="col|decontam", title="DECONTAM", default_sort="descending"))
 
@@ -430,7 +429,7 @@ def plot_sampletable_widgets(sizes, max_count_samples, metadata):
         metadata_multichoice = Spacer()
 
     help_text = """
-Summary of samples. Entries selected in the table are shown in the barplot below. 
+Summary of samples. Entries selected in the table are shown in the barplot below.
 
 Widgets can select batches of entries in the table by multiple criteria.
 
@@ -457,7 +456,7 @@ def plot_decontam(sizes, cds_p_decontam, cds_p_decontam_lines, min_obs_perc):
                           sizing_mode="stretch_width",
                           tools="save")
 
-    palette = make_color_palette(2) #Control, Sample
+    palette = make_color_palette(2)  # Control, Sample
     factors = list(sorted(set(cds_p_decontam.data["controls"]), reverse=True))
     # Add legend on top
     decontam_fig.add_layout(Legend(), 'above')
@@ -642,7 +641,7 @@ def plot_mgnify(sizes, cds_p_mgnify):
 
 
 def plot_mgnify_widgets():
-    biome_spinner = Spinner(title="Biome level", low=1, high=5, value=1, step=1, width=100, height=50)#, orientation="horizontal")
+    biome_spinner = Spinner(title="Biome level", low=1, high=5, value=1, step=1, width=100, height=50)  # orientation="horizontal")
     help_text = """
 Pie chart with the number of occurrences of the selected taxa in the table by environment (biome) in other microbiome studies analyzed and publicly available at the [MGNify](https://www.ebi.ac.uk/metagenomics) [1] resource.
 
@@ -920,7 +919,7 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
         metadata_fig.add_layout(legend_colorbars[md_header], 'right')
 
     metadata_fig.xaxis.axis_label = "metadata"
-    metadata_fig.xaxis.major_label_orientation = "horizontal" #"vertical"
+    metadata_fig.xaxis.major_label_orientation = "horizontal"
     metadata_fig.xaxis.major_label_text_font_size = "11px"
     metadata_fig.xaxis.minor_tick_line_color = None
     metadata_fig.xgrid.grid_line_color = None
@@ -1111,4 +1110,3 @@ def help_button(title: str="", text: str="", align: str="end"):
 
     hb.js_on_click(CustomJS(code="pop.open('" + title + "', '" + html_text + "');"))
     return hb
-

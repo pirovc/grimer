@@ -43,5 +43,5 @@ class Decontam:
     def get_contaminant_list(self):
         clist = []
         for r in self.rank:
-            clist.extend(self.rank[r].index[self.rank[r]["contaminant"]==True].to_list())
+            clist.extend(self.rank[r].index[self.rank[r]["contaminant"] == True].to_list())
         return clist
