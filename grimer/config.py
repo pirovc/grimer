@@ -6,7 +6,7 @@ from scipy.cluster.hierarchy import _LINKAGE_METHODS
 
 class Config:
 
-    version = "1.0.0-alpha1"
+    version = "1.0.0"
     default_rank_name = "default"
     output_plots = ["overview", "samples", "heatmap", "correlation"]
 
