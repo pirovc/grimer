@@ -13,7 +13,7 @@ def read(filename):
 
 setup(
     name="grimer",
-    version="0.0.0",
+    version="1.0.0-alpha1",
     url="https://www.github.com/pirovc/grimer",
     license='MIT',
 
@@ -24,7 +24,7 @@ setup(
     long_description=read("README.md"),
 
     packages=['grimer'],
-    #install_requires=['binpacking==1.4.3'],
+    #install_requires=['bokeh==2.2.3','pandas','numpy','scipy','multitax'],
 
     include_package_data=True,
     package_data={

@@ -1,26 +1,15 @@
-sources:
-  contaminants:
-    "CC Bacteria": "sources/contaminants/cc_bacteria.yml"
-    "CC Viruses": "sources/contaminants/cc_viruses.yml"
-    "CC Eukaryota": "sources/contaminants/cc_eukaryota.yml"
-    # "Custom Contaminants 1": "path/contfile1.tsv"
-    # "Custom Contaminants 2": "path/contfile2.tsv"
-  references:
-    "Human-Related": "sources/references/human-related.yml"
-    "Skin": "sources/references/skin.yml"
-    "Oral": "sources/references/oral.yml"
-    # "Custom References 1": "path/reffile1.tsv"
-    # "Custom References 2": "path/reffile2.tsv"
-  
-# samples:
-#   controls:
-#     "Positve Controls": "path/file1.tsv"
-#     "Negative Controls": "path/file1.tsv"
+references:
+  "Contaminants": "files/contaminants.yml"
+  "Human-related": "files/human-related.yml" 
+
+#controls:
+  # "Positve Controls": "path/file1.tsv"
+  # "Negative Controls": "path/file1.tsv"
 
 external:
-  mgnify: "sources/mgnify/taxa_counts_top10.tsv"
+  mgnify: "files/mgnify.tsv"
   decontam:
-    threshold: 0.2 # [0-1]
+    threshold: 0.1 # [0-1] P* hyperparameter
     method: "frequency" # frequency, prevalence, combined
     # # frequency (default: use sum of counts)
     # frequency_file: "path/file1.txt"

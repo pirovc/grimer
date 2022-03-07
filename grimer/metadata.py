@@ -1,15 +1,18 @@
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
-from grimer.utils import print_log
 
 
 class Metadata:
     valid_types = ["categorical", "numeric"]
     default_type = "categorical"
 
-    def __init__(self, metadata_file, samples: list=[]):
-        # Read metadata and let pandas guess dtypes, index as str
-        self.data = pd.read_table(metadata_file, sep='\t', header=0, skiprows=0, index_col=0, dtype={0:str})
+    def __init__(self, metadata_file: str="", metadata_table: pd.DataFrame=None, samples: list=[]):
+        if metadata_file:
+            # Read metadata and let pandas guess dtypes, index as str
+            self.data = pd.read_table(metadata_file, sep='\t', header=0, skiprows=0, index_col=0, dtype={0: str})
+        else:
+            # Metadata from table (biom file)
+            self.data = metadata_table
 
         # Enforce string index
         self.data.index = self.data.index.astype('str')
@@ -26,7 +29,7 @@ class Metadata:
             self.types[self.data.dtypes.map(is_numeric_dtype)] = "numeric"
 
         # Convert datatypes to adequate numeric values (int, float)
-        self.data = self.data.convert_dtypes(infer_objects=False, convert_string=False)
+        self.data = self.data.convert_dtypes(infer_objects=False, convert_string=False, convert_boolean=False)
         # Re-convert everython to object to standardize (int64 NA is not seriazable on bokeh)
         self.data = self.data.astype("object")
 
@@ -39,6 +42,9 @@ class Metadata:
 
         # Convert NaN on categorical to ""
         self.data[self.types[self.types == "categorical"].index] = self.data[self.types[self.types == "categorical"].index].fillna('')
+        # Convert boolean from categorical to String
+        mask = self.data[self.types[self.types == "categorical"].index].applymap(type) != bool
+        self.data[self.types[self.types == "categorical"].index] = self.data[self.types[self.types == "categorical"].index].where(mask, self.data[self.types[self.types == "categorical"].index].replace({True: 'True', False: 'False'}))
 
         # Remove names
         self.data.index.names = [None]
@@ -85,13 +91,7 @@ class Metadata:
         return self.data[col]
 
     def get_unique_values(self, col):
-        return sorted(self.get_col(col).dropna().unique())
-
-    def get_formatted_unique_values(self, col):
-        if self.types[col] == "categorical":
-            return self.get_unique_values(col)
-        else:
-            return list(map('{:.16g}'.format, self.get_unique_values(col)))
+        return self.get_col(col).dropna().unique()
 
     def get_type(self, col):
         return self.types[col]

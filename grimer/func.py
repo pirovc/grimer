@@ -6,15 +6,21 @@ import subprocess
 import shlex
 import pandas as pd
 import yaml
-from collections import OrderedDict
 
 #Internal
 from grimer.decontam import Decontam
-from grimer.plots import make_color_palette
-from grimer.source import Source
+from grimer.metadata import Metadata
+from grimer.reference import Reference
+from grimer.table import Table
+
+# Bokeh
+from bokeh.palettes import Category10, Category20, Colorblind, linear_palette, Turbo256
+
+# MultiTax
+from multitax import *
 
 #biom
-from biom import parse_table as parse_table_biom
+import biom
 
 # scikit-bio
 from skbio.stats.composition import clr
@@ -23,11 +29,251 @@ from skbio.stats.composition import clr
 import scipy.cluster.hierarchy as sch
 
 
-def parse_input_table(input_file, unassigned_header, transpose, min_frequency, max_frequency, min_count, max_count):
+def parse_config_file(config):
+    cfg = None
+    if config:
+        try:
+            with open(config, 'r') as file:
+                cfg = yaml.safe_load(file)
+        except Exception as e:
+            print_log("Failed loading configuration file [" + config + "], skipping")
+            print_log(str(e))
+    else:
+        print_log("Not provided, skipping")
+    return cfg
+
+
+def parse_taxonomy(taxonomy, tax_files):
+    tax = None
+    if taxonomy is not None:
+        try:
+            if not tax_files:
+                print_log("Downloading taxonomy")
+            if taxonomy == "ncbi":
+                tax = NcbiTx(files=tax_files, extended_names=True)
+            elif taxonomy == "gtdb":
+                tax = GtdbTx(files=tax_files)
+            elif taxonomy == "silva":
+                tax = SilvaTx(files=tax_files)
+            elif taxonomy == "greengenes":
+                tax = GreengenesTx(files=tax_files)
+            elif taxonomy == "ott":
+                tax = OttTx(files=tax_files, extended_names=True)
+            else:
+                raise
+        except Exception as e:
+            print_log("Failed loading " + taxonomy + " taxonomy, skipping")
+            print_log(str(e))
+    else:
+        print_log("Not provided, skipping")
+    return tax
+
+
+def parse_table(args, tax):
+    # Specific default params if biom file is provided
+    if args.input_file.endswith(".biom"):
+        if not args.level_separator:
+            args.level_separator = ";"
+        args.transpose = True
+
+    # Read and return full table with separated total and unassigned counts (sharing same index)
+    table_df, total, unassigned = parse_input_file(args.input_file, args.unassigned_header, args.transpose, args.sample_replace)
+
+    if table_df.empty:
+        raise Exception("Error parsing input file")
+
+    # Define if table is already normalized (0-100) or has count data
+    if args.values == "count":
+        normalized = False
+    elif args.values == "normalized":
+        normalized = True
+    elif (table_df.sum(axis=1).round() == 100).all() or (table_df % 1 != 0).any().any():
+        normalized = True
+    else:
+        normalized = False
+
+    # Zero replacement
+    try:
+        replace_zero_value = table_df[table_df.gt(0)].min().min() / int(args.replace_zeros)
+    except:
+        replace_zero_value = float(args.replace_zeros)
+    if replace_zero_value == 1 and args.transformation == "log":
+        replace_zero_value = 0.999999  # Do not allow value 1 using log
+
+    # Split table into ranks. Ranks are either in the headers in multi level tables or will be created for a one level table
+    if args.level_separator:
+        ranked_tables, lineage = parse_multi_table(table_df, args.ranks, tax, args.level_separator, args.obs_replace)
+    else:
+        ranked_tables, lineage = parse_single_table(table_df, args.ranks, tax, Config.default_rank_name)
+
+    if not ranked_tables:
+        raise Exception("Error parsing input file")
+
+    table = Table(table_df.index, total, unassigned, lineage, normalized, replace_zero_value)
+
+    print_log("")
+    print_log("Total valid samples: " + str(len(table.samples)))
+    # Check for long sample headers, break some plots
+    long_sample_headers = [h for h in table_df.index if len(h) > 70]
+    if long_sample_headers:
+        print_log("Long sample labels/headers detected, plots may break: ")
+        print_log("\n".join(long_sample_headers))
+    print_log("")
+
+    for r, t in ranked_tables.items():
+        print_log("--- " + r + " ---")
+        filtered_trimmed_t = trim_table(filter_input_table(t, total, args.min_frequency, args.max_frequency, args.min_count, args.max_count, normalized))
+        if t.empty:
+            print_log("No valid entries, skipping")
+        else:
+            # Trim table for empty zeros rows/cols
+            table.add_rank(r, filtered_trimmed_t)
+            print_log("Total valid observations: " + str(len(table.observations(r))))
+
+    print_log("")
+
+    if not normalized:
+        print_log("Total assigned (counts): " + str(table.get_total().sum() - table.get_unassigned().sum()))
+        print_log("Total unassigned (counts): " + str(table.get_unassigned().sum()))
+        print_log("")
+
+    return table
+
+
+def parse_metadata(args, table):
+    metadata = None
+    if args.metadata_file:
+        metadata = Metadata(metadata_file=args.metadata_file, samples=table.samples.to_list())
+    elif args.input_file.endswith(".biom"):
+        try:
+            biom_in = biom.load_table(args.input_file)
+            if biom_in.metadata() is not None:
+                metadata = Metadata(metadata_table=biom_in.metadata_to_dataframe(axis="sample"), samples=table.samples.to_list())
+        except:
+            print_log("Error parsing metadata from BIOM file, skipping")
+            return None
+
+    if metadata.data.empty:
+        print_log("No valid metadata, skipping")
+        return None
+
+    print_log("Samples: " + str(metadata.data.shape[0]))
+    print_log("Numeric Fields: " + str(metadata.get_data("numeric").shape[1]))
+    print_log("Categorical Fields: " + str(metadata.get_data("categorical").shape[1]))
+    if len(metadata.get_col_headers()) < args.metadata_cols:
+        args.metadata_cols = len(metadata.get_col_headers())
+
+    return metadata
+
+
+def parse_references(cfg, tax, taxonomy, ranks):
+    references = None
+    if cfg is not None and "references" in cfg:
+        if taxonomy == "ncbi":
+            references = {}
+            for desc, sf in cfg["references"].items():
+                references[desc] = Reference(file=sf)
+                if tax:
+                    # Update taxids / get taxid from name
+                    references[desc].update_taxids(update_tax_nodes(references[desc].ids, tax))
+                    for i in list(references[desc].ids.keys()):
+                        # lineage of all parent nodes (without itself)
+                        for l in tax.lineage(i)[:-1]:
+                            references[desc].add_parent(l, i)
+        else:
+            print_log("References only possible with ncbi taxonomy, skipping")
+    else:
+        print_log("No references defined in the configuration file, skipping")
+    return references
+
+
+def parse_controls(cfg, table):
+    controls = None
+    control_samples = None
+    if cfg is not None and "controls" in cfg:
+        controls = {}
+        control_samples = {}
+        for desc, cf in cfg["controls"].items():
+            with open(cf, "r") as file:
+                samples = file.read().splitlines()
+                obs = set()
+                valid_samples = set()
+                for rank in table.ranks():
+                    # Retrieve sub-table for every rank
+                    control_table = table.get_subtable(rank, samples=samples)
+                    obs.update(control_table.columns.to_list())
+                    valid_samples.update(control_table.index.to_list())
+
+                # Add control observations as a reference
+                controls[desc] = Reference(ids=obs)
+                control_samples[desc] = list(valid_samples)
+    else:
+        print_log("No controls defined in the configuration file, skipping")
+
+    return controls, control_samples
+
+
+def parse_mgnify(run_mgnify, cfg, tax, ranks):
+    mgnify = None
+    if run_mgnify:
+        if cfg is not None and "mgnify" in cfg["external"]:
+            try:
+                mgnify = pd.read_table(cfg["external"]["mgnify"], header=None, names=["rank", "taxa", "biome", "count"])
+            except Exception as e:
+                print_log("Failed parsing MGnify database file [" + cfg["external"]["mgnify"] + "], skipping")
+                print_log(str(e))
+            # Filter to keep only used ranks, if provided
+            if ranks:
+                mgnify = mgnify.loc[mgnify['rank'].isin(ranks)]
+                mgnify.reset_index(drop=True, inplace=True)
+            # Convert taxids if tax is provided
+            if tax:
+                updated_nodes = update_tax_nodes([tuple(x) for x in mgnify[["rank", "taxa"]].to_numpy()], tax)
+                mgnify["taxa"] = mgnify[["rank", "taxa"]].apply(lambda rt: updated_nodes[(rt[0], rt[1])] if updated_nodes[(rt[0], rt[1])] is not None else rt[1], axis=1)
+            if mgnify.empty:
+                mgnify = None
+                print_log("No matches with MGnify database, skipping")
+        else:
+            print_log("Not defined in the configuration file, skipping")
+    else:
+        print_log("Not activated, skipping")
+    return mgnify
+
+
+def run_correlation(table, top_obs_corr):
+    corr = {}
+    for rank in table.ranks():
+        corr[rank] = {}
+        if top_obs_corr:
+            top_taxids = sorted(table.get_top(rank, top_obs_corr))
+            matrix = table.get_subtable(taxids=top_taxids, rank=rank)
+        else:
+            top_taxids = sorted(table.observations(rank))
+            matrix = table.data[rank]
+
+        corr[rank]["observations"] = top_taxids
+        corr[rank]["rho"] = []
+        # No correlation with just one observation
+        if len(matrix.columns) >= 2:
+            rho = pairwise_rho(transform_table(matrix, 0, "clr", table.zerorep).values)
+            if len(matrix.columns) == 2:
+                # If there are only 2 observations, return in a float
+                # re-format in a matrix shape
+                rho = np.array([[np.nan, np.nan], [rho[1, 0], np.nan]])
+            else:
+                # fill upper triangular matrix (mirrored values) with nan to be ignored by pandas
+                # to save half of the space
+                rho[np.triu_indices(rho.shape[0])] = np.nan
+
+            corr[rank]["rho"] = rho
+
+    return corr
+
+
+def parse_input_file(input_file, unassigned_header, transpose, sample_replace):
 
     if input_file.endswith(".biom"):
-        with open(input_file, "r") as f:
-            table_df = parse_table_biom(f).to_dataframe(dense=True)
+        table_df = biom.load_table(input_file).to_dataframe(dense=True)
     else:
         # Default input_file: index=observations, columns=samples
         # table_df should have samples on indices and observations on columns
@@ -38,19 +284,34 @@ def parse_input_table(input_file, unassigned_header, transpose, min_frequency, m
         table_df = table_df.transpose()
 
     # Remove header on rows
-    table_df.index.names = [None]
+    table_df.index.name = None
+
+    # Replace text on sample labels
+    if sample_replace:
+        print_log("Replacing sample values:")
+        before_replace = table_df.head(1).index
+        #get index as series to use replace method
+        new_index = table_df.reset_index()["index"].replace(regex=dict(zip(sample_replace[::2], sample_replace[1::2])))
+        table_df.set_index(new_index, inplace=True)
+        for b, a in zip(before_replace, table_df.head(1).index):
+            print_log("  " + b + " -> " + a)
+        print_log("  ...")
 
     # Sum total before split unassigned or filter
     total = table_df.sum(axis=1)
 
     # unique unassigned/unclassified for table
+    # Separate unassigned counts column from main data frame
     unassigned = pd.Series(0, index=table_df.index)
     if unassigned_header:
         for header in unassigned_header:
             if header in table_df.columns:
-                # Separate unassigned counts column from main data frame
-                # Sum in case there are several equally named headers
-                unassigned = unassigned + table_df[header].sum(axis=1)
+                if isinstance(table_df[header], pd.DataFrame):
+                    # Sum in case there are several equally named headers
+                    unassigned += table_df[header].sum(axis=1)
+                else:
+                    # return a pd.Series
+                    unassigned += table_df[header]
                 table_df.drop(columns=header, inplace=True)
             else:
                 print_log("'" + header + "' header not found")
@@ -58,23 +319,22 @@ def parse_input_table(input_file, unassigned_header, transpose, min_frequency, m
     if unassigned.sum() == 0:
         print_log("No unassigned entries defined")
 
-    print_log("")
-    print_log("- Filtering table")
-    table_df = filter_input_table(table_df, total, min_frequency, max_frequency, min_count, max_count)
+    print_log("Trimming table")
+    table_df = trim_table(table_df)
 
-    # Filter based on the table
+    # Filter based on the final table
     unassigned = unassigned.reindex(table_df.index)
     total = total.reindex(table_df.index)
 
     return table_df, total, unassigned
 
 
-def filter_input_table(table_df, total, min_frequency, max_frequency, min_count, max_count):
+def filter_input_table(table_df, total, min_frequency, max_frequency, min_count, max_count, normalized):
 
     if min_count:
         cnt = table_df.sum().sum()
         if min_count < 1:
-            table_df_norm = transform_table(table_df, total, "norm", 0)
+            table_df_norm = transform_table(table_df, total, "norm", 0) if not normalized else table_df
             table_df = table_df[table_df_norm >= min_count].fillna(0)
         elif min_count > 1:
             table_df = table_df[table_df >= min_count].fillna(0)
@@ -83,7 +343,7 @@ def filter_input_table(table_df, total, min_frequency, max_frequency, min_count,
     if max_count:
         cnt = table_df.sum().sum()
         if max_count < 1:
-            table_df_norm = transform_table(table_df, total, "norm", 0)
+            table_df_norm = transform_table(table_df, total, "norm", 0) if not normalized else table_df
             table_df = table_df[table_df_norm <= max_count].fillna(0)
         elif max_count > 1:
             table_df = table_df[table_df <= max_count].fillna(0)
@@ -109,27 +369,33 @@ def filter_input_table(table_df, total, min_frequency, max_frequency, min_count,
             table_df = table_df.loc[:, table_df_freq <= max_frequency]
         print_log(str(int(cnt - table_df.shape[1])) + " observations removed with --max-frequency " + str(max_frequency))
 
+    return table_df
+
+
+def trim_table(table_df):
     # Check for cols/rows with sum zero
-    zero_rows = table_df.sum(axis=1) == 0
+    zero_rows = table_df.sum(axis=1).eq(0)
     if any(zero_rows):
         table_df = table_df.loc[~zero_rows, :]
-        print_log(str(sum(zero_rows)) + " samples without valid counts removed")
+        print_log(str(sum(zero_rows)) + " samples with only zero removed")
 
-    zero_cols = table_df.sum(axis=0) == 0
+    zero_cols = table_df.sum(axis=0).eq(0)
     if any(zero_cols):
         table_df = table_df.loc[:, ~zero_cols]
-        print_log(str(sum(zero_cols)) + " observations without valid counts removed")
+        print_log(str(sum(zero_cols)) + " observations with only zero removed")
 
     return table_df
 
 
 def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
+    from grimer.grimer import _debug
+
     # Transpose table (obseravations as index) and expand ranks in columns
     ranks_df = table_df.T.index.str.split(level_separator, expand=True).to_frame(index=False)
 
     # For every pair of replace arguments
     if obs_replace:
-        print_log("Replacing values:")
+        print_log("Replacing observation values:")
         before_replace = ranks_df.dropna().head(1).values[0]
         ranks_df.replace(regex=dict(zip(obs_replace[::2], obs_replace[1::2])), inplace=True)
         for b, a in zip(before_replace, ranks_df.dropna().head(1).values[0]):
@@ -150,7 +416,7 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
     ranks_df.rename(columns=parsed_ranks, inplace=True)
 
     # Update taxids
-    if tax:
+    if tax is not None:
         unmatched_nodes = 0
         for i, r in parsed_ranks.items():
             rank_nodes = ranks_df[r].dropna().unique()
@@ -163,9 +429,9 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
                 else:
                     updated_nodes = update_tax_nodes(rank_nodes, tax)
 
-                # Add nan to convert empty ranks
-                updated_nodes[np.nan] = tax.undefined_node
-                ranks_df[r] = ranks_df[r].map(lambda t: updated_nodes[t] if updated_nodes[t] else t)
+                # Add nan to keep missing ranks (different than tax.undefined_node [None] which will keep the name)
+                updated_nodes[np.nan] = np.nan
+                ranks_df[r] = ranks_df[r].map(lambda t: updated_nodes[t] if updated_nodes[t] is not None else t)
                 del updated_nodes[np.nan]
 
                 unmatched_nodes += list(updated_nodes.values()).count(tax.undefined_node)
@@ -180,28 +446,31 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
             invalid = lin_count[(lin_count > 1).any(axis=1)].index.to_list()
             if invalid:
                 print_log(str(len(invalid)) + " observations removed with invalid lineage at " + r)
+                if _debug:
+                    print_log(",".join(invalid) + " observations removed with invalid lineage at " + r)
                 # Set to NaN to keep shape of ranks_df
                 ranks_df.loc[ranks_df[r].isin(invalid), r] = np.nan
-   
+
     ranked_tables = {}
     for i, r in parsed_ranks.items():
         # ranks_df and table_df.T have the same shape
         ranked_table_df = pd.concat([ranks_df[r], table_df.T.reset_index(drop=True)], axis=1)
         ranked_tables[r] = ranked_table_df.groupby([r], dropna=True).sum().T
+        ranked_tables[r].columns.name = None
 
     lineage = ranks_df
-
     return ranked_tables, lineage
 
 
 def parse_single_table(table_df, ranks, tax, default_rank_name):
 
     # Update taxids
-    if tax:
+    if tax is not None:
         updated_nodes = update_tax_nodes(table_df.columns, tax)
         unmatched_nodes = list(updated_nodes.values()).count(tax.undefined_node)
         if unmatched_nodes:
             print_log(str(unmatched_nodes) + " observations not found in taxonomy")
+
         for node, upd_node in updated_nodes.items():
             if upd_node is not None and upd_node != node:
                 # If updated node is a merge on an existing taxid, sum values
@@ -242,29 +511,12 @@ def parse_single_table(table_df, ranks, tax, default_rank_name):
     return ranked_tables, lineage
 
 
-def fdrcorrection_bh(pvals):
-    """
-    Correct multiple p-values with the Benjamini/Hochberg method
-    Code copied and adapted from: statsmodels.stats.multitest.multipletests
-    https://github.com/statsmodels/statsmodels/blob/77bb1d276c7d11bc8657497b4307aa7575c3e65c/statsmodels/stats/multitest.py
-    """
-    pvals_sortind = np.argsort(pvals)
-    pvals_sorted = np.take(pvals, pvals_sortind)
-
-    nobs = len(pvals_sorted)
-    factors = np.arange(1, nobs + 1) / float(nobs)
-
-    pvals_corrected_raw = pvals_sorted / factors
-    pvals_corrected = np.minimum.accumulate(pvals_corrected_raw[::-1])[::-1]
-    pvals_corrected[pvals_corrected > 1] = 1
-
-    pvals_corrected_ = np.empty_like(pvals_corrected)
-    pvals_corrected_[pvals_sortind] = pvals_corrected
-
-    return pvals_corrected_
-
-
 def transform_table(df, total_counts, transformation, replace_zero_value):
+    # Special case clr with one observation (result in zeros)
+    if transformation == "clr" and df.shape[1] == 1:
+        print_log("WARNING: using log instead of clr with one observation")
+        transformation = "log"
+
     if transformation == "log":
         transformed_df = (df + replace_zero_value).apply(np.log10)
     elif transformation == "clr":
@@ -309,7 +561,16 @@ def update_tax_nodes(nodes, tax):
     return updated_nodes
 
 
-def run_decontam(cfg, table, metadata, control_samples):
+def run_decontam(run_decontam, cfg, table, metadata, control_samples):
+
+    if not run_decontam:
+        print_log("Not activated, skipping")
+        return None
+
+    if cfg is None:
+        print_log("Not defined in the configuration file, skipping")
+        return None
+
     df_decontam = pd.DataFrame(index=table.samples, columns=["concentration", "controls"])
     cfg_decontam = cfg["external"]["decontam"]
     tmp_output_prefix = "tmp_"
@@ -327,23 +588,25 @@ def run_decontam(cfg, table, metadata, control_samples):
                 df_decontam["concentration"] = pd.read_table(cfg_decontam["frequency_file"], sep='\t', header=None, skiprows=0, index_col=0).reindex(table.samples)
                 # If any entry is unknown, input is incomplete
                 if df_decontam["concentration"].isnull().values.any():
-                    print_log("File " + cfg_decontam["frequency_file"] + " is incomplete (Missing: " + ",".join(df_decontam[df_decontam.isnull().any(axis=1)].index.to_list()) + ") Skipping DECONTAM.")
+                    print_log("File " + cfg_decontam["frequency_file"] + " is incomplete (Missing: " + ",".join(df_decontam[df_decontam.isnull().any(axis=1)].index.to_list()) + "), skipping")
                     return None
             else:
-                print_log("File " + cfg_decontam["frequency_file"] + " not found. Skipping DECONTAM.")
+                print_log("File " + cfg_decontam["frequency_file"] + " not found, skipping")
                 return None
         elif "frequency_metadata" in cfg_decontam:
             if cfg_decontam["frequency_metadata"] in metadata.get_col_headers():
                 # Get concentrations from metadata
                 df_decontam["concentration"] = metadata.get_col(cfg_decontam["frequency_metadata"])
             else:
-                print_log("Could not find " + cfg_decontam["frequency_metadata"] + " in the metadata. Skipping DECONTAM.")
+                print_log("Could not find " + cfg_decontam["frequency_metadata"] + " in the metadata, skipping.")
                 return None
-        else:
+        elif not table.normalized:
             # Use total from table
-            print_log("WARNING: Using total counts as frequency for DECONTAM")
-            df_decontam["concentration"] = table.total
-
+            print_log("No concentration provided, using total counts as concentration (frequency for DECONTAM)")
+            df_decontam["concentration"] = table.get_total()
+        else:
+            print_log("Cannot run DECONTAM without defined concentration and normalized input values, skipping")
+            return None
         # Print concentrations to file
         df_decontam["concentration"].to_csv(out_concentration, sep="\t", header=False, index=True)
 
@@ -376,18 +639,20 @@ def run_decontam(cfg, table, metadata, control_samples):
             print("\n".join(df_decontam.index[df_decontam["controls"]]), file=outf)
             outf.close()
         else:
-            print("Could not find valid control entries. Skipping DECONTAM")
+            print("Could not find valid control entries, skipping")
             return None
 
     decontam = Decontam(df_decontam)
     # Run DECONTAM for each for each
     for rank in table.ranks():
-
         if len(table.observations(rank)) == 1:
             decontam.add_rank_empty(rank, table.observations(rank))
         else:
-            # normalized and write temporary table for each rank
-            transform_table(table.data[rank], table.total, "norm", 0).to_csv(out_table, sep="\t", header=True, index=True)
+            # normalize and write temporary table for each rank
+            if not table.normalized:
+                transform_table(table.data[rank], table.get_total()[table.data[rank].index], "norm", 0).to_csv(out_table, sep="\t", header=True, index=True)
+            else:
+                table.data[rank].to_csv(out_table, sep="\t", header=True, index=True)
 
             cmd = " ".join(["scripts/run_decontam.R",
                             "--resout " + tmp_output_prefix + "decontam_out.tsv",
@@ -404,16 +669,18 @@ def run_decontam(cfg, table, metadata, control_samples):
     for file in [out_table, out_concentration, out_controls, tmp_output_prefix + "decontam_out.tsv", tmp_output_prefix + "decontam_mod.tsv"]:
         if os.path.isfile(file):
             os.remove(file)
+
     return decontam
 
 
-def run_hclustering(table, linkage_methods, linkage_metrics, transformation, replace_zero_value, skip_dendrogram, optimal_ordering):
+def run_hclustering(table, linkage_methods, linkage_metrics, transformation, skip_dendrogram, optimal_ordering):
     hcluster = {}
     dendro = {}
 
     for rank in table.ranks():
+
         # Get .values of transform, numpy array
-        matrix = transform_table(table.data[rank], table.total, transformation, replace_zero_value).values
+        matrix = transform_table(table.data[rank], table.get_total(), transformation, table.zerorep).values
 
         hcluster[rank] = {}
         dendro[rank] = {}
@@ -481,6 +748,17 @@ def dendro_lines_color(dendro, axis):
         return icoord, dcoord, colors
 
 
+def pairwise_vlr(mat):
+    cov = np.cov(mat.T, ddof=1)
+    diagonal = np.diagonal(cov)
+    return -2 * cov + diagonal[:, np.newaxis] + diagonal
+
+
+def pairwise_rho(mat):
+    variances = np.var(mat, axis=0, ddof=1)
+    return 1 - (pairwise_vlr(mat) / np.add.outer(variances, variances))
+
+
 def include_scripts(scripts):
     # Insert global js functions and css and return template
     template = "{% block postamble %}"
@@ -493,60 +771,38 @@ def include_scripts(scripts):
     return template
 
 
-def parse_sources(cfg, tax, ranks):
-    contaminants = {}
-    references = {}
-    for desc, sf in cfg["sources"]["contaminants"].items():
-        contaminants[desc] = Source(file=sf)
-
-        # Update taxids / get taxid from name
-        if tax:
-            contaminants[desc].update_taxids(update_tax_nodes(contaminants[desc].ids, tax))
-            ids = contaminants[desc].ids
-
-            # lineage of all children nodes
-            for i in ids:
-                for lin in map(lambda txid: tax.lineage(txid, root_node=i), tax.leaves(i)):
-                    contaminants[desc].update_lineage(lin)
-                    contaminants[desc].update_refs({i: l for l in lin})
-
-    for desc, sf in cfg["sources"]["references"].items():
-        references[desc] = Source(file=sf)
-        # Update lineage and refs based on given taxonomy
-        if tax:
-            references[desc].update_taxids(update_tax_nodes(references[desc].ids, tax))
-            ids = references[desc].ids
-
-            # lineage of all children nodes
-            for i in ids:
-                for lin in map(lambda txid: tax.lineage(txid, root_node=i), tax.leaves(i)):
-                    references[desc].update_lineage(lin)
-                    references[desc].update_refs({i: l for l in lin})
-
-    return contaminants, references
+def format_js_toString(val):
+    # Transform numeric value to float and string to match toString
+    return str(float(val)) if isinstance(val, (int, float)) else str(val)
 
 
-def parse_controls(cfg, tax, table):
-    controls = {}
-    control_samples = {}
+def make_color_palette(n_colors, linear: bool=False, palette: dict=None):
+    if isinstance(palette, dict) and n_colors <= max(palette.keys()):
+        # Special case for 1 and 2 (not in palettes)
+        palette = palette[3 if n_colors < 3 else n_colors]
 
-    if "samples" in cfg:
-        if "controls" in cfg["samples"]:
-            for desc, cf in cfg["samples"]["controls"].items():
-                with open(cf, "r") as file:
-                    samples = file.read().splitlines()
-                    control_table = table.get_subtable(table.ranks()[-1], samples=samples)
-                    controls[desc] = Source(ids=control_table.columns.to_list())
-                    control_samples[desc] = control_table.index.to_list()
+    if linear or n_colors > 20:
+        if not palette:
+            palette = Turbo256
+        if n_colors <= 256:
+            return linear_palette(palette, n_colors)
+        else:
+            # Repeat colors
+            return [palette[int(i * 256.0 / n_colors)] for i in range(n_colors)]
+    else:
+        # Select color palette based on number of requested colors
+        # Return the closest palette with most distinc set of colors
+        if not palette:
+            if n_colors <= 8:
+                palette = Colorblind[8]
+            elif n_colors <= 10:
+                palette = Category10[10]
+            elif n_colors <= 20:
+                palette = Category20[20]
+            else:
+                palette = Turbo256
 
-                    if tax:
-                        ids = controls[desc].ids
-                        # lineage of all children nodes
-                        for i in ids:
-                            for lin in map(lambda txid: tax.lineage(txid, root_node=i), tax.leaves(i)):
-                                controls[desc].update_lineage(lin)
-
-    return controls, control_samples
+        return palette[:n_colors]
 
 def run_cmd(cmd, print_stderr: bool=False, exit_on_error: bool=True):
     errcode = 0
@@ -588,21 +844,16 @@ def print_log(text):
 def print_df(df, name: str=None):
     from grimer.grimer import _debug
     if _debug:
-        print("-----------------------------------------------")
         print(name)
         if isinstance(df, dict):
             if df:
-                print(list(df.keys())[0])
-                print("...")
-                print(list(df.keys())[-1])
-                print(list(df.values())[0])
-                print("...")
-                print(list(df.values())[-1])
-                print(len(df.keys()))
+                print(len(df.keys()), "keys:", list(df.keys())[0], "...", list(df.keys())[-1])
+                #print(list(df.values())[0], "...", list(df.values())[-1])
         else:
-            print(df.columns)
+            #print(df.columns)
             print(df.head())
             print(df.shape)
+        print("size:", sys.getsizeof(df))
         print("-----------------------------------------------")
 
 

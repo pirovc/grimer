@@ -17,18 +17,19 @@ class Decontam:
 
         # Parse models enforcing index as string
         mod = pd.read_table(decontam_mod_file, sep='\t', header=0, skiprows=0, index_col=0, dtype={0: str})
-   
+
         # Remove point counter at end (.1 or .1000)
         mod.index = mod.index.map(lambda txid: txid[:-5] if txid.endswith(".1000") else txid[:-2]).to_list()
-        
+
         # Merge first point of model
         self.rank[rank] = self.rank[rank].merge(mod.iloc[0::2, 0], left_index=True, right_index=True)
-        
+
         # Merge second point of model and non-contant line
         self.rank[rank] = self.rank[rank].merge(mod.iloc[1::2, :], suffixes=["", "_2"], left_index=True, right_index=True)
 
     def add_rank_empty(self, rank, idx):
         self.rank[rank] = pd.DataFrame(index=idx, columns=self.cols_rank + ["contam", "contam_2", "non.contam"])
+        self.rank[rank]["contaminant"] = False
 
     def get_data(self):
         return self.data.fillna(False)
@@ -36,11 +37,11 @@ class Decontam:
     def get_contaminants(self, rank, idx):
         return self.rank[rank].reindex(idx)["contaminant"]
 
-    def get_pvalues(self, rank, idx):
+    def get_pscore(self, rank, idx):
         return self.rank[rank].reindex(idx)["p"]
 
     def get_contaminant_list(self):
         clist = []
         for r in self.rank:
-            clist.extend(self.rank[r].index[self.rank[r]["contaminant"]==True].to_list())
+            clist.extend(self.rank[r].index[self.rank[r]["contaminant"] == True].to_list())
         return clist

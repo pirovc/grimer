@@ -2,7 +2,7 @@
 
 ![GRIMER](grimer/img/logo.png)
 
-GRIMER automates analysis and reports an offline and interactive dashboard integrating annotation, taxonomy and metadata to analyse microbiome studies and detect contamination.
+GRIMER perform analysis of microbiome data and generates a portable and interactive dashboard integrating annotation, taxonomy and metadata.
 
 ## Examples
 
@@ -22,19 +22,34 @@ grimer -h
 
 ## Usage
 
-### Basic
+### Tab-separated input table
 ```bash
-grimer -i input_table.tsv -m metadata.tsv -c config/default.yaml
+grimer -i input_table.tsv
+```
+
+### BIOM file
+```bash
+grimer -i myfile.biom
+```
+
+### Tab-separated input table with taxonomic annotated observations (e.g. sk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria...)
+```bash
+grimer -i input_table.tsv -f ";"
+```
+
+### Tab-separated input table with metadata
+```bash
+grimer -i input_table.tsv -m metadata.tsv
 ```
 
 ### With taxonomy integration (ncbi)
 ```bash
-grimer -i input_table.tsv -m metadata.tsv -c config/default.yaml -t ncbi #optional -b taxdump.tar.gz
+grimer -i input_table.tsv -m metadata.tsv -t ncbi #optional -b taxdump.tar.gz
 ```
 
-### With DECONTAM and MGnify annotations
+### With configuration file to setup external tools, references and annotations
 ```bash
-grimer -i input_table.tsv -m metadata.tsv -c config/default.yaml -d -g
+grimer -i input_table.tsv -m metadata.tsv -t ncbi -c config/default.yaml -d -g
 ```
 
 ### List all options 
@@ -44,7 +59,7 @@ grimer -h
 
 ## Powered by
 
-[<img src="https://static.bokeh.org/branding/logos/bokeh-logo.png" width="100">](https://bokeh.org)
-[<img src="https://pandas.pydata.org/static/img/pandas.svg" width="100">](https://pandas.org)
-[<img src="https://www.scipy.org/_static/logo.png" width="100">](https://scipy.org)
-[<img src="http://scikit-bio.org/assets/logo.svg" width="100">](https://scikit-bio.org)
+[<img src="https://static.bokeh.org/branding/logos/bokeh-logo.png" height="60">](https://bokeh.org)
+[<img src="https://pandas.pydata.org/static/img/pandas.svg" height="40">](https://pandas.org)
+[<img src="https://raw.githubusercontent.com/scipy/scipy/master/doc/source/_static/logo.svg" height="40">](https://scipy.org)
+[<img src="http://scikit-bio.org/assets/logo.svg" height="40">](https://scikit-bio.org)
