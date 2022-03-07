@@ -5,6 +5,7 @@ import sys
 import subprocess
 import shlex
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 import yaml
 
 #Internal
@@ -140,30 +141,102 @@ def parse_table(args, tax):
     return table
 
 
-def parse_metadata(args, table):
+def parse_metadata(args, samples):
     metadata = None
+
+    # Parse metadata as DataFrame (md)
     if args.metadata_file:
-        metadata = Metadata(metadata_file=args.metadata_file, samples=table.samples.to_list())
+        # Parse table as dataframe
+        md = pd.read_table(args.metadata_file, sep='\t', header=0, skiprows=0, index_col=0, dtype={0: str})
     elif args.input_file.endswith(".biom"):
         try:
             biom_in = biom.load_table(args.input_file)
             if biom_in.metadata() is not None:
-                metadata = Metadata(metadata_table=biom_in.metadata_to_dataframe(axis="sample"), samples=table.samples.to_list())
+                md = biom_in.metadata_to_dataframe(axis="sample")
         except:
             print_log("Error parsing metadata from BIOM file, skipping")
             return None
 
-    if metadata.data.empty:
+    print(md)
+
+    if md.empty:
         print_log("No valid metadata, skipping")
         return None
 
+    # Enforce string index
+    md.index = md.index.astype('str')
+
+    # Return type of columns, remove metadata row if present from metadata
+    md_types = define_metadata_types(md)
+
+    # types defined on file
+    if str(md.index[0]).startswith("#"):
+        # Drop row with types from main data
+        md.drop(md_types.name, inplace=True)
+        # Enforce column type on dataframe
+        md[md_types[md_types == "categorical"].index] = md[md_types[md_types == "categorical"].index].astype(str)
+        md[md_types[md_types == "numeric"].index] = md[md_types[md_types == "numeric"].index].apply(pd.to_numeric)
+
+    # Convert datatypes to adequate numeric values (int, float)
+    md = md.convert_dtypes(infer_objects=False, convert_string=False, convert_boolean=False)
+    # Re-convert everything to object to standardize (int64 NA is not seriazable on bokeh)
+    md = md.astype("object")
+
+    # Remove empty fields
+    null_cols = md.isna().all(axis=0)
+    if any(null_cols):
+        md = md.loc[:, ~null_cols]
+        md_types = md_types[~null_cols]
+        print_log(str(sum(null_cols)) + " metadata fields removed without valid values")
+
+    # Convert NaN on categorical to ""
+    md[md_types[md_types == "categorical"].index] = md[md_types[md_types == "categorical"].index].fillna('')
+    # Convert boolean from categorical to String
+    mask = md[md_types[md_types == "categorical"].index].applymap(type) != bool
+    md[md_types[md_types == "categorical"].index] = md[md_types[md_types == "categorical"].index].where(mask, md[md_types[md_types == "categorical"].index].replace({True: 'True', False: 'False'}))
+
+    # Remove names
+    md.index.names = [None]
+    md_types.name = None
+
+    # sort and filter by given samples
+    md = md.reindex(samples)
+
+    # Check if matched metadata and samples
+    null_rows = md.isna().all(axis=1)
+    if any(null_rows):
+        # Do not remove, just inform user
+        #md = md.loc[~null_rows, :]
+        print_log(str(sum(null_rows)) + " samples without valid metadata")
+
+    if md.empty or sum(null_rows) == md.shape[0]:
+        print_log("No valid metadata, skipping")
+        return None
+
+    metadata = Metadata(md, md_types)
     print_log("Samples: " + str(metadata.data.shape[0]))
     print_log("Numeric Fields: " + str(metadata.get_data("numeric").shape[1]))
     print_log("Categorical Fields: " + str(metadata.get_data("categorical").shape[1]))
-    if len(metadata.get_col_headers()) < args.metadata_cols:
-        args.metadata_cols = len(metadata.get_col_headers())
-
     return metadata
+
+
+def define_metadata_types(metadata):
+    # Define all COLUMN TYPES as default
+    types = pd.Series(Metadata.default_type, index=metadata.columns)
+    # Set types
+    if str(metadata.index[0]).startswith("#"):
+        # types defined on file: get values defined on the first row
+        types = metadata.iloc[0]
+        # Validate declared types
+        idx_valid = types.isin(Metadata.valid_types)
+        if not idx_valid.all():
+            print_log("Invalid metadata types replaced by: " + Metadata.default_type)
+            types[~idx_valid] = default_type
+    else:
+        # guessed types from read_table
+        types[metadata.dtypes.map(is_numeric_dtype)] = "numeric"
+
+    return types
 
 
 def parse_references(cfg, tax, taxonomy, ranks):
@@ -862,5 +935,5 @@ def print_logo_cli(version):
     print_log(" ╔═╗╦═╗╦╔╦╗╔═╗╦═╗ ")
     print_log(" ║ ╦╠╦╝║║║║║╣ ╠╦╝ ")
     print_log(" ╚═╝╩╚═╩╩ ╩╚═╝╩╚═ ")
-    print_log("   v" + version)
+    print_log("           v" + version)
     print_log("==================")

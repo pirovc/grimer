@@ -1,11 +1,12 @@
 from bokeh.layouts import column, row, gridplot
 from bokeh.models import Spacer, Tabs, Panel, Div
+from grimer.func import print_log
 import base64
 
 
 def make_layout(ele, sizes, version, logo_path, title, output_plots):
 
-    main_panels = []
+    main_panels = {}
     if "overview" in output_plots:
         filterwidgets = column(ele["obstable"]["wid"]["frequency_spinner"],
                                ele["obstable"]["wid"]["counts_perc_avg_spinner"],
@@ -51,7 +52,7 @@ def make_layout(ele, sizes, version, logo_path, title, output_plots):
                                 ele["samplebars"]["wid"]["y2_select"],
                                 ele["samplebars"]["wid"]["help_button"]),
                             ele["samplebars"]["wid"]["toggle_label"])
-        main_panels.append(Panel(child=column(row_obstable, row_barpot, sizing_mode="stretch_width"), title="Overview"))
+        main_panels["overview"] = Panel(child=column(row_obstable, row_barpot, sizing_mode="stretch_width"), title="Overview")
 
     if "samples" in output_plots:
         selectwidgets = column(ele["sampletable"]["wid"]["total_counts_spinner"],
@@ -72,7 +73,7 @@ def make_layout(ele, sizes, version, logo_path, title, output_plots):
                                  ele["obsbars"]["wid"]["sort_select"],
                                  ele["obsbars"]["wid"]["help_button"]),
                              ele["obsbars"]["wid"]["toggle_label"])
-        main_panels.append(Panel(child=column(row_sampletable, row_obsbars, sizing_mode="stretch_width"), title="Samples"))
+        main_panels["samples"] = Panel(child=column(row_sampletable, row_obsbars, sizing_mode="stretch_width"), title="Samples")
 
     if "heatmap" in output_plots:
         row_heatmap = gridplot([[ele["heatmap"]["fig"], ele["dendroy"]["fig"], ele["metadata"]["fig"]],
@@ -92,7 +93,7 @@ def make_layout(ele, sizes, version, logo_path, title, output_plots):
                                          ele["metadata"]["wid"]["toggle_legend"],
                                          sizing_mode="stretch_height",
                                          width=300))
-        main_panels.append(Panel(child=column(row_heatmap, row_heatmap_widgets, sizing_mode="stretch_width"), title="Heatmap"))
+        main_panels["heatmap"] = Panel(child=column(row_heatmap, row_heatmap_widgets, sizing_mode="stretch_width"), title="Heatmap")
 
     if "correlation" in output_plots:
         row_correlation = row(column(ele["correlation"]["wid"]["rank_select"],
@@ -101,9 +102,16 @@ def make_layout(ele, sizes, version, logo_path, title, output_plots):
                                      ele["correlation"]["wid"]["toggle_label"],
                                      ele["correlation"]["wid"]["help_button"]),
                               ele["correlation"]["fig"])
-        main_panels.append(Panel(child=column(row_correlation, sizing_mode="stretch_width"), title="Correlation"))
+        main_panels["correlation"] = Panel(child=column(row_correlation, sizing_mode="stretch_width"), title="Correlation")
 
-    main_tab = Tabs(tabs=main_panels)
+    if not main_panels:
+        print_log("No valid plots to output")
+        return None
+    else:
+        # Add plots in user chosen order
+        tabs = [main_panels[p] for p in output_plots]
+
+    main_tab = Tabs(tabs=tabs)
     logo_base64 = base64.b64encode(open(logo_path, 'rb').read())  # encode to base64
     logo_base64 = logo_base64.decode()    # convert to string
     logo_div = Div(text='<img src="data:image/png;base64,' + logo_base64 + '">' + '<a target="_blank" style="color: black" href="https://github.com/pirovc/grimer">v' + version + '</a>', width=300, height=40, sizing_mode="fixed")

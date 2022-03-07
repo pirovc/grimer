@@ -64,7 +64,7 @@ def main(argv=sys.argv[1:]):
         return 1
 
     print_log("- Parsing metadata")
-    metadata = parse_metadata(args, table)
+    metadata = parse_metadata(args, table.samples.to_list())
 
     print_log("- Parsing references")
     references = parse_references(cfg, tax, args.taxonomy, table.ranks())
@@ -301,6 +301,8 @@ def main(argv=sys.argv[1:]):
     logo_path = os.path.join(script_dir, "img", "logo.png")
 
     final_layout = make_layout(ele, sizes, Config.version, logo_path, args.title, args.output_plots)
+    if final_layout is None:
+        return 1
 
     template = include_scripts({os.path.join(script_dir, "js", "func.js"): "script",
                                 os.path.join(script_dir, "js", "popup.js"): "script",
