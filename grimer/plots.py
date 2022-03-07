@@ -651,7 +651,7 @@ The biomes are hierarchically classified in 5 different levels, from general (1)
     """
 
     return {"biome_spinner": biome_spinner,
-            "help_button": help_button(title="MGNify", text=help_text)}
+            "help_button": help_button(title="MGnify", text=help_text)}
 
 
 def plot_heatmap(table, cds_p_heatmap, tools_heatmap, transformation, dict_d_taxname):
@@ -697,7 +697,8 @@ def plot_heatmap(table, cds_p_heatmap, tools_heatmap, transformation, dict_d_tax
                          location="center",
                          orientation="vertical",
                          major_label_text_align="left",
-                         major_label_text_font_size="9px")
+                         major_label_text_font_size="9px",
+                         title=transformation)
     heatmap.add_layout(color_bar, 'left')
 
     # Convert taxid ticks to taxa names on client-side
@@ -771,13 +772,19 @@ def plot_heatmap_widgets(ranks, linkage_methods, linkage_metrics, references, co
     toggle_label = CheckboxGroup(labels=["Show observations labels", "Show samples label"], active=[])
 
     help_text = """
-The heatmap shows [transformed] values from the input table (color bar on top). If taxonomy is provided, one heatmap for each taxonomic rank is generated.
+***Heatmap***
 
-Values on axis can be independently clustered or sorted. Hierarchical clustering is done with [scipy linkage](https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.linkage.html). If clustering is selected, dendrograms will be plotted in the panels around the heatmap.
+The heatmap shows [transformed] values from the input table (color bar on top). Values on both axis can be independently clustered, grouped or sorted. 
+Hierarchical clustering uses [scipy linkage](https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.linkage.html). Dendrograms will be plotted in the panels around the heatmap if clustering is selected.
 
-The right-most panel will show metadata values related to each sample (y-axis), if provided. Colors are automatically generated for categorical (distinct colors) and numeric (sequential colors) fields. Multiple metadata fields can be select with Ctrl + click in the metadata selection widget.
+***Metadata***
 
-The bottom-most panel shows annotations for each observation/taxa values (x-axis).
+The right-most panel will show metadata values related to each sample (y-axis). Colors are automatically generated for categorical (distinct colors) and numeric (sequential colors) fields. Multiple metadata fields can be select with Ctrl + click in the metadata selection widget.
+
+***Annotations***
+
+The bottom-most panel shows annotations for each observation values (x-axis). Values are transformed and normalized to a 0-1 scale. References values are are normalized by max. occurrence in the selected rank.
+Controls values are their frequency in the specific control annotation. Decontam values are p-scores normalized, with higher values (1) representing low p-scores.
 
 The metadata and annotation plots are automatically sorted to reflect the clustering/sort of the heatmap.
 
@@ -790,7 +797,7 @@ The metadata and annotation plots are automatically sorted to reflect the cluste
             "y_groupby_select": y_groupby_select,
             "y_sort_select": y_sort_select,
             "toggle_label": toggle_label,
-            "help_button": help_button(title="Heatmap/Clustering", text=help_text)}
+            "help_button": help_button(title="Heatmap", text=help_text)}
 
 
 def plot_dendrogram(heatmap, tools_heatmap, cds_p_dendro_x, cds_p_dendro_y):
@@ -895,7 +902,7 @@ def plot_metadata(heatmap, tools_heatmap, metadata, cds_d_metadata, cds_p_metada
     metadata_colormap = CategoricalColorMapper(palette=palette, factors=factors)
 
     # Custom tooltip to show metadata field and value
-    md_custom = CustomJSHover(code='return value[0] ? "(" + value[0] + ") " + value[1] : "";')
+    md_custom = CustomJSHover(code='return value ? "(" + value[0] + ") " + value[1] : "";')
     tooltips = [('Sample', '@index')]
     formatters = {}
     for col in cols:

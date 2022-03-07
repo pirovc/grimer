@@ -710,7 +710,7 @@ def link_metadata_widgets(ele, cds_p_metadata, cds_d_metadata, max_metadata_cols
 
         var x_factors = [];
         var empty_y_values = new Array(index_len);
-        for (var i = 0; i < index_len; ++i) empty_y_values[i]=["", ""];
+        for (var i = 0; i < index_len; ++i) empty_y_values[i]="";
         // hide all legends
         for (let md_header in legend_colorbars) legend_colorbars[md_header].visible = false;
 

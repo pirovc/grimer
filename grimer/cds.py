@@ -53,7 +53,7 @@ def cds_annotations(table, references, controls, decontam, control_samples):
         # Generate a DataFrame to use as source in tables
         df_rank = pd.DataFrame(index=table.observations(rank))
 
-        if decontam:
+        if decontam is not None:
             contaminants = decontam.get_contaminants(rank, df_rank.index).values
             if contaminants.any():
                 df_rank["decontam"] = decontam.get_pscore(rank, df_rank.index)[contaminants]
@@ -268,6 +268,9 @@ def cds_plot_metadata(metadata, max_metadata_cols):
 
     df_plot_md["1"] = [(first_field, format_js_toString(md_value)) for md_value in metadata.get_col(first_field)]
 
+    # Fill with empty strings to match js output when not selected
+    df_plot_md.fillna("", inplace=True)
+    
     print_df(df_plot_md, "cds_p_metadata")
     return ColumnDataSource(df_plot_md)
 
