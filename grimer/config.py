@@ -25,8 +25,8 @@ class Config:
         main_group.add_argument('-c', '--config', type=str, help="Configuration file with definitions of references, controls and external tools.")
 
         output_group = parser.add_argument_group('output arguments')
-        output_group.add_argument('-g', '--mgnify', default=False, action='store_true', help="Use MGNify data")
-        output_group.add_argument('-d', '--decontam', default=False, action='store_true', help="Run DECONTAM")
+        output_group.add_argument('-g', '--mgnify', default=False, action='store_true', help="Plot MGnify chart")
+        output_group.add_argument('-d', '--decontam', default=False, action='store_true', help="Run and plot DECONTAM")
         output_group.add_argument('-l', '--title', type=str, default="", help="Title to display on the header of the report.")
         output_group.add_argument('-p', '--output-plots', nargs="*", type=str, default=Config.output_plots, help="Plots to generate. Default: " + ",".join(Config.output_plots), choices=Config.output_plots)
         output_group.add_argument('-o', '--output-html', type=str, default="output.html", help="File to output report. Default: output.html")

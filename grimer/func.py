@@ -157,8 +157,6 @@ def parse_metadata(args, samples):
             print_log("Error parsing metadata from BIOM file, skipping")
             return None
 
-    print(md)
-
     if md.empty:
         print_log("No valid metadata, skipping")
         return None
@@ -709,10 +707,10 @@ def run_decontam(run_decontam, cfg, table, metadata, control_samples):
         if df_decontam["controls"].any():
             print_log(str(df_decontam["controls"].sum()) + " valid control samples to be used by DECONTAM")
             outf = open(out_controls, "w")
-            print("\n".join(df_decontam.index[df_decontam["controls"]]), file=outf)
+            print_log("\n".join(df_decontam.index[df_decontam["controls"]]), file=outf)
             outf.close()
         else:
-            print("Could not find valid control entries, skipping")
+            print_log("Could not find valid control entries, skipping")
             return None
 
     decontam = Decontam(df_decontam)

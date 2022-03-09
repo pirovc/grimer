@@ -27,7 +27,7 @@ def make_layout(ele, sizes, version, logo_path, title, output_plots):
             info_tabs.append(Panel(child=column(ele["mgnify"]["fig"],
                                                 row(ele["mgnify"]["wid"]["biome_spinner"],
                                                     ele["mgnify"]["wid"]["help_button"])
-                                                ), title="MGNify"))
+                                                ), title="MGnify"))
         if ele["decontam"]["fig"]:
             info_tabs.append(Panel(child=column(ele["decontam"]["fig"],
                                                 row(ele["decontam"]["wid"]["pscore_text"],
