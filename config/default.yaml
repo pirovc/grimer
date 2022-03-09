@@ -7,7 +7,7 @@ references:
   # "Negative Controls": "path/file1.tsv"
 
 external:
-  mgnify: "files/mgnify.tsv"
+  mgnify: "files/mgnify5989.tsv"
   decontam:
     threshold: 0.1 # [0-1] P* hyperparameter
     method: "frequency" # frequency, prevalence, combined
