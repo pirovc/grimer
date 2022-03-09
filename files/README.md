@@ -31,8 +31,8 @@ Last update: 2022-03-09
 
 Manually curated from diverse publications:
 
- | Organism group | Genus | Species |
- |----------------|-------|---------|
+ | Organism group | Genus | Species | Reference |
+ |----------------|-------|---------|-----------|
  | Bacteria | 6 | 0 | 1998 Tanner, M.A. et al. | 
  | Bacteria | 0 | 10 | 2002 Kulakov, L.A. et al. | 
  | Bacteria | 4 | 0 | 2003 Grahn, N. et al. | 

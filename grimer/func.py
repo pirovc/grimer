@@ -293,6 +293,7 @@ def parse_mgnify(run_mgnify, cfg, tax, ranks):
             except Exception as e:
                 print_log("Failed parsing MGnify database file [" + cfg["external"]["mgnify"] + "], skipping")
                 print_log(str(e))
+                return None
             # Filter to keep only used ranks, if provided
             if ranks:
                 mgnify = mgnify.loc[mgnify['rank'].isin(ranks)]
@@ -707,7 +708,7 @@ def run_decontam(run_decontam, cfg, table, metadata, control_samples):
         if df_decontam["controls"].any():
             print_log(str(df_decontam["controls"].sum()) + " valid control samples to be used by DECONTAM")
             outf = open(out_controls, "w")
-            print_log("\n".join(df_decontam.index[df_decontam["controls"]]), file=outf)
+            print("\n".join(df_decontam.index[df_decontam["controls"]]), file=outf)
             outf.close()
         else:
             print_log("Could not find valid control entries, skipping")
