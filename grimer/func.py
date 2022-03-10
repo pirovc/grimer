@@ -78,7 +78,7 @@ def parse_table(args, tax):
         args.transpose = True
 
     # Read and return full table with separated total and unassigned counts (sharing same index)
-    table_df, total, unassigned = parse_input_file(args.input_file, args.unassigned_header, args.transpose, args.sample_replace)
+    table_df, total, unassigned = parse_input_file(args.input_file, args.unassigned_header, args.transpose, args.sample_replace, args.cumm_levels)
 
     if table_df.empty:
         raise Exception("Error parsing input file")
@@ -103,7 +103,7 @@ def parse_table(args, tax):
 
     # Split table into ranks. Ranks are either in the headers in multi level tables or will be created for a one level table
     if args.level_separator:
-        ranked_tables, lineage = parse_multi_table(table_df, args.ranks, tax, args.level_separator, args.obs_replace)
+        ranked_tables, lineage = parse_multi_table(table_df, args.ranks, tax, args.level_separator, args.obs_replace, args.cumm_levels)
     else:
         ranked_tables, lineage = parse_single_table(table_df, args.ranks, tax, Config.default_rank_name)
 
@@ -342,7 +342,7 @@ def run_correlation(table, top_obs_corr):
     return corr
 
 
-def parse_input_file(input_file, unassigned_header, transpose, sample_replace):
+def parse_input_file(input_file, unassigned_header, transpose, sample_replace, cumm_levels):
 
     if input_file.endswith(".biom"):
         table_df = biom.load_table(input_file).to_dataframe(dense=True)
@@ -370,7 +370,10 @@ def parse_input_file(input_file, unassigned_header, transpose, sample_replace):
         print_log("  ...")
 
     # Sum total before split unassigned or filter
-    total = table_df.sum(axis=1)
+    if cumm_levels:
+        total = table_df.max(axis=1)
+    else:
+        total = table_df.sum(axis=1)
 
     # unique unassigned/unclassified for table
     # Separate unassigned counts column from main data frame
@@ -459,7 +462,7 @@ def trim_table(table_df):
     return table_df
 
 
-def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
+def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace, cumm_levels):
     from grimer.grimer import _debug
 
     # Transpose table (obseravations as index) and expand ranks in columns
@@ -527,7 +530,10 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
     for i, r in parsed_ranks.items():
         # ranks_df and table_df.T have the same shape
         ranked_table_df = pd.concat([ranks_df[r], table_df.T.reset_index(drop=True)], axis=1)
-        ranked_tables[r] = ranked_table_df.groupby([r], dropna=True).sum().T
+        if cumm_levels:
+            ranked_tables[r] = ranked_table_df.groupby([r], dropna=True).max().T
+        else:
+            ranked_tables[r] = ranked_table_df.groupby([r], dropna=True).sum().T
         ranked_tables[r].columns.name = None
 
     lineage = ranks_df
