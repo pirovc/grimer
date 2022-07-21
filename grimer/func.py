@@ -5,6 +5,7 @@ import sys
 import subprocess
 import shlex
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 import yaml
 
 #Internal
@@ -77,7 +78,7 @@ def parse_table(args, tax):
         args.transpose = True
 
     # Read and return full table with separated total and unassigned counts (sharing same index)
-    table_df, total, unassigned = parse_input_file(args.input_file, args.unassigned_header, args.transpose, args.sample_replace)
+    table_df, total, unassigned = parse_input_file(args.input_file, args.unassigned_header, args.transpose, args.sample_replace, args.cumm_levels)
 
     if table_df.empty:
         raise Exception("Error parsing input file")
@@ -102,7 +103,7 @@ def parse_table(args, tax):
 
     # Split table into ranks. Ranks are either in the headers in multi level tables or will be created for a one level table
     if args.level_separator:
-        ranked_tables, lineage = parse_multi_table(table_df, args.ranks, tax, args.level_separator, args.obs_replace)
+        ranked_tables, lineage = parse_multi_table(table_df, args.ranks, tax, args.level_separator, args.obs_replace, args.cumm_levels)
     else:
         ranked_tables, lineage = parse_single_table(table_df, args.ranks, tax, Config.default_rank_name)
 
@@ -140,30 +141,100 @@ def parse_table(args, tax):
     return table
 
 
-def parse_metadata(args, table):
+def parse_metadata(args, samples):
     metadata = None
+
+    # Parse metadata as DataFrame (md)
     if args.metadata_file:
-        metadata = Metadata(metadata_file=args.metadata_file, samples=table.samples.to_list())
+        # Parse table as dataframe
+        md = pd.read_table(args.metadata_file, sep='\t', header=0, skiprows=0, index_col=0, dtype={0: str})
     elif args.input_file.endswith(".biom"):
         try:
             biom_in = biom.load_table(args.input_file)
             if biom_in.metadata() is not None:
-                metadata = Metadata(metadata_table=biom_in.metadata_to_dataframe(axis="sample"), samples=table.samples.to_list())
+                md = biom_in.metadata_to_dataframe(axis="sample")
         except:
             print_log("Error parsing metadata from BIOM file, skipping")
             return None
 
-    if metadata.data.empty:
+    if md.empty:
         print_log("No valid metadata, skipping")
         return None
 
+    # Enforce string index
+    md.index = md.index.astype('str')
+
+    # Return type of columns, remove metadata row if present from metadata
+    md_types = define_metadata_types(md)
+
+    # types defined on file
+    if str(md.index[0]).startswith("#"):
+        # Drop row with types from main data
+        md.drop(md_types.name, inplace=True)
+        # Enforce column type on dataframe
+        md[md_types[md_types == "categorical"].index] = md[md_types[md_types == "categorical"].index].astype(str)
+        md[md_types[md_types == "numeric"].index] = md[md_types[md_types == "numeric"].index].apply(pd.to_numeric)
+
+    # Convert datatypes to adequate numeric values (int, float)
+    md = md.convert_dtypes(infer_objects=False, convert_string=False, convert_boolean=False)
+    # Re-convert everything to object to standardize (int64 NA is not seriazable on bokeh)
+    md = md.astype("object")
+
+    # Remove empty fields
+    null_cols = md.isna().all(axis=0)
+    if any(null_cols):
+        md = md.loc[:, ~null_cols]
+        md_types = md_types[~null_cols]
+        print_log(str(sum(null_cols)) + " metadata fields removed without valid values")
+
+    # Convert NaN on categorical to ""
+    md[md_types[md_types == "categorical"].index] = md[md_types[md_types == "categorical"].index].fillna('')
+    # Convert boolean from categorical to String
+    mask = md[md_types[md_types == "categorical"].index].applymap(type) != bool
+    md[md_types[md_types == "categorical"].index] = md[md_types[md_types == "categorical"].index].where(mask, md[md_types[md_types == "categorical"].index].replace({True: 'True', False: 'False'}))
+
+    # Remove names
+    md.index.names = [None]
+    md_types.name = None
+
+    # sort and filter by given samples
+    md = md.reindex(samples)
+
+    # Check if matched metadata and samples
+    null_rows = md.isna().all(axis=1)
+    if any(null_rows):
+        # Do not remove, just inform user
+        #md = md.loc[~null_rows, :]
+        print_log(str(sum(null_rows)) + " samples without valid metadata")
+
+    if md.empty or sum(null_rows) == md.shape[0]:
+        print_log("No valid metadata, skipping")
+        return None
+
+    metadata = Metadata(md, md_types)
     print_log("Samples: " + str(metadata.data.shape[0]))
     print_log("Numeric Fields: " + str(metadata.get_data("numeric").shape[1]))
     print_log("Categorical Fields: " + str(metadata.get_data("categorical").shape[1]))
-    if len(metadata.get_col_headers()) < args.metadata_cols:
-        args.metadata_cols = len(metadata.get_col_headers())
-
     return metadata
+
+
+def define_metadata_types(metadata):
+    # Define all COLUMN TYPES as default
+    types = pd.Series(Metadata.default_type, index=metadata.columns)
+    # Set types
+    if str(metadata.index[0]).startswith("#"):
+        # types defined on file: get values defined on the first row
+        types = metadata.iloc[0]
+        # Validate declared types
+        idx_valid = types.isin(Metadata.valid_types)
+        if not idx_valid.all():
+            print_log("Invalid metadata types replaced by: " + Metadata.default_type)
+            types[~idx_valid] = default_type
+    else:
+        # guessed types from read_table
+        types[metadata.dtypes.map(is_numeric_dtype)] = "numeric"
+
+    return types
 
 
 def parse_references(cfg, tax, taxonomy, ranks):
@@ -222,6 +293,7 @@ def parse_mgnify(run_mgnify, cfg, tax, ranks):
             except Exception as e:
                 print_log("Failed parsing MGnify database file [" + cfg["external"]["mgnify"] + "], skipping")
                 print_log(str(e))
+                return None
             # Filter to keep only used ranks, if provided
             if ranks:
                 mgnify = mgnify.loc[mgnify['rank'].isin(ranks)]
@@ -270,7 +342,7 @@ def run_correlation(table, top_obs_corr):
     return corr
 
 
-def parse_input_file(input_file, unassigned_header, transpose, sample_replace):
+def parse_input_file(input_file, unassigned_header, transpose, sample_replace, cumm_levels):
 
     if input_file.endswith(".biom"):
         table_df = biom.load_table(input_file).to_dataframe(dense=True)
@@ -298,7 +370,10 @@ def parse_input_file(input_file, unassigned_header, transpose, sample_replace):
         print_log("  ...")
 
     # Sum total before split unassigned or filter
-    total = table_df.sum(axis=1)
+    if cumm_levels:
+        total = table_df.max(axis=1)
+    else:
+        total = table_df.sum(axis=1)
 
     # unique unassigned/unclassified for table
     # Separate unassigned counts column from main data frame
@@ -387,7 +462,7 @@ def trim_table(table_df):
     return table_df
 
 
-def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
+def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace, cumm_levels):
     from grimer.grimer import _debug
 
     # Transpose table (obseravations as index) and expand ranks in columns
@@ -455,7 +530,10 @@ def parse_multi_table(table_df, ranks, tax, level_separator, obs_replace):
     for i, r in parsed_ranks.items():
         # ranks_df and table_df.T have the same shape
         ranked_table_df = pd.concat([ranks_df[r], table_df.T.reset_index(drop=True)], axis=1)
-        ranked_tables[r] = ranked_table_df.groupby([r], dropna=True).sum().T
+        if cumm_levels:
+            ranked_tables[r] = ranked_table_df.groupby([r], dropna=True).max().T
+        else:
+            ranked_tables[r] = ranked_table_df.groupby([r], dropna=True).sum().T
         ranked_tables[r].columns.name = None
 
     lineage = ranks_df
@@ -639,7 +717,7 @@ def run_decontam(run_decontam, cfg, table, metadata, control_samples):
             print("\n".join(df_decontam.index[df_decontam["controls"]]), file=outf)
             outf.close()
         else:
-            print("Could not find valid control entries, skipping")
+            print_log("Could not find valid control entries, skipping")
             return None
 
     decontam = Decontam(df_decontam)
@@ -862,5 +940,5 @@ def print_logo_cli(version):
     print_log(" ╔═╗╦═╗╦╔╦╗╔═╗╦═╗ ")
     print_log(" ║ ╦╠╦╝║║║║║╣ ╠╦╝ ")
     print_log(" ╚═╝╩╚═╩╩ ╩╚═╝╩╚═ ")
-    print_log("   v" + version)
+    print_log("           v" + version)
     print_log("==================")

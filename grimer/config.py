@@ -6,7 +6,7 @@ from scipy.cluster.hierarchy import _LINKAGE_METHODS
 
 class Config:
 
-    version = "1.0.0-alpha1"
+    version = "1.0.0"
     default_rank_name = "default"
     output_plots = ["overview", "samples", "heatmap", "correlation"]
 
@@ -25,16 +25,17 @@ class Config:
         main_group.add_argument('-c', '--config', type=str, help="Configuration file with definitions of references, controls and external tools.")
 
         output_group = parser.add_argument_group('output arguments')
-        output_group.add_argument('-g', '--mgnify', default=False, action='store_true', help="Use MGNify data")
-        output_group.add_argument('-d', '--decontam', default=False, action='store_true', help="Run DECONTAM")
+        output_group.add_argument('-g', '--mgnify', default=False, action='store_true', help="Plot MGnify chart")
+        output_group.add_argument('-d', '--decontam', default=False, action='store_true', help="Run and plot DECONTAM")
         output_group.add_argument('-l', '--title', type=str, default="", help="Title to display on the header of the report.")
         output_group.add_argument('-p', '--output-plots', nargs="*", type=str, default=Config.output_plots, help="Plots to generate. Default: " + ",".join(Config.output_plots), choices=Config.output_plots)
         output_group.add_argument('-o', '--output-html', type=str, default="output.html", help="File to output report. Default: output.html")
         output_group.add_argument('--full-offline', default=False, action='store_true', help="Embed javascript library in the output file. File will be around 1.5MB bigger but also work without internet connection. That way your report will live forever.")
 
         data_group = parser.add_argument_group('general data options')
-        data_group.add_argument('-f', '--level-separator', default=None, type=str, help="If provided, consider --input-table to be a hiearchical multi-level table where the observations headers are separated by the indicated separator characther (usually ';' or '|')")
+        data_group.add_argument('-f', '--level-separator', default=None, type=str, help="If provided, consider --input-table to be a hierarchical multi-level table where the observations headers are separated by the indicated separator characther (usually ';' or '|')")
         data_group.add_argument('-y', '--values', default=None, type=str, help="Force 'count' or 'normalized' data parsing. Empty to auto-detect.")
+        data_group.add_argument('-w', '--cumm-levels', default=False, action='store_true', help="Activate if input table has already cummulative values among levels.")
         data_group.add_argument('-s', '--transpose', default=False, action='store_true', help="Transpose --input-table (if samples are listed on columns and observations on rows)")
         data_group.add_argument('-u', '--unassigned-header', nargs="*", type=str, default=None, help="Define one or more header names containing unsassinged/unclassified counts.")
         data_group.add_argument('--obs-replace', nargs="*", type=str, default=[], help="Replace values on table observations labels/headers (support regex). Example: '_' ' ' will replace underscore with spaces, '^.+__' '' will remove the matching regex.")

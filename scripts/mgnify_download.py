@@ -14,9 +14,7 @@ from glob import glob
 Script to download taxonomy abundance files and metadata from MGnify
 - It always downloads latest available results based on the pipeline version
 
-Usage: ./mgnify_download.py study_accession [output_folder]
-Example single: ./mgnify_download.py MGYS00000554
-Example dump: seq -f "MGYS%08g" 1 5724 | xargs -P 8 -I {} ./mgnify_download.py -i {} -v -g -o mgnify_dump_20210408/ > mgnify_dump_20210408.log 2>&1 &
+Example dump: seq -f "MGYS%08g" 1 5724 | xargs -P 8 -I {} ./mgnify_download.py -i {} -v -g -o mgnify_dump/ > mgnify_dump.log 2>&1 &
 """
 
 
@@ -33,7 +31,7 @@ def main(argv=sys.argv[1:]):
 
     study_accession = args.study_accession
     if args.output_prefix:
-        prefix = args.output_prefix
+        prefix = args.output_prefix + study_accession
     else:
         prefix = study_accession
     gz = args.gzip

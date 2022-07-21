@@ -643,7 +643,7 @@ def plot_mgnify(sizes, cds_p_mgnify):
 def plot_mgnify_widgets():
     biome_spinner = Spinner(title="Biome level", low=1, high=5, value=1, step=1, width=100, height=50)  # orientation="horizontal")
     help_text = """
-Pie chart with the number of occurrences of the selected taxa in the table by environment (biome) in other microbiome studies analyzed and publicly available at the [MGNify](https://www.ebi.ac.uk/metagenomics) [1] resource.
+Pie chart with the number of occurrences of the selected taxa in the table by environment (biome) in other microbiome studies analyzed and publicly available at the [MGnify](https://www.ebi.ac.uk/metagenomics) [1] resource.
 
 The biomes are hierarchically classified in 5 different levels, from general (1) to specific (5). For example: 1) Host-associated > 2) Human > 3) Digestive system > 4) Large intestine > 5) Fecal
 

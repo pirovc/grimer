@@ -7,7 +7,7 @@ import re
 
 def get_taxid(url):
     try:
-        sys.stderr.write(url+"\n")
+        sys.stderr.write(url + "\n")
         assembly_stats = url + "/" + url.split("/")[-1] + "_assembly_stats.txt"
         filedata = urllib.request.urlopen(assembly_stats).read().decode()
         x = re.search("# Taxid:[\s0-9]*\\r\\n", filedata)
