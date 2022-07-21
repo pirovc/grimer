@@ -13,8 +13,8 @@ Online examples of reports generated with GRIMER: https://pirovc.github.io/grime
 ```bash
 git clone https://github.com/pirovc/grimer.git
 cd grimer
-conda env create -f env.yaml
-conda activate grimer # source activate grimer
+conda env create -f env.yaml # or mamba env create -f env.yaml
+conda activate grimer # or source activate grimer
 python setup.py install --record files.txt # Uninstall: xargs rm -rf < files.txt
 grimer -h
 ```
@@ -55,6 +55,12 @@ grimer -i input_table.tsv -m metadata.tsv -t ncbi -c config/default.yaml -d -g
 ### List all options 
 ```bash
 grimer -h
+```
+
+### Analyzing any MGnify public study
+
+```bash
+./grimer-mgnify.py -i MGYS00006024 -o output_folder/
 ```
 
 ## Powered by

@@ -78,7 +78,7 @@ def main(argv=sys.argv[1:]):
     print_log("- Running DECONTAM")
     decontam = run_decontam(args.decontam, cfg, table, metadata, control_samples)
 
-    print_log("- Running hiearchical clustering")
+    print_log("- Running hierarchical clustering")
     hcluster, dendro = run_hclustering(table, args.linkage_methods, args.linkage_metrics, args.transformation, args.skip_dendrogram, args.optimal_ordering)
 
     print_log("- Running correlation")
