@@ -16,25 +16,15 @@ setup(
     version="1.0.0",
     url="https://www.github.com/pirovc/grimer",
     license='MIT',
-
     author="Vitor C. Piro",
     author_email="pirovc@posteo.net",
-
-    description="GRIMER portable microbiome visualization and contamination detection",
+    description="GRIMER: contamination detection and microbiome exploration",
     long_description=read("README.md"),
-
     packages=['grimer'],
-    #install_requires=['bokeh==2.2.3','pandas','numpy','scipy','multitax'],
-
-    include_package_data=True,
     package_data={
-        'js': ['*'],
-        'css': ['*'],
-        'img': ['*']
+        'grimer': ['js/*', 'css/*', 'img/*']
     },
-
     entry_points={'console_scripts': ['grimer=grimer.grimer:main']},
-
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.5',
