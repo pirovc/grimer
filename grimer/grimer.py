@@ -36,6 +36,8 @@ def main(argv=sys.argv[1:]):
     # Setup global _debug variable to be used by other files with #from grimer.grimer import _debug
     global _debug
     _debug = args.debug
+    # Define path of running script to get static files
+    script_dir, _ = os.path.split(__file__)
 
     # 1) Load data/analysis
     # If not parsed, skipped or error, var is None
@@ -76,7 +78,7 @@ def main(argv=sys.argv[1:]):
     mgnify = parse_mgnify(args.mgnify, cfg, tax, table.ranks())
 
     print_log("- Running DECONTAM")
-    decontam = run_decontam(args.decontam, cfg, table, metadata, control_samples)
+    decontam = run_decontam(args.decontam, cfg, table, metadata, control_samples, script_dir)
 
     print_log("- Running hierarchical clustering")
     hcluster, dendro = run_hclustering(table, args.linkage_methods, args.linkage_metrics, args.transformation, args.skip_dendrogram, args.optimal_ordering)
@@ -296,8 +298,6 @@ def main(argv=sys.argv[1:]):
 
     # 5) Draw layout
     print_log("- Drawing layout")
-    # Define path of running script to get static files
-    script_dir, _ = os.path.split(__file__)
     logo_path = os.path.join(script_dir, "img", "logo.png")
 
     final_layout = make_layout(ele, sizes, Config.version, logo_path, args.title, args.output_plots)

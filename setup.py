@@ -22,7 +22,7 @@ setup(
     long_description=read("README.md"),
     packages=['grimer'],
     package_data={
-        'grimer': ['js/*', 'css/*', 'img/*']
+        'grimer': ['css/*', 'img/*', 'js/*', 'scripts/*']
     },
     entry_points={'console_scripts': ['grimer=grimer.grimer:main']},
     classifiers=[

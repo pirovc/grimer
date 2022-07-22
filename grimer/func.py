@@ -639,7 +639,7 @@ def update_tax_nodes(nodes, tax):
     return updated_nodes
 
 
-def run_decontam(run_decontam, cfg, table, metadata, control_samples):
+def run_decontam(run_decontam, cfg, table, metadata, control_samples, script_dir):
 
     if not run_decontam:
         print_log("Not activated, skipping")
@@ -732,7 +732,7 @@ def run_decontam(run_decontam, cfg, table, metadata, control_samples):
             else:
                 table.data[rank].to_csv(out_table, sep="\t", header=True, index=True)
 
-            cmd = " ".join(["scripts/run_decontam.R",
+            cmd = " ".join([os.path.join(script_dir, "scripts", "run_decontam.R"),
                             "--resout " + tmp_output_prefix + "decontam_out.tsv",
                             "--modout " + tmp_output_prefix + "decontam_mod.tsv",
                             "--counts " + out_table,
