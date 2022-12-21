@@ -9,6 +9,7 @@ from pandas.api.types import is_numeric_dtype
 import yaml
 
 #Internal
+from grimer.config import Config
 from grimer.decontam import Decontam
 from grimer.metadata import Metadata
 from grimer.reference import Reference
@@ -145,6 +146,7 @@ def parse_metadata(args, samples):
     metadata = None
 
     # Parse metadata as DataFrame (md)
+    md = pd.DataFrame()
     if args.metadata_file:
         # Parse table as dataframe
         md = pd.read_table(args.metadata_file, sep='\t', header=0, skiprows=0, index_col=0, dtype={0: str})
@@ -560,6 +562,7 @@ def parse_single_table(table_df, ranks, tax, default_rank_name):
                     table_df.rename(columns={node: upd_node}, inplace=True)
                     print_log("Updated taxonomic node: " + node + " -> " + upd_node)
 
+
     # Generate ranks
     ranked_tables = {}
     for rank in ranks:
@@ -579,6 +582,7 @@ def parse_single_table(table_df, ranks, tax, default_rank_name):
 
             if not rank_df.empty:
                 ranked_tables[rank] = rank_df
+
 
     # Generate lineage
     if tax:

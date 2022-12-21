@@ -6,7 +6,7 @@ from scipy.cluster.hierarchy import _LINKAGE_METHODS
 
 class Config:
 
-    version = "1.0.0"
+    version = "1.1.0"
     default_rank_name = "default"
     output_plots = ["overview", "samples", "heatmap", "correlation"]
 
@@ -15,7 +15,7 @@ class Config:
         parser = argparse.ArgumentParser(description='grimer')
 
         required_group = parser.add_argument_group('required arguments')
-        required_group.add_argument('-i', '--input-file', required=True, type=str, help="Main input table with counts (Observation table, Count table, Contingency Tables, ...) or .biom file. By default rows contain observations and columns contain samples (use --tranpose if your file is reversed). First column and first row are used as headers.")
+        required_group.add_argument('-i', '--input-file', required=True, type=str, help="Main input table with counts (Observation table, Count table, Contingency Tables, ...) or .biom file. By default rows contain observations and columns contain samples (use --transpose if your file is reversed). First column and first row are used as headers.")
 
         main_group = parser.add_argument_group('main arguments')
         main_group.add_argument('-m', '--metadata-file', type=str, help="Input metadata file in simple tabular format with samples in rows and metadata fields in columns. QIIME 2 metadata format is also accepted, with an extra row to define categorical and numerical fields. If not provided and --input-file is a .biom files, will attempt to get metadata from it. ")
