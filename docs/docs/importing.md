@@ -88,10 +88,29 @@ grimer --input-file ERP108433_phylum_taxonomy_abundances_SSU_v4.1_parsed.tsv \
 ### ganon
 
 ```bash
-ganon table 
+ganon table --input *.tre \
+            --output-file ganon_table.tsv \
+            --header taxid \
+            --rank species
+
+grimer --input-file ganon_table.tsv \
+       --taxonomy ncbi \
+       --ranks superkingdom phylum class order family genus species
 ```
 
 ### MetaPhlAn
+
+```bash
+# merge_metaphlan_tables.py is available with the metaphlan package
+merge_metaphlan_tables.py *.tsv | head -n+2 > metaphlan_table.tsv
+
+grimer --input-file metaphlan_table.tsv \
+       --level-separator "|" \
+       --obs-replace '^.+__' '' '_' ' ' \
+       --taxonomy ncbi \
+       --ranks superkingdom phylum class order family genus species
+```
+
 ### QIIME2 feature table (.qza)
 
 - Example [feature-table.qza](https://docs.qiime2.org/2022.8/data/tutorials/exporting/feature-table.qza) from [QIIME2 docs](https://docs.qiime2.org/2022.8/tutorials/exporting/#exporting-a-feature-table)
