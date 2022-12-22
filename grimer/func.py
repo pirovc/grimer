@@ -351,7 +351,9 @@ def parse_input_file(input_file, unassigned_header, transpose, sample_replace, c
     else:
         # Default input_file: index=observations, columns=samples
         # table_df should have samples on indices and observations on columns
-        table_df = pd.read_table(input_file, sep='\t', index_col=0).transpose().fillna(0)
+        table_df = pd.read_table(input_file, sep='\t', index_col=0, dtype={0: str}).transpose().fillna(0)
+        # Enforce string observations
+        table_df.columns = table_df.columns.astype(str)
 
     # If user is providing a reverse table, turn back
     if transpose:
@@ -546,6 +548,7 @@ def parse_single_table(table_df, ranks, tax, default_rank_name):
 
     # Update taxids
     if tax is not None:
+        print(table_df)
         updated_nodes = update_tax_nodes(table_df.columns, tax)
         unmatched_nodes = list(updated_nodes.values()).count(tax.undefined_node)
         if unmatched_nodes:
