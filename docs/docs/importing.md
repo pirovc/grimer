@@ -119,7 +119,32 @@ grimer --input-file metaphlan_table.tsv \
 qiime tools export --input-path feature-table.qza --output-path exported-feature-table
 grimer --input-file exported-feature-table/feature-table.biom
 ```
+
 ### MGnify
+
+- `grimer-mgnify.py` will download and generate a GRIMER report for any MGnify study accession (e.g. MGYS00006024)
+ 
+```bash
+./grimer-mgnify.py -i MGYS00006024 -o out_folder_mgnify/
+```
+
 ### phyloseq
+
+
+```R
+#source("http://bioconductor.org/biocLite.R")
+#biocLite("biomformat")
+#biocLite('phyloseq')
+library("biomformat")
+library('phyloseq')
+data(soilrep)
+b <- make_biom(data = otu_table(soilrep))
+write_biom(b, 'out.biom')
+```
+
+```bash
+grimer --input-file out.biom
+```
+
 ### GTDB-tk
 ### CoverM

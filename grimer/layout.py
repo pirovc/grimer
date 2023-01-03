@@ -12,7 +12,7 @@ def make_layout(ele, sizes, version, logo_path, title, output_plots):
                                ele["obstable"]["wid"]["counts_perc_avg_spinner"],
                                ele["obstable"]["wid"]["total_counts_spinner"],
                                ele["obstable"]["wid"]["name_multichoice"],
-                               ele["obstable"]["wid"]["help_button"])
+                               row(ele["obstable"]["wid"]["help_button"], ele["obstable"]["wid"]["export_dropdown"]))
         filterwidgetstabs = Tabs(tabs=[Panel(child=filterwidgets, title="Filter")],
                                  sizing_mode="fixed",
                                  height=sizes["overview_top_panel_height"] + 20,
@@ -58,7 +58,7 @@ def make_layout(ele, sizes, version, logo_path, title, output_plots):
         selectwidgets = column(ele["sampletable"]["wid"]["total_counts_spinner"],
                                ele["sampletable"]["wid"]["assigned_spinner"],
                                ele["sampletable"]["wid"]["metadata_multichoice"],
-                               ele["sampletable"]["wid"]["help_button"])
+                               row(ele["sampletable"]["wid"]["help_button"], ele["sampletable"]["wid"]["export_dropdown"]))
         selectwidgetstabs = Tabs(tabs=[Panel(child=selectwidgets, title="Select")],
                                  sizing_mode="fixed",
                                  height=sizes["overview_top_panel_height"] + 20,
