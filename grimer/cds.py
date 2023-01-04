@@ -530,13 +530,13 @@ def cds_mgnify(mgnify, table, tax):
     # for each biome level (ignoring root 0)
     for l in range(1, n_levels):
         # group counts by biome, and fix fields
-        df_biome = df_tmp.groupby(["taxa", l]).sum()
+        df_biome = df_tmp.groupby(["taxa", l]).sum(numeric_only=True)
         df_biome["level"] = str(l)
         df_biome.reset_index(inplace=True)
         df_biome.rename(columns={l: "lineage"}, inplace=True)
 
         # Calculate angle for each taxa/level for wedges
-        total_taxa_level = df_biome.groupby("taxa").sum().to_dict()["count"]
+        total_taxa_level = df_biome.groupby("taxa").sum(numeric_only=True).to_dict()["count"]
         df_biome["angle"] = (df_biome['count'] / df_biome['taxa'].map(total_taxa_level)) * (2 * pi)
 
         # Group to the final df

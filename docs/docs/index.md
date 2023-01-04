@@ -65,6 +65,10 @@ grimer -i input_table.tsv -m metadata.tsv -t ncbi -c config/default.yaml -d -g
 ./grimer-mgnify.py -i MGYS00006024 -o output_folder/
 ```
 
+## Config file
+
+..TODO..
+
 ## Parameters
 
     grimer

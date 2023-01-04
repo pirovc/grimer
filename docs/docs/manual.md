@@ -1,4 +1,4 @@
-# User Manual
+# GRIMER Reports - User Manual
 
 ## Overview
 - Table, filtering table contents, selecting taxa

@@ -72,7 +72,7 @@ def main(argv=sys.argv[1:]):
     references = parse_references(cfg, tax, args.taxonomy, table.ranks())
 
     print_log("- Parsing controls")
-    controls, control_samples = parse_controls(cfg, table)
+    controls, control_samples = parse_controls(cfg, table, metadata)
 
     print_log("- Parsing MGnify database")
     mgnify = parse_mgnify(args.mgnify, cfg, tax, table.ranks())

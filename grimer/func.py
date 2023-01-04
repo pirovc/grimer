@@ -260,15 +260,28 @@ def parse_references(cfg, tax, taxonomy, ranks):
     return references
 
 
-def parse_controls(cfg, table):
+def parse_controls(cfg, table, metadata):
     controls = None
     control_samples = None
     if cfg is not None and "controls" in cfg:
         controls = {}
         control_samples = {}
-        for desc, cf in cfg["controls"].items():
-            with open(cf, "r") as file:
-                samples = file.read().splitlines()
+        for desc, c in cfg["controls"].items():
+            samples = set()
+            if isinstance(c, str):
+                # If str, it's a file with one sample per line
+                with open(c, "r") as file:
+                    samples = file.read().splitlines()
+            elif isinstance(c, dict):
+                # if a dict, several metadata fields:values can be provided to set control samples
+                for field, val in c.items():
+                    if field not in metadata.get_col_headers():
+                        print_log("Could not find " + field + " in the metadata, skipping for control " + desc)
+                    else:
+                        for v in val:
+                            samples.update(metadata.get_subset(field, v).index)
+
+            if samples:
                 obs = set()
                 valid_samples = set()
                 for rank in table.ranks():
@@ -276,10 +289,13 @@ def parse_controls(cfg, table):
                     control_table = table.get_subtable(rank, samples=samples)
                     obs.update(control_table.columns.to_list())
                     valid_samples.update(control_table.index.to_list())
-
                 # Add control observations as a reference
                 controls[desc] = Reference(ids=obs)
                 control_samples[desc] = list(valid_samples)
+                print_log(desc + ": " + str(len(valid_samples)) + " samples / " + str(len(obs)) + " observations")
+            else:
+                print_log("Could not identify control input " + desc)
+
     else:
         print_log("No controls defined in the configuration file, skipping")
 

@@ -3,4 +3,4 @@ theme: readthedocs
 nav:
     - GRIMER: index.md
     - Importing files: importing.md
-    - User Manual: manual.md
+    - GRIMER Reports - User Manual: manual.md

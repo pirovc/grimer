@@ -805,13 +805,11 @@ def link_obstable_filter(ele, cds_m_obstable, active_ranks):
         args=dict(cds_m_obstable=cds_m_obstable,),
         code='''
         const filename = 'grimer_obs_export.tsv'
+        const cols = Object.keys(cds_m_obstable.data).filter(k => k.startsWith("col|")).sort();
+        const headers = cols.map(k => k.substring(4));
         const selected = ((this.item=="selected") ? true : false);
-        const filetext = table_to_tsv(cds_m_obstable,
-                                    ["col|rank", "col|name", "col|frequency_perc", "col|counts_perc_avg", "col|total_counts"],
-                                    ["Rank", "Name", "Frequency", "Avg. counts/sample", "Total counts"],
-                                    selected)
+        const filetext = table_to_tsv(cds_m_obstable, cols, headers, selected)
         save_file(filename, filetext);
-
     ''')
     ele["obstable"]["wid"]["export_dropdown"].js_on_event("menu_item_click", export_callback)
 
@@ -1070,7 +1068,7 @@ def link_sampletable_select(ele, cds_p_sampletable, cds_d_metadata):
         const selected = ((this.item=="selected") ? true : false);
         const filetext = table_to_tsv(cds_p_sampletable,
                                     ["index", "col|total", "col|assigned", "col|assigned_perc", "col|unassigned", "col|unassigned_perc"],
-                                    ["Sample", "Total counts", "Assigned", "Assigned %", "Unassigned", "Unassigned %"],
+                                    ["sample", "total", "assigned", "assigned_perc", "unassigned", "unassigned_perc"],
                                     selected)
         save_file(filename, filetext);
 
