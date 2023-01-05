@@ -1,5 +1,3 @@
-# GRIMER
-
 ![GRIMER](grimer/img/logo.png)
 
 GRIMER performs analysis of microbiome studies and generates a portable and interactive dashboard integrating annotation, taxonomy and metadata with focus on contamination detection. 
