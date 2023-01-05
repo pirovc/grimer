@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="None" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>GRIMER</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "GRIMER";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> GRIMER
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href=".">GRIMER</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#about">About</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic Usage</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#config-file">Config file</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#parameters">Parameters</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#powered-by">Powered by</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="importing/">Importing files</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="manual/">GRIMER Reports - User Manual</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">GRIMER</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+      <li>GRIMER</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="grimer">GRIMER</h1>
+<h2 id="about">About</h2>
+<p>GRIMER performs analysis of microbiome data and generates a portable and interactive dashboard integrating annotation, taxonomy and metadata with focus on contamination detection. More information about the method can be found in the <a href="https://doi.org/10.1101/2021.06.22.449360">pre-print</a></p>
+<h2 id="examples">Examples</h2>
+<p>Online examples of reports generated with GRIMER --&gt; <a href="https://pirovc.github.io/grimer-reports/">https://pirovc.github.io/grimer-reports/</a></p>
+<h2 id="installation">Installation</h2>
+<ul>
+<li>Via conda</li>
+</ul>
+<pre><code class="language-bash">conda install -c bioconda -c conda-forge grimer
+</code></pre>
+<ul>
+<li>or locally installing only dependencies via conda:</li>
+</ul>
+<pre><code class="language-bash">git clone https://github.com/pirovc/grimer.git
+cd grimer
+conda env create -f env.yaml # or mamba env create -f env.yaml
+conda activate grimer # or source activate grimer
+python setup.py install --record files.txt # Uninstall: xargs rm -rf &lt; files.txt
+grimer -h
+</code></pre>
+<h2 id="basic-usage">Basic Usage</h2>
+<ul>
+<li>Tab-separated input table</li>
+</ul>
+<pre><code class="language-bash">grimer -i input_table.tsv
+</code></pre>
+<ul>
+<li>BIOM file</li>
+</ul>
+<pre><code class="language-bash">grimer -i myfile.biom
+</code></pre>
+<ul>
+<li>Tab-separated input table with taxonomic annotated observations (e.g. sk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria...)</li>
+</ul>
+<pre><code class="language-bash">grimer -i input_table.tsv -f &quot;;&quot;
+</code></pre>
+<ul>
+<li>Tab-separated input table with metadata</li>
+</ul>
+<pre><code class="language-bash">grimer -i input_table.tsv -m metadata.tsv
+</code></pre>
+<ul>
+<li>With taxonomy integration (ncbi)</li>
+</ul>
+<pre><code class="language-bash">grimer -i input_table.tsv -m metadata.tsv -t ncbi #optional -b taxdump.tar.gz
+</code></pre>
+<ul>
+<li>With configuration file to setup external tools, references and annotations</li>
+</ul>
+<pre><code class="language-bash">grimer -i input_table.tsv -m metadata.tsv -t ncbi -c config/default.yaml -d -g
+</code></pre>
+<ul>
+<li>Analyzing any MGnify public study</li>
+</ul>
+<pre><code class="language-bash">./grimer-mgnify.py -i MGYS00006024 -o output_folder/
+</code></pre>
+<h2 id="config-file">Config file</h2>
+<p>..TODO..</p>
+<h2 id="parameters">Parameters</h2>
+<pre><code>grimer
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --version         show program's version number and exit
+
+required arguments:
+  -i INPUT_FILE, --input-file INPUT_FILE
+                        Main input table with counts (Observation table, Count table, Contingency Tables, ...) or .biom file. By default rows contain observations and columns contain
+                        samples (use --tranpose if your file is reversed). First column and first row are used as headers.
+
+main arguments:
+  -m METADATA_FILE, --metadata-file METADATA_FILE
+                        Input metadata file in simple tabular format with samples in rows and metadata fields in columns. QIIME 2 metadata format is also accepted, with an extra row to
+                        define categorical and numerical fields. If not provided and --input-file is a .biom files, will attempt to get metadata from it.
+  -t {ncbi,gtdb,silva,greengenes,ott}, --taxonomy {ncbi,gtdb,silva,greengenes,ott}
+                        Define taxonomy to convert entry and annotate samples. Will automatically download and parse or files can be provided with --tax-files.
+  -b [TAX_FILES ...], --tax-files [TAX_FILES ...]
+                        Optional specific taxonomy files to use.
+  -r [RANKS ...], --ranks [RANKS ...]
+                        Taxonomic ranks to generate visualizations. Use 'default' to use entries from the table directly. Default: default
+  -c CONFIG, --config CONFIG
+                        Configuration file with definitions of references, controls and external tools.
+
+output arguments:
+  -g, --mgnify          Plot MGnify chart
+  -d, --decontam        Run and plot DECONTAM
+  -l TITLE, --title TITLE
+                        Title to display on the header of the report.
+  -p [{overview,samples,heatmap,correlation} ...], --output-plots [{overview,samples,heatmap,correlation} ...]
+                        Plots to generate. Default: overview,samples,heatmap,correlation
+  -o OUTPUT_HTML, --output-html OUTPUT_HTML
+                        File to output report. Default: output.html
+  --full-offline        Embed javascript library in the output file. File will be around 1.5MB bigger but also work without internet connection. That way your report will live forever.
+
+general data options:
+  -f LEVEL_SEPARATOR, --level-separator LEVEL_SEPARATOR
+                        If provided, consider --input-table to be a hierarchical multi-level table where the observations headers are separated by the indicated separator characther
+                        (usually ';' or '|')
+  -y VALUES, --values VALUES
+                        Force 'count' or 'normalized' data parsing. Empty to auto-detect.
+  -w, --cumm-levels     Activate if input table has already cummulative values among levels.
+  -s, --transpose       Transpose --input-table (if samples are listed on columns and observations on rows)
+  -u [UNASSIGNED_HEADER ...], --unassigned-header [UNASSIGNED_HEADER ...]
+                        Define one or more header names containing unsassinged/unclassified counts.
+  --obs-replace [OBS_REPLACE ...]
+                        Replace values on table observations labels/headers (support regex). Example: '_' ' ' will replace underscore with spaces, '^.+__' '' will remove the matching
+                        regex.
+  --sample-replace [SAMPLE_REPLACE ...]
+                        Replace values on table sample labels/headers (support regex). Example: '_' ' ' will replace underscore with spaces, '^.+__' '' will remove the matching regex.
+  -z REPLACE_ZEROS, --replace-zeros REPLACE_ZEROS
+                        INT (add 'smallest count'/INT to every raw count), FLOAT (add FLOAT to every raw count). Default: 1000
+  --min-frequency MIN_FREQUENCY
+                        Define minimum number/percentage of samples containing an observation to keep the observation [values between 0-1 for percentage, &gt;1 specific number].
+  --max-frequency MAX_FREQUENCY
+                        Define maximum number/percentage of samples containing an observation to keep the observation [values between 0-1 for percentage, &gt;1 specific number].
+  --min-count MIN_COUNT
+                        Define minimum number/percentage of counts to keep an observation [values between 0-1 for percentage, &gt;1 specific number].
+  --max-count MAX_COUNT
+                        Define maximum number/percentage of counts to keep an observation [values between 0-1 for percentage, &gt;1 specific number].
+
+Samples options:
+  -j TOP_OBS_BARS, --top-obs-bars TOP_OBS_BARS
+                        Top abundant observations to show in the bars.
+
+Heatmap and clustering options:
+  -a TRANSFORMATION, --transformation TRANSFORMATION
+                        none (counts), norm (percentage), log (log10), clr (centre log ratio). Default: log
+  -e METADATA_COLS, --metadata-cols METADATA_COLS
+                        How many metadata cols to show on the heatmap. Higher values makes plot slower to navigate.
+  --optimal-ordering    Activate optimal_ordering on linkage, takes longer for large number of samples.
+  --show-zeros          Do not skip zeros on heatmap. File will be bigger and iteraction with heatmap slower.
+  --linkage-methods [{single,complete,average,centroid,median,ward,weighted} ...]
+  --linkage-metrics [{braycurtis,canberra,chebyshev,cityblock,correlation,cosine,dice,euclidean,hamming,jaccard,jensenshannon,kulsinski,mahalanobis,minkowski,rogerstanimoto,russellrao,seuclidean,sokalmichener,sokalsneath,sqeuclidean,wminkowski,yule} ...]
+  --skip-dendrogram     Disable dendogram. Will create smaller files.
+
+Correlation options:
+  -x TOP_OBS_CORR, --top-obs-corr TOP_OBS_CORR
+                        Top abundant observations to build the correlationn matrix, based on the avg. percentage counts/sample. 0 for all
+</code></pre>
+<h2 id="powered-by">Powered by</h2>
+<p><a href="https://bokeh.org"><img src="https://static.bokeh.org/branding/logos/bokeh-logo.png" height="60"></a>
+<a href="https://pandas.org"><img src="https://pandas.pydata.org/static/img/pandas.svg" height="40"></a>
+<a href="https://scipy.org"><img src="https://raw.githubusercontent.com/scipy/scipy/master/doc/source/_static/logo.svg" height="40"></a>
+<a href="https://scikit-bio.org"><img src="http://scikit-bio.org/assets/logo.svg" height="40"></a></p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="importing/" class="btn btn-neutral float-right" title="Importing files">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+      <span><a href="importing/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '.';</script>
+    <script src="js/theme_extra.js" defer></script>
+    <script src="js/theme.js" defer></script>
+      <script src="search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.4.2
+Build Date UTC : 2023-01-05 10:13:50.959860+00:00
+-->

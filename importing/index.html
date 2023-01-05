@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Importing files - GRIMER</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Importing files";
+        var mkdocs_page_input_path = "importing.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> GRIMER
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">GRIMER</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">Importing files</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#biom-file">biom file</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#tab-separated-file-tsv">tab-separated file (.tsv)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#multi-level-annotations-eg-bacteriaproteobacteriagammaproteobacteria">Multi-level annotations (e.g. Bacteria;Proteobacteria;Gammaproteobacteria...)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#single-level-annotations-eg-neisseria-animalis">Single level annotations (e.g. Neisseria animalis)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#special-cases">Special cases</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#from-commonly-used-toolssources">From commonly used tools/sources</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#ganon">ganon</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metaphlan">MetaPhlAn</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#qiime2-feature-table-qza">QIIME2 feature table (.qza)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#mgnify">MGnify</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#phyloseq">phyloseq</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#gtdb-tk">GTDB-tk</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#coverm">CoverM</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../manual/">GRIMER Reports - User Manual</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">GRIMER</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+      <li>Importing files</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="importing-files">Importing files</h1>
+<p>GRIMER is independent of any quantification method and requires a contingency table with raw counts of observations/components for each samples/compositions in the study. Observations are usually, but not limited to, taxonomic entries (e.g. genus, species, strains), operational taxonomic units (OTUs), amplicon sequence variants (ASVs), metagenome-assembled genomes (MAGs) or sequence features.</p>
+<p>GRIMER <code>--input-file</code> receives a tab-separated text file with a table of counts (Observation table, Count table, Contingency Tables, ...) or a <a href="https://biom-format.org/">BIOM</a> file.</p>
+<ul>
+<li>Rows contain observations and columns contain samples (use <code>--transpose</code> if your file is reversed)</li>
+<li>First column and first row are used as headers</li>
+<li>Taxonomy integration: files can have either taxonomic identifiers (NCBI, e.g.: 562) or taxonomic names (NCBI, e.g.: Escherichia coli or GTDB, e.g.: s__Escherichia coli)</li>
+</ul>
+<h2 id="biom-file">biom file</h2>
+<p>GRIMER parses <a href="https://biom-format.org/">BIOM</a> files and affiliated metadata (if available). Alternatively, an external metadata file can be provided with <code>-m/--metadata</code>.</p>
+<p>Example <a href="https://microbiomedb.org/common/downloads/release-31/c66d2dc8473138e3a737ef2ad0b25f1e6e9c0f22/UgandaMaternalV3V4.16s_DADA2.taxon_abundance.biom">UgandaMaternalV3V4.16s_DADA2.taxon_abundance.biom</a> file from <a href="https://microbiomedb.org">microbiomedb.org</a></p>
+<ul>
+<li>Default report (no taxonomy)</li>
+</ul>
+<pre><code class="language-bash">grimer --input-file UgandaMaternalV3V4.16s_DADA2.taxon_abundance.biom
+</code></pre>
+<ul>
+<li>With integrated NCBI taxonomy (will translate names to taxids)</li>
+</ul>
+<pre><code class="language-bash">grimer --input-file UgandaMaternalV3V4.16s_DADA2.taxon_abundance.biom \
+       --taxonomy ncbi \
+       --ranks superkingdom phylum class order family genus species
+</code></pre>
+<h2 id="tab-separated-file-tsv">tab-separated file (.tsv)</h2>
+<p>GRIMER parses .tsv files with single taxonomic identifier/names annotations or with multi-level (e.g.: lineage) taxonomic annotated observations.</p>
+<h3 id="multi-level-annotations-eg-bacteriaproteobacteriagammaproteobacteria">Multi-level annotations (e.g. Bacteria;Proteobacteria;Gammaproteobacteria...)</h3>
+<ul>
+<li>Example <a href="https://microbiomedb.org/common/downloads/release-31/c66d2dc8473138e3a737ef2ad0b25f1e6e9c0f22/UgandaMaternalV3V4.16s_DADA2.taxon_abundance.tsv">UgandaMaternalV3V4.16s_DADA2.taxon_abundance.tsv</a> file from <a href="https://microbiomedb.org">microbiomedb.org</a></li>
+</ul>
+<pre><code class="language-bash">grimer --input-file UgandaMaternalV3V4.16s_DADA2.taxon_abundance.tsv \
+       --level-separator &quot;;&quot;
+</code></pre>
+<ul>
+<li>With metadata (<a href="https://microbiomedb.org/common/downloads/release-31/c66d2dc8473138e3a737ef2ad0b25f1e6e9c0f22/UgandaMaternalV3V4.16s_DADA2.taxon_abundance.tsv">UgandaMaternalV3V4.16s_DADA2.sample_details.tsv</a>)</li>
+</ul>
+<pre><code class="language-bash">grimer --input-file UgandaMaternalV3V4.16s_DADA2.taxon_abundance.tsv \
+       --level-separator &quot;;&quot; \
+       --metadata-file UgandaMaternalV3V4.16s_DADA2.sample_details.tsv
+</code></pre>
+<ul>
+<li>With integrated NCBI taxonomy (will translate names to taxids)</li>
+</ul>
+<pre><code class="language-bash">grimer --input-file UgandaMaternalV3V4.16s_DADA2.taxon_abundance.tsv \
+       --level-separator &quot;;&quot; \
+       --metadata-file UgandaMaternalV3V4.16s_DADA2.sample_details.tsv \
+       --taxonomy ncbi \
+       --ranks superkingdom phylum class order family genus species
+</code></pre>
+<h3 id="single-level-annotations-eg-neisseria-animalis">Single level annotations (e.g. Neisseria animalis)</h3>
+<ul>
+<li>Example <a href="https://www.ebi.ac.uk/metagenomics/api/v1/studies/MGYS00005180/pipelines/4.1/file/ERP108433_phylum_taxonomy_abundances_SSU_v4.1.tsv">ERP108433_phylum_taxonomy_abundances_SSU_v4.1.tsv</a> from <a href="https://www.ebi.ac.uk/metagenomics">MGnify</a>, phylum level only</li>
+</ul>
+<pre><code class="language-bash"># Removing first column with kingdom
+cut -f 2- ERP108433_phylum_taxonomy_abundances_SSU_v4.1.tsv &gt; ERP108433_phylum_taxonomy_abundances_SSU_v4.1_parsed.tsv
+# Set identifier for unassigned observations as &quot;Unassigned&quot; (many occurences, will be summed)
+grimer --input-file ERP108433_phylum_taxonomy_abundances_SSU_v4.1_parsed.tsv \
+       --unassigned-header &quot;Unassigned&quot;
+</code></pre>
+<ul>
+<li>Re-generating taxonomic lineage from single annotations (in this case only superkingdom)</li>
+</ul>
+<pre><code class="language-bash">grimer --input-file ERP108433_phylum_taxonomy_abundances_SSU_v4.1_parsed.tsv \
+       --unassigned-header &quot;Unassigned&quot; \
+       --taxonomy ncbi \
+       --ranks superkingdom phylum 
+</code></pre>
+<h3 id="special-cases">Special cases</h3>
+<ul>
+<li>--obs-replace --sample-replace --cumm-levels --transpose</li>
+</ul>
+<h2 id="from-commonly-used-toolssources">From commonly used tools/sources</h2>
+<h3 id="ganon">ganon</h3>
+<pre><code class="language-bash">ganon table --input *.tre \
+            --output-file ganon_table.tsv \
+            --header taxid \
+            --rank species
+
+grimer --input-file ganon_table.tsv \
+       --taxonomy ncbi \
+       --ranks superkingdom phylum class order family genus species
+</code></pre>
+<h3 id="metaphlan">MetaPhlAn</h3>
+<pre><code class="language-bash"># merge_metaphlan_tables.py is available with the metaphlan package
+merge_metaphlan_tables.py *.tsv | head -n+2 &gt; metaphlan_table.tsv
+
+grimer --input-file metaphlan_table.tsv \
+       --level-separator &quot;|&quot; \
+       --obs-replace '^.+__' '' '_' ' ' \
+       --taxonomy ncbi \
+       --ranks superkingdom phylum class order family genus species
+</code></pre>
+<h3 id="qiime2-feature-table-qza">QIIME2 feature table (.qza)</h3>
+<ul>
+<li>Example <a href="https://docs.qiime2.org/2022.8/data/tutorials/exporting/feature-table.qza">feature-table.qza</a> from <a href="https://docs.qiime2.org/2022.8/tutorials/exporting/#exporting-a-feature-table">QIIME2 docs</a></li>
+</ul>
+<pre><code class="language-bash">qiime tools export --input-path feature-table.qza --output-path exported-feature-table
+grimer --input-file exported-feature-table/feature-table.biom
+</code></pre>
+<h3 id="mgnify">MGnify</h3>
+<ul>
+<li><code>grimer-mgnify.py</code> will download and generate a GRIMER report for any MGnify study accession (e.g. MGYS00006024)</li>
+</ul>
+<pre><code class="language-bash">./grimer-mgnify.py -i MGYS00006024 -o out_folder_mgnify/
+</code></pre>
+<h3 id="phyloseq">phyloseq</h3>
+<pre><code class="language-R">#source(&quot;http://bioconductor.org/biocLite.R&quot;)
+#biocLite(&quot;biomformat&quot;)
+#biocLite('phyloseq')
+library(&quot;biomformat&quot;)
+library('phyloseq')
+data(soilrep)
+b &lt;- make_biom(data = otu_table(soilrep))
+write_biom(b, 'out.biom')
+</code></pre>
+<pre><code class="language-bash">grimer --input-file out.biom
+</code></pre>
+<h3 id="gtdb-tk">GTDB-tk</h3>
+<h3 id="coverm">CoverM</h3>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href=".." class="btn btn-neutral float-left" title="GRIMER"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../manual/" class="btn btn-neutral float-right" title="GRIMER Reports - User Manual">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../manual/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
