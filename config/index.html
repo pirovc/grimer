@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Configuration file - GRIMER</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Configuration file";
+        var mkdocs_page_input_path = "config.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> GRIMER
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">GRIMER</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../importing/">Importing files</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">Configuration file</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#references">references</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#controls">controls</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#external">external</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#mgnify">mgnify</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#decontam">decontam</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../manual/">GRIMER Reports - User Manual</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../examples/">GRIMER Reports - Examples</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">GRIMER</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+      <li>Configuration file</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="config-files">Config files</h1>
+<p>GRIMER uses a configuration file to set reference sources of annotation (e.g. contaminants), controls and external tools (decontam, mgnify). The configuration can be provided with the argument <code>-c/--config</code> and it should be in the <a href="https://yaml.org/">YAML</a> format.</p>
+<p>A basic example of a configuration file:</p>
+<pre><code class="language-yaml">references:
+  &quot;Contaminants&quot;: &quot;files/contaminants.yml&quot;
+  &quot;Human-related&quot;: &quot;files/human-related.yml&quot; 
+
+controls:
+  &quot;Negative Controls&quot;: &quot;path/file1.tsv&quot;
+  &quot;Positve Controls&quot;: 
+    &quot;Metadata_Field&quot;: 
+      - &quot;Metadata_Value1&quot;
+      - &quot;Metadata_Value2&quot;
+
+external:
+  mgnify: &quot;files/mgnify5989.tsv&quot;
+  decontam:
+    threshold: 0.1
+    method: &quot;frequency&quot;
+</code></pre>
+<h2 id="references">references</h2>
+<p>References can be provided as an external <code>.yml/.yaml</code> file in a specific format (see below) or in a text file with one taxonomic identifier or taxonomic name per line.</p>
+<pre><code class="language-yaml">&quot;General Description&quot;:
+  &quot;Specific description&quot;:
+    url: &quot;www.website.com?id={}&quot; 
+    ids: [1,2,3]
+</code></pre>
+<p>A real example of saliva organisms extracted from BacDive:</p>
+<pre><code class="language-yaml">&quot;Human-related bacterial isolates from BacDive&quot;:
+  &quot;Saliva&quot;:
+    url: &quot;https://bacdive.dsmz.de/search?search=taxid:{}&quot;
+    ids: [152331, 113107, 157688, 979627, 45634, 60133, 157687, 1624, 1583331, 1632, 249188]
+</code></pre>
+<h2 id="controls">controls</h2>
+<p>Several control groups cann be provided. A file with one sample identifier per line</p>
+<pre><code class="language-yaml">controls:
+  &quot;Controls&quot;: &quot;controls.txt&quot;
+</code></pre>
+<p>or as a metadata field and value(s). </p>
+<pre><code class="language-yaml">controls:
+  &quot;Other Controls&quot;: 
+    &quot;sample_type&quot;: #  field
+      - &quot;blank&quot;    #  value
+      - &quot;control&quot;  #  value
+</code></pre>
+<p>Both can be combined into one configuration file.</p>
+<h2 id="external">external</h2>
+<p>Here it's possible to configure the function of external tools executed by GRIMER.</p>
+<h3 id="mgnify">mgnify</h3>
+<p>GRIMER can use a parsed MGnify database to annotate observations and link them to the respective MGnify entry, reporting most common biome occurrences. Instructions on how to re-generate the parsed database from MGnify can be found <a href="https://github.com/pirovc/grimer/tree/main/files#mgnify">here</a>.</p>
+<p>A <a href="https://raw.githubusercontent.com/pirovc/grimer/main/files/mgnify5989.tsv">pre-parsed database</a> is availble in the GRIMER repository (generated on 2022-03-09). To use it, please set the file in the configuration as follows and activate it with the <code>-g/--mgnify</code> when running GRIMER.</p>
+<pre><code class="language-yaml">external:
+  mgnify: &quot;files/mgnify5989.tsv&quot;
+</code></pre>
+<h3 id="decontam">decontam</h3>
+<p>GRIMER can run <a href="https://benjjneb.github.io/decontam/">DECONTAM</a> with <code>-d/--decontam</code>, but some configuration is necessary. It is possible to set the threshold (P* hyperparameter) and the method (frequency, prevalence, combined).</p>
+<p>For the frequency/combined method, the DNA frequency for each sample has to be provided either in a <code>.tsv</code> file (sample identifier <tab> frequency) or a metadata field. If none is provided, the sum of all counts in the contigency table is used for the frequency calculation, but this is not recommended.</p>
+<p>For the prevalence/combined method, file(s) with a list of sample identifiers can be provided or a field:value in the metadata. If none is provided, all samples defined in the "controls" are considered for the prevalence calculation.</p>
+<p>Below an example of how to provide those values in the configuration file:</p>
+<pre><code class="language-yaml">external:
+  decontam:
+    threshold: 0.1 # [0-1] P* hyperparameter
+    method: &quot;frequency&quot; # frequency, prevalence, combined
+    # frequency_file: &quot;path/file1.txt&quot;
+    # frequency_metadata: &quot;Field1&quot;
+    # prevalence_file: 
+    #  - &quot;path/file1.txt&quot;
+    #  - &quot;path/file2.txt&quot;
+    # prevalence_metadata: 
+    #  &quot;Field1&quot;: &quot;ValueA&quot;
+    #  &quot;Field2&quot;: &quot;ValueB&quot;
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../importing/" class="btn btn-neutral float-left" title="Importing files"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../manual/" class="btn btn-neutral float-right" title="GRIMER Reports - User Manual">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../importing/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../manual/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

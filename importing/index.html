@@ -71,17 +71,21 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#phyloseq">phyloseq</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#gtdb-tk">GTDB-tk</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#coverm">CoverM</a>
-    </li>
         </ul>
     </li>
     </ul>
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../config/">Configuration file</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../manual/">GRIMER Reports - User Manual</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../examples/">GRIMER Reports - Examples</a>
                 </li>
               </ul>
       </div>
@@ -109,12 +113,7 @@
               
                 <h1 id="importing-files">Importing files</h1>
 <p>GRIMER is independent of any quantification method and requires a contingency table with raw counts of observations/components for each samples/compositions in the study. Observations are usually, but not limited to, taxonomic entries (e.g. genus, species, strains), operational taxonomic units (OTUs), amplicon sequence variants (ASVs), metagenome-assembled genomes (MAGs) or sequence features.</p>
-<p>GRIMER <code>--input-file</code> receives a tab-separated text file with a table of counts (Observation table, Count table, Contingency Tables, ...) or a <a href="https://biom-format.org/">BIOM</a> file.</p>
-<ul>
-<li>Rows contain observations and columns contain samples (use <code>--transpose</code> if your file is reversed)</li>
-<li>First column and first row are used as headers</li>
-<li>Taxonomy integration: files can have either taxonomic identifiers (NCBI, e.g.: 562) or taxonomic names (NCBI, e.g.: Escherichia coli or GTDB, e.g.: s__Escherichia coli)</li>
-</ul>
+<p>GRIMER <code>--input-file</code> receives a file with tab-separated values (.tsv) containing a table of counts (Observation table, Count table, Contingency Tables, ...) or a <a href="https://biom-format.org/">BIOM</a> file.</p>
 <h2 id="biom-file">biom file</h2>
 <p>GRIMER parses <a href="https://biom-format.org/">BIOM</a> files and affiliated metadata (if available). Alternatively, an external metadata file can be provided with <code>-m/--metadata</code>.</p>
 <p>Example <a href="https://microbiomedb.org/common/downloads/release-31/c66d2dc8473138e3a737ef2ad0b25f1e6e9c0f22/UgandaMaternalV3V4.16s_DADA2.taxon_abundance.biom">UgandaMaternalV3V4.16s_DADA2.taxon_abundance.biom</a> file from <a href="https://microbiomedb.org">microbiomedb.org</a></p>
@@ -132,6 +131,11 @@
 </code></pre>
 <h2 id="tab-separated-file-tsv">tab-separated file (.tsv)</h2>
 <p>GRIMER parses .tsv files with single taxonomic identifier/names annotations or with multi-level (e.g.: lineage) taxonomic annotated observations.</p>
+<ul>
+<li>Rows contain observations and columns contain samples (use <code>--transpose</code> if your file is reversed)</li>
+<li>First column and first row are used as headers</li>
+<li>Taxonomy integration: files can have either taxonomic identifiers (NCBI, e.g.: 562) or taxonomic names (NCBI, e.g.: Escherichia coli or GTDB, e.g.: s__Escherichia coli)</li>
+</ul>
 <h3 id="multi-level-annotations-eg-bacteriaproteobacteriagammaproteobacteria">Multi-level annotations (e.g. Bacteria;Proteobacteria;Gammaproteobacteria...)</h3>
 <ul>
 <li>Example <a href="https://microbiomedb.org/common/downloads/release-31/c66d2dc8473138e3a737ef2ad0b25f1e6e9c0f22/UgandaMaternalV3V4.16s_DADA2.taxon_abundance.tsv">UgandaMaternalV3V4.16s_DADA2.taxon_abundance.tsv</a> file from <a href="https://microbiomedb.org">microbiomedb.org</a></li>
@@ -223,14 +227,12 @@ write_biom(b, 'out.biom')
 </code></pre>
 <pre><code class="language-bash">grimer --input-file out.biom
 </code></pre>
-<h3 id="gtdb-tk">GTDB-tk</h3>
-<h3 id="coverm">CoverM</h3>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href=".." class="btn btn-neutral float-left" title="GRIMER"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../manual/" class="btn btn-neutral float-right" title="GRIMER Reports - User Manual">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../config/" class="btn btn-neutral float-right" title="Configuration file">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -256,7 +258,7 @@ write_biom(b, 'out.biom')
       <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../manual/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../config/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

@@ -45,13 +45,9 @@
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#about">About</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a>
-    </li>
     <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic Usage</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#config-file">Config file</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#parameters">Parameters</a>
     </li>
@@ -65,7 +61,15 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="config/">Configuration file</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="manual/">GRIMER Reports - User Manual</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="examples/">GRIMER Reports - Examples</a>
                 </li>
               </ul>
       </div>
@@ -92,10 +96,10 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="grimer">GRIMER</h1>
+<p><img src="https://raw.githubusercontent.com/pirovc/grimer/main/grimer/img/logo.png"></p>
 <h2 id="about">About</h2>
-<p>GRIMER performs analysis of microbiome data and generates a portable and interactive dashboard integrating annotation, taxonomy and metadata with focus on contamination detection. More information about the method can be found in the <a href="https://doi.org/10.1101/2021.06.22.449360">pre-print</a></p>
-<h2 id="examples">Examples</h2>
-<p>Online examples of reports generated with GRIMER --&gt; <a href="https://pirovc.github.io/grimer-reports/">https://pirovc.github.io/grimer-reports/</a></p>
+<p>GRIMER is a tool that performs automated analyses and generates a portable and interactive dashboard integrating annotation, taxonomy and metadata. It unifies several sources of evidence to help detect contamination. GRIMER is independent of quantification methods and directly analyses contingency tables to create an interactive and offline report. Reports can be created in seconds and are accessible for non-specialists, providing an intuitive set of charts to explore data distribution among observations and samples and its connections with external sources.</p>
+<p>More information about the method can be found in the <a href="https://doi.org/10.1101/2021.06.22.449360">pre-print</a></p>
 <h2 id="installation">Installation</h2>
 <ul>
 <li>Via conda</li>
@@ -113,6 +117,7 @@ python setup.py install --record files.txt # Uninstall: xargs rm -rf &lt; files.
 grimer -h
 </code></pre>
 <h2 id="basic-usage">Basic Usage</h2>
+<p>Complete commands with sample files can be found in <a href="importing">Importing files</a></p>
 <ul>
 <li>Tab-separated input table</li>
 </ul>
@@ -143,13 +148,6 @@ grimer -h
 </ul>
 <pre><code class="language-bash">grimer -i input_table.tsv -m metadata.tsv -t ncbi -c config/default.yaml -d -g
 </code></pre>
-<ul>
-<li>Analyzing any MGnify public study</li>
-</ul>
-<pre><code class="language-bash">./grimer-mgnify.py -i MGYS00006024 -o output_folder/
-</code></pre>
-<h2 id="config-file">Config file</h2>
-<p>..TODO..</p>
 <h2 id="parameters">Parameters</h2>
 <pre><code>grimer
 
@@ -283,5 +281,5 @@ Correlation options:
 
 <!--
 MkDocs version : 1.4.2
-Build Date UTC : 2023-01-05 10:13:50.959860+00:00
+Build Date UTC : 2023-01-06 16:07:25.633351+00:00
 -->
