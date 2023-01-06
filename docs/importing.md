@@ -2,11 +2,7 @@
 
 GRIMER is independent of any quantification method and requires a contingency table with raw counts of observations/components for each samples/compositions in the study. Observations are usually, but not limited to, taxonomic entries (e.g. genus, species, strains), operational taxonomic units (OTUs), amplicon sequence variants (ASVs), metagenome-assembled genomes (MAGs) or sequence features.
 
-GRIMER `--input-file` receives a tab-separated text file with a table of counts (Observation table, Count table, Contingency Tables, ...) or a [BIOM](https://biom-format.org/) file.
-
-- Rows contain observations and columns contain samples (use `--transpose` if your file is reversed)
-- First column and first row are used as headers
-- Taxonomy integration: files can have either taxonomic identifiers (NCBI, e.g.: 562) or taxonomic names (NCBI, e.g.: Escherichia coli or GTDB, e.g.: s__Escherichia coli)
+GRIMER `--input-file` receives a file with tab-separated values (.tsv) containing a table of counts (Observation table, Count table, Contingency Tables, ...) or a [BIOM](https://biom-format.org/) file.
 
 ## biom file
 
@@ -30,6 +26,11 @@ grimer --input-file UgandaMaternalV3V4.16s_DADA2.taxon_abundance.biom \
 ## tab-separated file (.tsv)
 
 GRIMER parses .tsv files with single taxonomic identifier/names annotations or with multi-level (e.g.: lineage) taxonomic annotated observations.
+
+- Rows contain observations and columns contain samples (use `--transpose` if your file is reversed)
+- First column and first row are used as headers
+- Taxonomy integration: files can have either taxonomic identifiers (NCBI, e.g.: 562) or taxonomic names (NCBI, e.g.: Escherichia coli or GTDB, e.g.: s__Escherichia coli)
+
 
 ### Multi-level annotations (e.g. Bacteria;Proteobacteria;Gammaproteobacteria...)
 
@@ -145,6 +146,3 @@ write_biom(b, 'out.biom')
 ```bash
 grimer --input-file out.biom
 ```
-
-### GTDB-tk
-### CoverM

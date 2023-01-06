@@ -1,12 +1,12 @@
 # GRIMER
 
+<img src="https://raw.githubusercontent.com/pirovc/grimer/main/grimer/img/logo.png">
+
 ## About
 
-GRIMER performs analysis of microbiome data and generates a portable and interactive dashboard integrating annotation, taxonomy and metadata with focus on contamination detection. More information about the method can be found in the [pre-print](https://doi.org/10.1101/2021.06.22.449360)
+GRIMER is a tool that performs automated analyses and generates a portable and interactive dashboard integrating annotation, taxonomy and metadata. It unifies several sources of evidence to help detect contamination. GRIMER is independent of quantification methods and directly analyses contingency tables to create an interactive and offline report. Reports can be created in seconds and are accessible for non-specialists, providing an intuitive set of charts to explore data distribution among observations and samples and its connections with external sources.
 
-## Examples
-
-Online examples of reports generated with GRIMER --> [https://pirovc.github.io/grimer-reports/](https://pirovc.github.io/grimer-reports/)
+More information about the method can be found in the [pre-print](https://doi.org/10.1101/2021.06.22.449360)
 
 ## Installation
 
@@ -28,6 +28,8 @@ grimer -h
 ```
 
 ## Basic Usage
+
+Complete commands with sample files can be found in [Importing files](importing)
 
 - Tab-separated input table
 ```bash
@@ -58,16 +60,6 @@ grimer -i input_table.tsv -m metadata.tsv -t ncbi #optional -b taxdump.tar.gz
 ```bash
 grimer -i input_table.tsv -m metadata.tsv -t ncbi -c config/default.yaml -d -g
 ```
-
-- Analyzing any MGnify public study
-
-```bash
-./grimer-mgnify.py -i MGYS00006024 -o output_folder/
-```
-
-## Config file
-
-..TODO..
 
 ## Parameters
 
