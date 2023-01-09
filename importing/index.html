@@ -213,7 +213,9 @@ grimer --input-file exported-feature-table/feature-table.biom
 <ul>
 <li><code>grimer-mgnify.py</code> will download and generate a GRIMER report for any MGnify study accession (e.g. MGYS00006024)</li>
 </ul>
-<pre><code class="language-bash">./grimer-mgnify.py -i MGYS00006024 -o out_folder_mgnify/
+<pre><code class="language-bash"># Install API dependency
+conda install &quot;jsonapi-client&gt;=0.9.7&quot;
+./grimer-mgnify.py -i MGYS00006024 -o out_folder_mgnify/
 </code></pre>
 <h3 id="phyloseq">phyloseq</h3>
 <pre><code class="language-R">#source(&quot;http://bioconductor.org/biocLite.R&quot;)

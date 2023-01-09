@@ -85,8 +85,135 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="examples">Examples</h1>
-<p>Online examples of reports generated with GRIMER --&gt; <a href="https://pirovc.github.io/grimer-reports/">https://pirovc.github.io/grimer-reports/</a></p>
+                <p><img alt="GRIMER" src="https://raw.githubusercontent.com/pirovc/grimer/main/grimer/img/logo.png" /></p>
+<p>Examples of reports generated with <a href="https://github.com/pirovc/grimer">GRIMER</a></p>
+<hr />
+<h3 id="data-analysis-from-leiby-et-al-lack-of-detection-of-a-human-placenta-microbiome-in-samples-from-preterm-and-term-deliveries">Data analysis from Leiby et al. "Lack of detection of a human placenta microbiome in samples from preterm and term deliveries"</h3>
+<p><strong><em>original publication: <a href="https://doi.org/10.1186/s40168-018-0575-4">10.1186/s40168-018-0575-4</a></em></strong></p>
+<p><strong><a href="https://pirovc.github.io/grimer-reports/placenta/placenta_mgs.html">GRIMER report MGS</a></strong></p>
+<p><strong><a href="https://pirovc.github.io/grimer-reports/placenta/placenta_amplicon.html">GRIMER report AMPLICON</a></strong></p>
+<details>
+<summary>commands used to create report</summary>
+
+
+<pre><code class="language-bash"># Download files (table, metadata and config)
+wget https://raw.githubusercontent.com/pirovc/grimer-reports/main/placenta/placenta_files.tar.gz
+tar xf  placenta_files.tar.gz
+
+# AMPLICON
+grimer --config placenta_amplicon_config.yaml \
+       --input-file placenta_amplicon_table.tsv \
+       --metadata-file placenta_metadata.tsv \
+       --taxonomy ncbi \
+       --ranks superkingdom phylum class order family genus species \
+       --level-separator &quot;;&quot; \
+       --obs-replace &quot;^.+__&quot; &quot;&quot; &quot;_&quot; &quot; &quot; \
+       --unassigned-header &quot;Unassigned&quot;  \
+       --decontam --mgnify --transpose \
+       --title &quot;Placenta study AMPLICON - Leiby, J.S. et al 2018&quot; \
+       --output-html placenta_amplicon.html
+
+# MGS
+grimer --config placenta_mgs_config.yaml \
+       --input-file placenta_mgs_table.tsv \
+       --metadata-file placenta_metadata.tsv \
+       --taxonomy ncbi \
+       --ranks superkingdom phylum class order family genus species \
+       --level-separator &quot;|&quot; \
+       --unassigned-header &quot;unassigned&quot;  \
+       --decontam --mgnify \
+       --title &quot;Placenta study MGS - Leiby, J.S. et al 2018&quot; \
+       --output-html placenta_mgs.html
+</code></pre>
+
+
+</details>
+<hr />
+<h3 id="katharoseq-analysis-from-minich-et-al-katharoseq-enables-high-throughput-microbiome-analysis-from-low-biomass-samples">KatharoSeq analysis from Minich et al. "KatharoSeq Enables High-Throughput Microbiome Analysis from Low-Biomass Samples"</h3>
+<p><strong><em>original publication: <a href="https://doi.org/10.1128/mSystems.00218-17">10.1128/mSystems.00218-17</a></em></strong></p>
+<p><strong><a href="https://pirovc.github.io/grimer-reports/katharoseq/katharoseq.html">GRIMER report</a></strong></p>
+<details>
+<summary>commands used to create report</summary>
+
+
+<pre><code class="language-bash"># Download files (table, metadata and config)
+wget https://raw.githubusercontent.com/pirovc/grimer-reports/main/katharoseq/katharoseq_files.tar.gz
+tar xf katharoseq_files.tar.gz
+
+# Run GRIMER
+grimer --config katharoseq_config.yaml \
+       --input-file katharoseq_table.tsv \
+       --metadata-file katharoseq_metadata.tsv \
+       --transformation clr \
+       --obs-replace &quot;^.+__&quot; &quot;&quot; &quot;_&quot; &quot; &quot; \
+       --taxonomy ncbi \
+       --ranks superkingdom phylum class order family genus species \
+       --level-separator &quot;;&quot; \
+       --decontam --mgnify \
+       --title &quot;KatharoSeq - Minich et al. 2018&quot; \
+       --output-html katharoseq.html
+</code></pre>
+
+
+</details>
+
+<hr />
+<h3 id="preterm-infant-resistome-downloaded-from-microbiomedb">Preterm Infant Resistome downloaded from <a href="https://microbiomedb.org/mbio/app/record/dataset/DS_82fe0308e2">MicrobiomeDB</a></h3>
+<p><strong><em>original publication: <a href="https://doi.org/10.1038/nmicrobiol.2016.24">10.1038/nmicrobiol.2016.24</a></em></strong></p>
+<p><strong><a href="https://pirovc.github.io/grimer-reports/microbiomedb/ResistomeAmplicon.html">GRIMER report</a></strong></p>
+<details>
+<summary>commands used to create report</summary>
+
+
+<pre><code class="language-bash"># Download files (table, metadata and config) - Original source: https://microbiomedb.org/common/downloads/release-22/82fe0308e2032de2041694df6592ba542ea84b86/ResistomeAmplicon.16s_DADA2.taxon_abundance.biom
+wget https://raw.githubusercontent.com/pirovc/grimer-reports/main/microbiomedb/microbiomedb_files.tar.gz
+tar xf microbiomedb_files.tar.gz
+
+# Run GRIMER
+grimer --config config/default.yaml \
+       --input-file ResistomeAmplicon.16s_DADA2.taxon_abundance.biom \
+       --taxonomy ncbi \
+       --ranks superkingdom phylum class order family genus species \
+       --decontam --mgnify \
+       --title &quot;MicrobiomeDB Preterm Infant Resistome (V4)&quot; \
+       --output-html ResistomeAmplicon.html
+</code></pre>
+
+
+</details>
+
+<hr />
+<h3 id="antibiotic-induced-changes-in-the-microbiota-disrupt-redox-dynamics-in-the-gut-downloaded-from-mgnify">Antibiotic induced changes in the microbiota disrupt redox dynamics in the gut downloaded from <a href="https://www.ebi.ac.uk/metagenomics/studies/MGYS00005180">MGnify</a></h3>
+<p><strong><em>original publication <a href="https://doi.org/10.7554/elife.35987">10.7554/elife.35987</a></em></strong></p>
+<p><strong><a href="https://pirovc.github.io/grimer-reports/mgnify/MGYS00005180.html">GRIMER report</a></strong></p>
+<details>
+<summary>commands used to create report</summary>
+
+
+<pre><code class="language-bash"># Script to download files and generate GRIMER report from any MGnify study accession
+# Requires &quot;jsonapi-client&gt;=0.9.7&quot; (conda install &quot;jsonapi-client&gt;=0.9.7&quot;)
+./grimer-mgnify.py -i MGYS00005180 -o MGYS00005180 -g &quot;--decontam --mgnify&quot; 
+
+# Or directly from files
+wget https://raw.githubusercontent.com/pirovc/grimer-reports/main/mgnify/mgnify_files.tar.gz
+tar xf mgnify.tar.gz
+# Run GRIMER
+grimer --config config/default.yaml \
+       --input-file MGYS00005180_ERP108433_taxonomy_abundances_SSU_v4.1.tsv \
+       --metadata-file MGYS00005180_metadata.tsv \
+       --obs-replace &quot;^.+__&quot; &quot;&quot; &quot;_&quot; &quot; &quot; \
+       --taxonomy ncbi \
+       --ranks superkingdom kingdom phylum class order family genus species \
+       --level-separator &quot;;&quot; \
+       --decontam --mgnify \
+       --title &quot;MGnify study accession MGYS00005180&quot; \
+       --output-html MGYS00005180.html
+</code></pre>
+
+
+</details>
+
+<hr />
               
             </div>
           </div><footer>

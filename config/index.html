@@ -130,6 +130,7 @@ external:
     url: &quot;https://bacdive.dsmz.de/search?search=taxid:{}&quot;
     ids: [152331, 113107, 157688, 979627, 45634, 60133, 157687, 1624, 1583331, 1632, 249188]
 </code></pre>
+<p>Common contaminants compiled from the literature and human-related possible sources of contamination are available in the <a href="https://github.com/pirovc/grimer/tree/main/files">GRIMER repository</a>. For more information, please refer to the <a href="https://doi.org/10.1101/2021.06.22.449360">pre-print</a>. If the target study overlaps with some of those annotation (e.g. study of human skin), related entries can be easily removed from those files to not generated redundant annotations.</p>
 <h2 id="controls">controls</h2>
 <p>Several control groups cann be provided. A file with one sample identifier per line</p>
 <pre><code class="language-yaml">controls:
@@ -166,8 +167,11 @@ external:
     #  - &quot;path/file1.txt&quot;
     #  - &quot;path/file2.txt&quot;
     # prevalence_metadata: 
-    #  &quot;Field1&quot;: &quot;ValueA&quot;
-    #  &quot;Field2&quot;: &quot;ValueB&quot;
+    #  &quot;Field1&quot;:
+    #    - &quot;ValueA&quot;
+    #    - &quot;ValueB&quot;
+    #  &quot;Field2&quot;:
+    #    - &quot;ValueC&quot;
 </code></pre>
               
             </div>
