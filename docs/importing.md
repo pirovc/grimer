@@ -126,6 +126,8 @@ grimer --input-file exported-feature-table/feature-table.biom
 - `grimer-mgnify.py` will download and generate a GRIMER report for any MGnify study accession (e.g. MGYS00006024)
  
 ```bash
+# Install API dependency
+conda install "jsonapi-client>=0.9.7"
 ./grimer-mgnify.py -i MGYS00006024 -o out_folder_mgnify/
 ```
 

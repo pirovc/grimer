@@ -3,7 +3,7 @@
 GRIMER performs analysis of microbiome studies and generates a portable and interactive dashboard integrating annotation, taxonomy and metadata with focus on contamination detection. 
 
 - [Installation and user manual](https://pirovc.github.io/grimer/)
-- [Live examples](https://pirovc.github.io/grimer-reports/)
+- [Live examples](https://pirovc.github.io/grimer/examples/)
 - [Pre-print](https://doi.org/10.1101/2021.06.22.449360)
 
 ## Powered by

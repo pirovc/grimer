@@ -721,11 +721,13 @@ def run_decontam(run_decontam, cfg, table, metadata, control_samples, script_dir
                 else:
                     print_log("File not found " + file)
         elif "prevalence_metadata" in cfg_decontam:
-            for field, value in cfg_decontam["prevalence_metadata"].items():
-                if field in metadata.get_col_headers():
-                    control_list.update(metadata.get_subset(field, value).index)
+            # if a dict, several metadata fields:values can be provided to set control samples
+            for field, val in cfg_decontam["prevalence_metadata"].items():
+                if field not in metadata.get_col_headers():
+                    print_log("Could not find " + field + " in the metadata, skipping for decontam (prevalence)")
                 else:
-                    print_log("Could not find " + field + " in the metadata.")
+                    for v in val:
+                        control_list.update(metadata.get_subset(field, v).index)
         else:
             # Use all samples passed as controls
             for cs in control_samples.values():

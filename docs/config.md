@@ -43,6 +43,8 @@ A real example of saliva organisms extracted from BacDive:
     ids: [152331, 113107, 157688, 979627, 45634, 60133, 157687, 1624, 1583331, 1632, 249188]
 ```
 
+Common contaminants compiled from the literature and human-related possible sources of contamination are available in the [GRIMER repository](https://github.com/pirovc/grimer/tree/main/files). For more information, please refer to the [pre-print](https://doi.org/10.1101/2021.06.22.449360). If the target study overlaps with some of those annotation (e.g. study of human skin), related entries can be easily removed from those files to not generated redundant annotations.
+
 ## controls
 
 Several control groups cann be provided. A file with one sample identifier per line
@@ -100,6 +102,9 @@ external:
     #  - "path/file1.txt"
     #  - "path/file2.txt"
     # prevalence_metadata: 
-    #  "Field1": "ValueA"
-    #  "Field2": "ValueB"
+    #  "Field1":
+    #    - "ValueA"
+    #    - "ValueB"
+    #  "Field2":
+    #    - "ValueC"
 ```
