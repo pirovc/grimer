@@ -6,7 +6,7 @@
 
 GRIMER is a tool that performs automated analyses and generates a portable and interactive dashboard integrating annotation, taxonomy and metadata. It unifies several sources of evidence to help detect contamination. GRIMER is independent of quantification methods and directly analyses contingency tables to create an interactive and offline report. Reports can be created in seconds and are accessible for non-specialists, providing an intuitive set of charts to explore data distribution among observations and samples and its connections with external sources.
 
-More information about the method can be found in the [pre-print](https://doi.org/10.1101/2021.06.22.449360)
+More information about the method can be found in the [pre-print](https://doi.org/10.1101/2021.06.22.449360){ target="_blank" }
 
 ## Installation
 

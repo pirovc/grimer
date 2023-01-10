@@ -4,7 +4,7 @@
 
 *For this manual we will use the metagenomics analysis from data obtained from Leiby et al. "Lack of detection of a human placenta microbiome in samples from preterm and term deliveries"*
 
-- **[GRIMER report MGS Leiby et al.](https://pirovc.github.io/grimer-reports/placenta/placenta_mgs.html)**
+- **[GRIMER report MGS Leiby et al.](https://pirovc.github.io/grimer-reports/placenta/placenta_mgs.html){ target="_blank" }**
 
 --- 
 
@@ -12,8 +12,10 @@ GRIMER reports contain 4 main panels: [Overview](#overview), [Samples](#samples)
 
 <img src="../img/logo_panels.png">
 
-- Help buttons <img src="../img/help.png"> will provide details and information about the plot/analysis
 - Panels can be reported independently with `-p/--output-plots`
+- Help buttons <img src="../img/help.png"> will provide details and information about the plot/analysis
+- All plots have built-in tools to export an image, show/hide tooltips, zoom in/out, select entries, among other features <img src="../img/tools.png">
+
 
 ## Overview
 
@@ -85,16 +87,66 @@ This plot ummarizes samples contents, with general classification metrics (left 
 
 <img src="../img/overview_bars.png"> 
 
-- aa
+- bars are showing total number of counts for each sample and are annotated with the percentage of "human-related" taxa, provided as a reference.
+- bars are grouped by two metadata variables: Type and Case/control. Each sub-group is sorted based on the number of counts (in this case reads).
+- yellow circles (right y-axis) are showing the amount of the selected observation (Streptococcus) for each of the samples in a log scale.
+- parent taxonomic ranks can be activated on the top-rigth legend.
 
 ## Samples
 
 In depth evaluation of individual samples can be performed in the Samples panel
 
+<img src="../img/samples.png">
+
+### Table
+
+<img src="../img/samples_table.png">
+
+- items of the table can be selected using the widgets on the right. Selected items will be displayed in the bar plot below. In the example above, only samples belonging to the "Maternal Saliva" category for the metadata field "Type" are selected.
+- the top table lists all samples in the study, with information about assigned and unassigned counts.
+- a breakdown information for each taxonomic rank is display if enabled for the report.
+ 
+### Bars
+
+<img src="../img/samples_bars.png">
+
+- Observation bars showing proportions of top most abundant observations. The number of items to be displayed can defined with the parameter `-j/--top-obs-bars`
+- In the example above, genus level proportions are displayed only for the items selected in the table above.
+- The bars are grouped by Case/Control and antibiotic usage. Samples are sorted by the Streptococcus abundances within each group.
+
 ## Heatmap
 
 Several transformations can be applied to the data (normalization, log, center log ratio) to be further visualized in the Heatmap panel. Hierarchical clustering, grouping and sorting options can be independently selected for samples and observations to enable pattern detection (e.g. batch effects, treatment effects etc).
 
+<img src="../img/heatmap.png">
+
+- The heatmap shows values for samples (y-axis) vs. observations (x-axis)
+- Side panels link metadata and annotation information to the axis
+- By default, all external references are displayed. Metadata fields are manually selected in the report
+
+### Clustering
+
+<img src="../img/heatmap_cluster.png">
+
+- With clustering methods, data will be grouped by hierarchical/agglomerative clustering.
+- More clustering methods and metrics can be generated using the parameter `--linkage-methods` and `--linkage-metrics`,
+- Additional dendrograms are displayed on the clustered axis.
+- Here is possible to explore effects of clusters of data in the external panels (annotations and metadata)
+
+### Grouping
+
+<img src="../img/heatmap_group.png">
+
+- Manual grouping and sorting of the data is also possible in the heatmap
+
 ## Correlation
 
+<img src="../img/correlation.png">
+
 Correlation between observations are plotted as a heatmap matrix. Positive or negative correlations among observations can point towards concurrent signals in the microbiome analysis.
+
+<img src="../img/correlation_genus.png">
+
+- In the example above, only top observations are displayed. This can be changed with the parameter `-x/--top-obs-corr`
+- Only highly positive or negative correlated organisms are displayed: -1 to -0.8 and 0.8 to 1, respectively
+- Organisms highly correlated can be further investigated in the Overview and Heatmap panels

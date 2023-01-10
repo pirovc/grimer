@@ -1,4 +1,4 @@
-# Config files
+# Configuration file
 
 GRIMER uses a configuration file to set reference sources of annotation (e.g. contaminants), controls and external tools (decontam, mgnify). The configuration can be provided with the argument `-c/--config` and it should be in the [YAML](https://yaml.org/) format.
 

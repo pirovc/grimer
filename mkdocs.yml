@@ -7,4 +7,6 @@ nav:
     - GRIMER Reports - User Manual: manual.md
     - GRIMER Reports - Examples: examples.md
 plugins:
-    - glightbox
+    - glightbox # pip install mkdocs-glightbox
+markdown_extensions:
+  - attr_list

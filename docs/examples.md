@@ -6,11 +6,11 @@ Examples of reports generated with [GRIMER](https://github.com/pirovc/grimer)
 
 ### Data analysis from Leiby et al. "Lack of detection of a human placenta microbiome in samples from preterm and term deliveries"
 
-***original publication: [10.1186/s40168-018-0575-4](https://doi.org/10.1186/s40168-018-0575-4)***
+***original publication: [10.1186/s40168-018-0575-4](https://doi.org/10.1186/s40168-018-0575-4){ target="_blank" }***
 
-**[GRIMER report MGS](https://pirovc.github.io/grimer-reports/placenta/placenta_mgs.html)**
+**[GRIMER report MGS](https://pirovc.github.io/grimer-reports/placenta/placenta_mgs.html){ target="_blank" }**
 
-**[GRIMER report AMPLICON](https://pirovc.github.io/grimer-reports/placenta/placenta_amplicon.html)**
+**[GRIMER report AMPLICON](https://pirovc.github.io/grimer-reports/placenta/placenta_amplicon.html){ target="_blank" }**
 
 <details>
 <summary>commands used to create report</summary>
@@ -51,9 +51,9 @@ grimer --config placenta_mgs_config.yaml \
 
 ### KatharoSeq analysis from Minich et al. "KatharoSeq Enables High-Throughput Microbiome Analysis from Low-Biomass Samples"
 
-***original publication: [10.1128/mSystems.00218-17](https://doi.org/10.1128/mSystems.00218-17)***
+***original publication: [10.1128/mSystems.00218-17](https://doi.org/10.1128/mSystems.00218-17){ target="_blank" }***
 
-**[GRIMER report](https://pirovc.github.io/grimer-reports/katharoseq/katharoseq.html)**
+**[GRIMER report](https://pirovc.github.io/grimer-reports/katharoseq/katharoseq.html){ target="_blank" }**
 
 <details>
 <summary>commands used to create report</summary>
@@ -81,11 +81,11 @@ grimer --config katharoseq_config.yaml \
 
 ---
 
-### Preterm Infant Resistome downloaded from [MicrobiomeDB](https://microbiomedb.org/mbio/app/record/dataset/DS_82fe0308e2) 
+### Preterm Infant Resistome downloaded from [MicrobiomeDB](https://microbiomedb.org/mbio/app/record/dataset/DS_82fe0308e2){ target="_blank" }
 
-***original publication: [10.1038/nmicrobiol.2016.24](https://doi.org/10.1038/nmicrobiol.2016.24)***
+***original publication: [10.1038/nmicrobiol.2016.24](https://doi.org/10.1038/nmicrobiol.2016.24){ target="_blank" }***
 
-**[GRIMER report](https://pirovc.github.io/grimer-reports/microbiomedb/ResistomeAmplicon.html)**
+**[GRIMER report](https://pirovc.github.io/grimer-reports/microbiomedb/ResistomeAmplicon.html){ target="_blank" }**
 
 <details>
 <summary>commands used to create report</summary>
@@ -109,11 +109,11 @@ grimer --config config/default.yaml \
 
 ---
 
-### Antibiotic induced changes in the microbiota disrupt redox dynamics in the gut downloaded from [MGnify](https://www.ebi.ac.uk/metagenomics/studies/MGYS00005180)
+### Antibiotic induced changes in the microbiota disrupt redox dynamics in the gut downloaded from [MGnify](https://www.ebi.ac.uk/metagenomics/studies/MGYS00005180){ target="_blank" }
 
-***original publication [10.7554/elife.35987](https://doi.org/10.7554/elife.35987)***
+***original publication [10.7554/elife.35987](https://doi.org/10.7554/elife.35987){ target="_blank" }***
 
-**[GRIMER report](https://pirovc.github.io/grimer-reports/mgnify/MGYS00005180.html)**
+**[GRIMER report](https://pirovc.github.io/grimer-reports/mgnify/MGYS00005180.html){ target="_blank" }**
 
 <details>
 <summary>commands used to create report</summary>
