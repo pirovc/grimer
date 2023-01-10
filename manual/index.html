@@ -1,152 +1,215 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+
+<html class="writer-html5" lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>GRIMER Reports - User Manual - GRIMER</title>
-    <link rel="stylesheet" href="../css/theme.css" />
-    <link rel="stylesheet" href="../css/theme_extra.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
-    
-      <script>
+<meta charset="utf-8"/>
+<meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="../img/favicon.ico" rel="shortcut icon"/>
+<title>GRIMER Reports - User Manual - GRIMER</title>
+<link href="../css/theme.css" rel="stylesheet"/>
+<link href="../css/theme_extra.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" rel="stylesheet"/>
+<script>
         // Current page data
         var mkdocs_page_name = "GRIMER Reports - User Manual";
         var mkdocs_page_input_path = "manual.md";
         var mkdocs_page_url = null;
       </script>
-    
-    <script src="../js/jquery-3.6.0.min.js" defer></script>
-    <!--[if lt IE 9]>
+<script defer="" src="../js/jquery-3.6.0.min.js"></script>
+<!--[if lt IE 9]>
       <script src="../js/html5shiv.min.js"></script>
     <![endif]-->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
-      <script>hljs.initHighlightingOnLoad();</script> 
-</head>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link href="../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            </style><script src="../assets/javascripts/glightbox.min.js"></script></head>
 <body class="wy-body-for-nav" role="document">
-
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
-    <div class="wy-side-scroll">
-      <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> GRIMER
-        </a><div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
-  </form>
+<div class="wy-grid-for-nav">
+<nav class="wy-nav-side stickynav" data-toggle="wy-nav-shift">
+<div class="wy-side-scroll">
+<div class="wy-side-nav-search">
+<a class="icon icon-home" href=".."> GRIMER
+        </a>
 </div>
-      </div>
-
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="..">GRIMER</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../importing/">Importing files</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../config/">Configuration file</a>
-                </li>
-              </ul>
-              <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="./">GRIMER Reports - User Manual</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#samples">Samples</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#heatmap">Heatmap</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#correlation">Correlation</a>
-    </li>
-    </ul>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../examples/">GRIMER Reports - Examples</a>
-                </li>
-              </ul>
-      </div>
-    </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">GRIMER</a>
-        
-      </nav>
-      <div class="wy-nav-content">
-        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
-  <ul class="wy-breadcrumbs">
-    <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li>
-      <li>GRIMER Reports - User Manual</li>
-    <li class="wy-breadcrumbs-aside">
-    </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-            <div class="section" itemprop="articleBody">
-              
-                <h1 id="grimer-reports-user-manual">GRIMER Reports - User Manual</h1>
-<h2 id="overview">Overview</h2>
+<div aria-label="Navigation menu" class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation">
 <ul>
-<li>Table, filtering table contents, selecting taxa</li>
-<li>Info, References, MGnify, DECONTAM plots</li>
-<li>Bars: annotations, sorting, grouping, transforming axis</li>
+<li class="toctree-l1"><a class="reference internal" href="..">GRIMER</a>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../importing/">Importing files</a>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../config/">Configuration file</a>
+</li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal current" href="./">GRIMER Reports - User Manual</a>
+<ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+<ul>
+<li class="toctree-l3"><a class="reference internal" href="#table">Table</a>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#side-plots">Side plots</a>
+<ul>
+<li class="toctree-l4"><a class="reference internal" href="#info">Info</a>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#references">References</a>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#mgnify">MGnify</a>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#decontam">DECONTAM</a>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#sample-bars">Sample bars</a>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#samples">Samples</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#heatmap">Heatmap</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#correlation">Correlation</a>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/">GRIMER Reports - Examples</a>
+</li>
+</ul>
+</div>
+</div>
+</nav>
+<section class="wy-nav-content-wrap" data-toggle="wy-nav-shift">
+<nav aria-label="Mobile navigation menu" class="wy-nav-top" role="navigation">
+<i class="fa fa-bars" data-toggle="wy-nav-top"></i>
+<a href="..">GRIMER</a>
+</nav>
+<div class="wy-nav-content">
+<div class="rst-content"><div aria-label="breadcrumbs navigation" role="navigation">
+<ul class="wy-breadcrumbs">
+<li><a alt="Docs" class="icon icon-home" href=".."></a> »</li>
+<li>GRIMER Reports - User Manual</li>
+<li class="wy-breadcrumbs-aside">
+</li>
+</ul>
+<hr/>
+</div>
+<div class="document" itemscope="itemscope" itemtype="http://schema.org/Article" role="main">
+<div class="section" itemprop="articleBody">
+<h1 id="grimer-reports-user-manual">GRIMER Reports - User Manual</h1>
+<hr/>
+<p><em>For this manual we will use the metagenomics analysis from data obtained from Leiby et al. "Lack of detection of a human placenta microbiome in samples from preterm and term deliveries"</em></p>
+<ul>
+<li><strong><a href="https://pirovc.github.io/grimer-reports/placenta/placenta_mgs.html">GRIMER report MGS Leiby et al.</a></strong></li>
+</ul>
+<hr/>
+<p>GRIMER reports contain 4 main panels: <a href="#overview">Overview</a>, <a href="#samples">Samples</a>, <a href="#heatmap">Heatmap</a>, and <a href="#correlation">Correlation</a>. Every panel has one or more visualization and widgets to select, filter, group, and modify its contents. </p>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-width="100%" href="../img/logo_panels.png"><img src="../img/logo_panels.png"/></a></p>
+<ul>
+<li>Help buttons <a class="glightbox" data-desc-position="bottom" data-height="auto" data-width="100%" href="../img/help.png"><img src="../img/help.png"/></a> will provide details and information about the plot/analysis</li>
+<li>Panels can be reported independently with <code>-p/--output-plots</code></li>
+</ul>
+<h2 id="overview">Overview</h2>
+<p>The Overview panel shows an individual summary for each observation and its relation to annotations and distribution among samples.</p>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-width="100%" href="../img/overview.png"><img src="../img/overview.png"/></a> </p>
+<h3 id="table">Table</h3>
+<p>In the top, a table will list the observations of the study (e.g. OTUS, species). If taxons are the observations, entries can be divided into taxonomic ranks.</p>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-width="100%" href="../img/overview_table.png"><img src="../img/overview_table.png"/></a> </p>
+<ul>
+<li>It is possible to filter the items listed on table using the widgets on the rigth</li>
+<li>Each entry will contain some details about each observation (e.g. Frequency among samples, total counts, ...)</li>
+<li>Selecting an item on the table will trigger the activation of the observation in the other plots of the panel</li>
+</ul>
+<p>For example, the genus Streptococcus:</p>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-width="100%" href="../img/overview_table_strep.png"><img src="../img/overview_table_strep.png"/></a> </p>
+<ul>
+<li>Appears on 61% of the samples of this study</li>
+<li>Has an average 2.5% relative abundance among all samples</li>
+<li>Was reported in 5 studies as "common contaminant"</li>
+<li>It is highly present in water and negative control samples</li>
+<li>It was detected as a possible contaminant by the DECONTAM method</li>
+</ul>
+<h3 id="side-plots">Side plots</h3>
+<p>On the top right, additional plots and information are display once an observation is selected on the Table. In this example, the Streptococcus genus is selected.</p>
+<h4 id="info">Info</h4>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-width="100%" href="../img/overview_info.png"><img src="../img/overview_info.png"/></a> </p>
+<ul>
+<li>Further information about the observation and related references can be found (in this case, common contaminants)</li>
+</ul>
+<h4 id="references">References</h4>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-width="100%" href="../img/overview_references.png"><img src="../img/overview_references.png"/></a> </p>
+<ul>
+<li>Visual representation of number of counts in the references and it's lineage</li>
+<li>In the example above, the genus Streptococcus was reported 5 times in one of the reference sets (common contaminants) directly, and 3 times as parent (species of Streptococcus were reported as contaminant)</li>
+</ul>
+<h4 id="mgnify">MGnify</h4>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-width="100%" href="../img/overview_mgnify.png"><img src="../img/overview_mgnify.png"/></a> </p>
+<ul>
+<li>This plot shows the number of studies in the MGnify database for the selected taxa</li>
+<li>Streptococcus was reported in 316 studies for the biome Host Associated:Human</li>
+<li>Deeper biome levels can be selected to define more specific groups. In the biome level 5 (see below), Streptococcus was reported to be mostly found in Fecal samples among all MGnify studies.</li>
+</ul>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-width="100%" href="../img/overview_mgnify_2.png"><img src="../img/overview_mgnify_2.png"/></a> </p>
+<h4 id="decontam">DECONTAM</h4>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-width="100%" href="../img/overview_decontam.png"><img src="../img/overview_decontam.png"/></a> </p>
+<ul>
+<li>Plot to verify the DECONTAM output</li>
+<li>Proportion of counts of selected observation (y-axis) against DNA Concentration (if provided) or Total number of counts (x-axis) of each sample, both in log10 scale</li>
+<li>If provided, controls samples are displayed in a different color.</li>
+<li>A indication of contamination is when counts are inversely proportional to DNA concentration. The red and black dotted lines are the expected models for contamination and non-contamination, respectively. A good indication for contamination is when the dots (excluding control samples) "fit" the red line model.</li>
+<li>The P-score statistic is not a P-value and it is not associated with any guarantees on the type 1 error rate. Small scores indicate the contaminant model is a better fit, and high scores indicate that the non-contaminant model is a better fit.</li>
+</ul>
+<h3 id="sample-bars">Sample bars</h3>
+<p>This plot ummarizes samples contents, with general classification metrics (left y-axis). Once an item is selected on the top table, this plot will also show the amount of the observation for each sample (right y-axis). </p>
+<p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-width="100%" href="../img/overview_bars.png"><img src="../img/overview_bars.png"/></a> </p>
+<ul>
+<li>aa</li>
 </ul>
 <h2 id="samples">Samples</h2>
+<p>In depth evaluation of individual samples can be performed in the Samples panel</p>
 <h2 id="heatmap">Heatmap</h2>
+<p>Several transformations can be applied to the data (normalization, log, center log ratio) to be further visualized in the Heatmap panel. Hierarchical clustering, grouping and sorting options can be independently selected for samples and observations to enable pattern detection (e.g. batch effects, treatment effects etc).</p>
 <h2 id="correlation">Correlation</h2>
-              
-            </div>
-          </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../config/" class="btn btn-neutral float-left" title="Configuration file"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../examples/" class="btn btn-neutral float-right" title="GRIMER Reports - Examples">Next <span class="icon icon-circle-arrow-right"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <!-- Copyright etc -->
-  </div>
+<p>Correlation between observations are plotted as a heatmap matrix. Positive or negative correlations among observations can point towards concurrent signals in the microbiome analysis.</p>
+</div>
+</div><footer>
+<div aria-label="Footer Navigation" class="rst-footer-buttons" role="navigation">
+<a class="btn btn-neutral float-left" href="../config/" title="Configuration file"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+<a class="btn btn-neutral float-right" href="../examples/" title="GRIMER Reports - Examples">Next <span class="icon icon-circle-arrow-right"></span></a>
+</div>
+<hr/>
+<div role="contentinfo">
+<!-- Copyright etc -->
+</div>
 
   Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
-          
-        </div>
-      </div>
-
-    </section>
-
-  </div>
-
-  <div class="rst-versions" role="note" aria-label="Versions">
-  <span class="rst-current-version" data-toggle="rst-current-version">
-    
-    
-      <span><a href="../config/" style="color: #fcfcfc">&laquo; Previous</a></span>
-    
-    
-      <span><a href="../examples/" style="color: #fcfcfc">Next &raquo;</a></span>
-    
-  </span>
 </div>
-    <script>var base_url = '..';</script>
-    <script src="../js/theme_extra.js" defer></script>
-    <script src="../js/theme.js" defer></script>
-      <script src="../search/main.js" defer></script>
-    <script defer>
+</div>
+</section>
+</div>
+<div aria-label="Versions" class="rst-versions" role="note">
+<span class="rst-current-version" data-toggle="rst-current-version">
+<span><a href="../config/" style="color: #fcfcfc">« Previous</a></span>
+<span><a href="../examples/" style="color: #fcfcfc">Next »</a></span>
+</span>
+</div>
+<script>var base_url = '..';</script>
+<script defer="" src="../js/theme_extra.js"></script>
+<script defer="" src="../js/theme.js"></script>
+<script defer="">
         window.onload = function () {
             SphinxRtdTheme.Navigation.enable(true);
         };
     </script>
-
-</body>
+<script>const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});</script></body>
 </html>
