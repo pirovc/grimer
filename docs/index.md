@@ -29,34 +29,37 @@ grimer -h
 
 ## Basic Usage
 
-Complete commands with sample files can be found in [Importing files](importing)
+- Complete commands with sample files can be found in [Importing files](importing)
+- Complete examples of real files can be found in [Examples](examples)
 
-- Tab-separated input table
+
+Tab-separated input table
+
 ```bash
 grimer -i input_table.tsv
 ```
 
-- BIOM file
+BIOM file
 ```bash
 grimer -i myfile.biom
 ```
 
-- Tab-separated input table with taxonomic annotated observations (e.g. sk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria...)
+Tab-separated input table with taxonomic annotated observations (e.g. sk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria...)
 ```bash
 grimer -i input_table.tsv -f ";"
 ```
 
-- Tab-separated input table with metadata
+Tab-separated input table with metadata
 ```bash
 grimer -i input_table.tsv -m metadata.tsv
 ```
 
-- With taxonomy integration (ncbi)
+With taxonomy integration (ncbi)
 ```bash
 grimer -i input_table.tsv -m metadata.tsv -t ncbi #optional -b taxdump.tar.gz
 ```
 
-- With configuration file to setup external tools, references and annotations
+With configuration file to setup external tools, references and annotations
 ```bash
 grimer -i input_table.tsv -m metadata.tsv -t ncbi -c config/default.yaml -d -g
 ```

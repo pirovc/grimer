@@ -18,9 +18,9 @@ class Config:
         required_group.add_argument('-i', '--input-file', required=True, type=str, help="Main input table with counts (Observation table, Count table, Contingency Tables, ...) or .biom file. By default rows contain observations and columns contain samples (use --transpose if your file is reversed). First column and first row are used as headers.")
 
         main_group = parser.add_argument_group('main arguments')
-        main_group.add_argument('-m', '--metadata-file', type=str, help="Input metadata file in simple tabular format with samples in rows and metadata fields in columns. QIIME 2 metadata format is also accepted, with an extra row to define categorical and numerical fields. If not provided and --input-file is a .biom files, will attempt to get metadata from it. ")
-        main_group.add_argument('-t', '--taxonomy', type=str, default=None, help="Define taxonomy to convert entry and annotate samples. Will automatically download and parse or files can be provided with --tax-files.", choices=["ncbi", "gtdb", "silva", "greengenes", "ott"])
-        main_group.add_argument('-b', '--tax-files', nargs="*", type=str, default=[], help="Optional specific taxonomy files to use.")
+        main_group.add_argument('-m', '--metadata-file', type=str, help="Input metadata file in simple tabular format with samples in rows and metadata fields in columns. QIIME 2 metadata format is also accepted, with an extra row to define categorical and numerical fields. If not provided and --input-file is a .biom file, will attempt to get metadata from it. ")
+        main_group.add_argument('-t', '--taxonomy', type=str, default=None, help="Define taxonomy to convert entries and annotate samples. Will automatically download and parse. Files can be provided with --taxonomy-files.", choices=["ncbi", "gtdb", "silva", "greengenes", "ott"])
+        main_group.add_argument('-b', '--taxonomy-files', nargs="*", type=str, default=[], help="Specific taxonomy files to use.")
         main_group.add_argument('-r', '--ranks', nargs="*", default=[Config.default_rank_name], type=str, help="Taxonomic ranks to generate visualizations. Use '" + Config.default_rank_name + "' to use entries from the table directly. Default: " + Config.default_rank_name)
         main_group.add_argument('-c', '--config', type=str, help="Configuration file with definitions of references, controls and external tools.")
 

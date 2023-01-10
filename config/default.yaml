@@ -22,6 +22,9 @@ external:
     #  - "path/file1.txt"
     #  - "path/file2.txt"
     # prevalence_metadata: 
-    #  "Field1": "ValueA"
-    #  "Field2": "ValueB"
+    #  "Field1": 
+    #    - "ValueA"
+    #    - "ValueB"
+    #  "Field2":
+    #    - "ValueC"
 

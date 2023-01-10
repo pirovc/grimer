@@ -125,7 +125,7 @@ grimer --config config/default.yaml \
 
 # Or directly from files
 wget https://raw.githubusercontent.com/pirovc/grimer-reports/main/mgnify/mgnify_files.tar.gz
-tar xf mgnify.tar.gz
+tar xf mgnify_files.tar.gz
 # Run GRIMER
 grimer --config config/default.yaml \
        --input-file MGYS00005180_ERP108433_taxonomy_abundances_SSU_v4.1.tsv \

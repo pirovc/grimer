@@ -6,3 +6,5 @@ nav:
     - Configuration file: config.md
     - GRIMER Reports - User Manual: manual.md
     - GRIMER Reports - Examples: examples.md
+plugins:
+    - glightbox
