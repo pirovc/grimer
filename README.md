@@ -6,7 +6,11 @@ GRIMER performs analysis of microbiome studies and generates a portable and inte
 - [Live examples](https://pirovc.github.io/grimer/examples/)
 - [Pre-print](https://doi.org/10.1101/2021.06.22.449360)
 
+
+![recording-(2)5](https://user-images.githubusercontent.com/4673375/211857099-c9492232-c5f8-444e-aa68-70d6db8c82b4.gif)
+
 ## Powered by
+
 
 [<img src="https://static.bokeh.org/branding/logos/bokeh-logo.png" height="60">](https://bokeh.org)
 [<img src="https://pandas.pydata.org/static/img/pandas.svg" height="40">](https://pandas.org)
