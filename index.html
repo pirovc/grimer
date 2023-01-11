@@ -93,16 +93,15 @@
 <p><a class="glightbox" data-desc-position="bottom" data-height="auto" data-width="100%" href="https://raw.githubusercontent.com/pirovc/grimer/main/grimer/img/logo.png"><img src="https://raw.githubusercontent.com/pirovc/grimer/main/grimer/img/logo.png"/></a></p>
 <h2 id="about">About</h2>
 <p>GRIMER is a tool that performs automated analyses and generates a portable and interactive dashboard integrating annotation, taxonomy and metadata. It unifies several sources of evidence to help detect contamination. GRIMER is independent of quantification methods and directly analyses contingency tables to create an interactive and offline report. Reports can be created in seconds and are accessible for non-specialists, providing an intuitive set of charts to explore data distribution among observations and samples and its connections with external sources.</p>
-<p>More information about the method can be found in the <a href="https://doi.org/10.1101/2021.06.22.449360" target="_blank">pre-print</a></p>
-<h2 id="installation">Installation</h2>
 <ul>
-<li>Via conda</li>
+<li>More information about the method can be found in the <a href="https://doi.org/10.1101/2021.06.22.449360" target="_blank">pre-print</a></li>
+<li>The Source-code can be found in the <a href="https://github.com/pirovc/grimer" target="_blank">GitHub repository</a></li>
 </ul>
+<h2 id="installation">Installation</h2>
+<p>Via conda</p>
 <pre><code class="language-bash">conda install -c bioconda -c conda-forge grimer
 </code></pre>
-<ul>
-<li>or locally installing only dependencies via conda:</li>
-</ul>
+<p>or locally installing only dependencies via conda:</p>
 <pre><code class="language-bash">git clone https://github.com/pirovc/grimer.git
 cd grimer
 conda env create -f env.yaml # or mamba env create -f env.yaml
@@ -112,8 +111,8 @@ grimer -h
 </code></pre>
 <h2 id="basic-usage">Basic Usage</h2>
 <ul>
-<li>Complete commands with sample files can be found in <a href="importing">Importing files</a></li>
-<li>Complete examples of real files can be found in <a href="examples">Examples</a></li>
+<li>In-depth examples of input files can be found in <a href="importing">Importing files</a></li>
+<li>Complete examples of usage with real files can be found in <a href="examples">Examples</a></li>
 </ul>
 <p>Tab-separated input table</p>
 <pre><code class="language-bash">grimer -i input_table.tsv
@@ -252,5 +251,5 @@ Correlation options:
 </html>
 <!--
 MkDocs version : 1.4.2
-Build Date UTC : 2023-01-10 13:30:22.002035+00:00
+Build Date UTC : 2023-01-11 16:14:26.440729+00:00
 -->
