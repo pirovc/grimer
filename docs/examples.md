@@ -20,6 +20,7 @@ Examples of reports generated with [GRIMER](https://github.com/pirovc/grimer)
 wget https://raw.githubusercontent.com/pirovc/grimer-reports/main/placenta/placenta_files.tar.gz
 tar xf  placenta_files.tar.gz
 
+# Run GRIMER
 # AMPLICON
 grimer --config placenta_amplicon_config.yaml \
        --input-file placenta_amplicon_table.tsv \
@@ -45,8 +46,8 @@ grimer --config placenta_mgs_config.yaml \
        --title "Placenta study MGS - Leiby, J.S. et al 2018" \
        --output-html placenta_mgs.html
 ```
-
 </details>
+
 ---
 
 ### KatharoSeq analysis from Minich et al. "KatharoSeq Enables High-Throughput Microbiome Analysis from Low-Biomass Samples"

@@ -43,18 +43,18 @@ A real example of saliva organisms extracted from BacDive:
     ids: [152331, 113107, 157688, 979627, 45634, 60133, 157687, 1624, 1583331, 1632, 249188]
 ```
 
-Common contaminants compiled from the literature and human-related possible sources of contamination are available in the [GRIMER repository](https://github.com/pirovc/grimer/tree/main/files). For more information, please refer to the [pre-print](https://doi.org/10.1101/2021.06.22.449360). If the target study overlaps with some of those annotation (e.g. study of human skin), related entries can be easily removed from those files to not generated redundant annotations.
+Common contaminants compiled from the literature and human-related possible sources of contamination are available in the [GRIMER repository](https://github.com/pirovc/grimer/tree/main/files). For more information, please refer to the [pre-print](https://doi.org/10.1101/2021.06.22.449360). If the target study overlaps with some of those annotation (e.g. study of human skin), related entries can be easily removed from those files to not generate redundant annotations.
 
 ## controls
 
-Several control groups cann be provided. A file with one sample identifier per line
+Several control groups cann be provided to annotate samples. They can be provided as a file with one sample identifier per line:
 
 ```yaml
 controls:
   "Controls": "controls.txt"
 ```
 
-or as a metadata field and value(s). 
+or as a metadata field and value(s) information:
 
 ```yaml
 controls:
@@ -64,11 +64,11 @@ controls:
       - "control"  #  value
 ```
 
-Both can be combined into one configuration file.
+Both methods can be combined into one configuration file.
 
 ## external
 
-Here it's possible to configure the function of external tools executed by GRIMER.
+Set the configuration and functionality of external tools executed by GRIMER.
 
 ### mgnify
 
@@ -94,8 +94,8 @@ Below an example of how to provide those values in the configuration file:
 ```yaml
 external:
   decontam:
-    threshold: 0.1 # [0-1] P* hyperparameter
-    method: "frequency" # frequency, prevalence, combined
+    threshold: 0.1 # P* hyperparameter threshold, values between 0 and 1
+    method: "frequency" # Options: frequency, prevalence, combined
     # frequency_file: "path/file1.txt"
     # frequency_metadata: "Field1"
     # prevalence_file: 

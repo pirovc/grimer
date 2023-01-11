@@ -6,17 +6,18 @@
 
 GRIMER is a tool that performs automated analyses and generates a portable and interactive dashboard integrating annotation, taxonomy and metadata. It unifies several sources of evidence to help detect contamination. GRIMER is independent of quantification methods and directly analyses contingency tables to create an interactive and offline report. Reports can be created in seconds and are accessible for non-specialists, providing an intuitive set of charts to explore data distribution among observations and samples and its connections with external sources.
 
-More information about the method can be found in the [pre-print](https://doi.org/10.1101/2021.06.22.449360){ target="_blank" }
+- More information about the method can be found in the [pre-print](https://doi.org/10.1101/2021.06.22.449360){ target="_blank" }
+- The Source-code can be found in the [GitHub repository](https://github.com/pirovc/grimer){ target="_blank" }
 
 ## Installation
 
-- Via conda
+Via conda
 
 ```bash
 conda install -c bioconda -c conda-forge grimer
 ```
 
-- or locally installing only dependencies via conda:
+or locally installing only dependencies via conda:
 
 ```bash
 git clone https://github.com/pirovc/grimer.git
@@ -29,8 +30,8 @@ grimer -h
 
 ## Basic Usage
 
-- Complete commands with sample files can be found in [Importing files](importing)
-- Complete examples of real files can be found in [Examples](examples)
+- In-depth examples of input files can be found in [Importing files](importing)
+- Complete examples of usage with real files can be found in [Examples](examples)
 
 
 Tab-separated input table

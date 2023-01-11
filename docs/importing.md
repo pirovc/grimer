@@ -81,9 +81,6 @@ grimer --input-file ERP108433_phylum_taxonomy_abundances_SSU_v4.1_parsed.tsv \
        --ranks superkingdom phylum 
 ```
 
-### Special cases
-- --obs-replace --sample-replace --cumm-levels --transpose
-
 ## From commonly used tools/sources
 
 ### ganon

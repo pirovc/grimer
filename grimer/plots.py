@@ -371,6 +371,8 @@ The table contain the following fixed columns:
 - **DECONTAM**: Final contamination output from DECONTAM method
 
 Widgets can filter entries of the table. "Obs. name or id" filters the lineage of the entries, if taxonomy is provided. With that is possible to, for example, filter a certain genus and the table will show only children species.
+
+The export button will save entries of the table into a tab-separated file. That can be done for all lines (of all taxonomic ranks if available) or only selected lines of one rank. To select multiple items hold the Ctrl-key and select the desired lines.
     """
 
     export_dropdown = Dropdown(label="Export", button_type="success", width=100, height=32, menu=[("all", "all"), ("selected", "selected")])
@@ -437,6 +439,8 @@ Summary of samples. Entries selected in the table are shown in the barplot below
 Widgets can select batches of entries in the table by multiple criteria.
 
 Multiple metadata fields/values can be chosen and the union of the matching results will be selected in the table.
+
+The export button will save entries of the table into a tab-separated file. That can be done for all lines or only selected lines. To select multiple items hold the Ctrl-key and select the desired lines.
 """
 
     export_dropdown = Dropdown(label="Export", button_type="success", width=100, height=32, menu=[("all", "all"), ("selected", "selected")])
