@@ -45,22 +45,22 @@ def parse_config_file(config):
     return cfg
 
 
-def parse_taxonomy(taxonomy, tax_files):
+def parse_taxonomy(taxonomy, taxonomy_files):
     tax = None
     if taxonomy is not None:
         try:
-            if not tax_files:
+            if not taxonomy_files:
                 print_log("Downloading taxonomy")
             if taxonomy == "ncbi":
-                tax = NcbiTx(files=tax_files, extended_names=True)
+                tax = NcbiTx(files=taxonomy_files, extended_names=True)
             elif taxonomy == "gtdb":
-                tax = GtdbTx(files=tax_files)
+                tax = GtdbTx(files=taxonomy_files)
             elif taxonomy == "silva":
-                tax = SilvaTx(files=tax_files)
+                tax = SilvaTx(files=taxonomy_files)
             elif taxonomy == "greengenes":
-                tax = GreengenesTx(files=tax_files)
+                tax = GreengenesTx(files=taxonomy_files)
             elif taxonomy == "ott":
-                tax = OttTx(files=tax_files, extended_names=True)
+                tax = OttTx(files=taxonomy_files, extended_names=True)
             else:
                 raise
         except Exception as e:

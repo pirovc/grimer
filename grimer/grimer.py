@@ -7,7 +7,7 @@ import sys
 #Internal
 from grimer.callbacks import *
 from grimer.cds import *
-from grimer.config import Config
+from grimer.config import Config, logo
 from grimer.layout import *
 from grimer.plots import *
 from grimer.func import *
@@ -32,7 +32,7 @@ def main(argv=sys.argv[1:]):
 
     # Parse CLI arguments
     args = Config(argv)
-    print_logo_cli(Config.version)
+
     # Setup global _debug variable to be used by other files with #from grimer.grimer import _debug
     global _debug
     _debug = args.debug
@@ -56,7 +56,7 @@ def main(argv=sys.argv[1:]):
     cfg = parse_config_file(args.config)
 
     print_log("- Parsing taxonomy")
-    tax = parse_taxonomy(args.taxonomy, args.tax_files)
+    tax = parse_taxonomy(args.taxonomy, args.taxonomy_files)
 
     print_log("- Parsing input table")
     try:
