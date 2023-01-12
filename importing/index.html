@@ -44,7 +44,7 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal current" href="./">Importing files</a>
 <ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="#biom-file">biom file</a>
+<li class="toctree-l2"><a class="reference internal" href="#the-biological-observation-matrix-file-biom">The Biological Observation Matrix file (.biom)</a>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#tab-separated-file-tsv">tab-separated file (.tsv)</a>
 <ul>
@@ -62,9 +62,9 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#qiime2-feature-table-qza">QIIME2 feature table (.qza)</a>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#mgnify">MGnify</a>
-</li>
 <li class="toctree-l3"><a class="reference internal" href="#phyloseq">phyloseq</a>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#mgnify">MGnify</a>
 </li>
 </ul>
 </li>
@@ -105,19 +105,27 @@
 <div class="section" itemprop="articleBody">
 <h1 id="importing-files">Importing files</h1>
 <p>GRIMER is independent of any quantification method and requires a contingency table with raw counts of observations/components for each samples/compositions in the study. Observations are usually, but not limited to, taxonomic entries (e.g. genus, species, strains), operational taxonomic units (OTUs), amplicon sequence variants (ASVs), metagenome-assembled genomes (MAGs) or sequence features.</p>
-<p>GRIMER <code>--input-file</code> receives a file with tab-separated values (.tsv) containing a table of counts (Observation table, Count table, Contingency Tables, ...) or a <a href="https://biom-format.org/">BIOM</a> file.</p>
-<h2 id="biom-file">biom file</h2>
-<p>GRIMER parses <a href="https://biom-format.org/">BIOM</a> files and affiliated metadata (if available). Alternatively, an external metadata file can be provided with <code>-m/--metadata</code>.</p>
-<p>Example <a href="https://microbiomedb.org/common/downloads/release-31/c66d2dc8473138e3a737ef2ad0b25f1e6e9c0f22/UgandaMaternalV3V4.16s_DADA2.taxon_abundance.biom">UgandaMaternalV3V4.16s_DADA2.taxon_abundance.biom</a> file from <a href="https://microbiomedb.org">microbiomedb.org</a></p>
+<p>GRIMER <code>--input-file</code> accepts a file with tab-separated values (.tsv) containing a table of counts (Observation table, Count table, Contingency Tables, ...) or a <a href="https://biom-format.org/" target="_blank">.biom</a> file.</p>
+<h2 id="the-biological-observation-matrix-file-biom">The Biological Observation Matrix file (.biom)</h2>
+<p>GRIMER parses <a href="https://biom-format.org/" target="_blank">BIOM</a> files and affiliated metadata, if available. Alternatively, an external metadata file can be provided with <code>-m/--metadata</code> and will take precedence over the .biom metadata.</p>
+<p>Example <a href="https://microbiomedb.org/common/downloads/release-31/c66d2dc8473138e3a737ef2ad0b25f1e6e9c0f22/UgandaMaternalV3V4.16s_DADA2.taxon_abundance.biom" target="_blank">UgandaMaternalV3V4.16s_DADA2.taxon_abundance.biom</a> file from <a href="https://microbiomedb.org" target="_blank">microbiomedb.org</a></p>
 <ul>
 <li>Default report (no taxonomy)</li>
 </ul>
 <pre><code class="language-bash">grimer --input-file UgandaMaternalV3V4.16s_DADA2.taxon_abundance.biom
 </code></pre>
 <ul>
-<li>With integrated NCBI taxonomy (will translate names to taxids)</li>
+<li>Integrated NCBI taxonomy (will translate names to taxonomy ids)</li>
 </ul>
 <pre><code class="language-bash">grimer --input-file UgandaMaternalV3V4.16s_DADA2.taxon_abundance.biom \
+       --taxonomy ncbi \
+       --ranks superkingdom phylum class order family genus species
+</code></pre>
+<ul>
+<li>Using an external metadata file (<a href="https://microbiomedb.org/common/downloads/release-31/c66d2dc8473138e3a737ef2ad0b25f1e6e9c0f22/UgandaMaternalV3V4.16s_DADA2.sample_details.tsv" target="_blank">UgandaMaternalV3V4.16s_DADA2.sample_details.tsv</a>)</li>
+</ul>
+<pre><code class="language-bash">grimer --input-file UgandaMaternalV3V4.16s_DADA2.taxon_abundance.biom \
+       --metadata-file UgandaMaternalV3V4.16s_DADA2.sample_details.tsv \
        --taxonomy ncbi \
        --ranks superkingdom phylum class order family genus species
 </code></pre>
@@ -130,7 +138,7 @@
 </ul>
 <h3 id="multi-level-annotations-eg-bacteriaproteobacteriagammaproteobacteria">Multi-level annotations (e.g. Bacteria;Proteobacteria;Gammaproteobacteria...)</h3>
 <ul>
-<li>Example <a href="https://microbiomedb.org/common/downloads/release-31/c66d2dc8473138e3a737ef2ad0b25f1e6e9c0f22/UgandaMaternalV3V4.16s_DADA2.taxon_abundance.tsv">UgandaMaternalV3V4.16s_DADA2.taxon_abundance.tsv</a> file from <a href="https://microbiomedb.org">microbiomedb.org</a></li>
+<li>Example <a href="https://microbiomedb.org/common/downloads/release-31/c66d2dc8473138e3a737ef2ad0b25f1e6e9c0f22/UgandaMaternalV3V4.16s_DADA2.taxon_abundance.tsv" target="_blank">UgandaMaternalV3V4.16s_DADA2.taxon_abundance.tsv</a> file from <a href="https://microbiomedb.org" target="_blank">microbiomedb.org</a></li>
 </ul>
 <pre><code class="language-bash">grimer --input-file UgandaMaternalV3V4.16s_DADA2.taxon_abundance.tsv \
        --level-separator ";"
@@ -197,14 +205,6 @@ grimer --input-file metaphlan_table.tsv \
 <pre><code class="language-bash">qiime tools export --input-path feature-table.qza --output-path exported-feature-table
 grimer --input-file exported-feature-table/feature-table.biom
 </code></pre>
-<h3 id="mgnify">MGnify</h3>
-<ul>
-<li><code>grimer-mgnify.py</code> will download and generate a GRIMER report for any MGnify study accession (e.g. MGYS00006024)</li>
-</ul>
-<pre><code class="language-bash"># Install API dependency
-conda install "jsonapi-client&gt;=0.9.7"
-./grimer-mgnify.py -i MGYS00006024 -o out_folder_mgnify/
-</code></pre>
 <h3 id="phyloseq">phyloseq</h3>
 <pre><code class="language-R">#source("http://bioconductor.org/biocLite.R")
 #biocLite("biomformat")
@@ -216,6 +216,14 @@ b &lt;- make_biom(data = otu_table(soilrep))
 write_biom(b, 'out.biom')
 </code></pre>
 <pre><code class="language-bash">grimer --input-file out.biom
+</code></pre>
+<h3 id="mgnify">MGnify</h3>
+<ul>
+<li><code>grimer-mgnify.py</code> will download and generate a GRIMER report for any MGnify study accession (e.g. MGYS00006024)</li>
+</ul>
+<pre><code class="language-bash"># Install API dependency
+conda install "jsonapi-client&gt;=0.9.7"
+./grimer-mgnify.py -i MGYS00006024 -o out_folder_mgnify/
 </code></pre>
 </div>
 </div><footer>
