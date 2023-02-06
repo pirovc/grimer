@@ -13,7 +13,7 @@ def read(filename):
 
 setup(
     name="grimer",
-    version="1.0.0",
+    version="1.1.0",
     url="https://www.github.com/pirovc/grimer",
     license='MIT',
     author="Vitor C. Piro",

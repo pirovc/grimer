@@ -1,0 +1,12 @@
+site_name: GRIMER
+theme: readthedocs
+nav:
+    - GRIMER: index.md
+    - Importing files: importing.md
+    - Configuration file: config.md
+    - GRIMER Reports - User Manual: manual.md
+    - GRIMER Reports - Examples: examples.md
+plugins:
+    - glightbox # pip install mkdocs-glightbox
+markdown_extensions:
+  - attr_list

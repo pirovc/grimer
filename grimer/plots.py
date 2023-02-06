@@ -1,7 +1,7 @@
 import markdown
 
 # Bokeh
-from bokeh.models import AdaptiveTicker, Button, CategoricalColorMapper, CDSView, CheckboxGroup, ColorBar, ColumnDataSource, CustomJS, CustomJSHover, FactorRange, FixedTicker, FuncTickFormatter, HoverTool, Legend, LegendItem, LinearAxis, LinearColorMapper, MultiChoice, MultiSelect, NumberFormatter, Panel, Paragraph, Range1d, RangeSlider, Select, Spacer, Spinner, Tabs, TextAreaInput, TextInput
+from bokeh.models import AdaptiveTicker, Button, CategoricalColorMapper, CDSView, CheckboxGroup, ColorBar, ColumnDataSource, CustomJS, CustomJSHover, Dropdown, FactorRange, FixedTicker, FuncTickFormatter, HoverTool, Legend, LegendItem, LinearAxis, LinearColorMapper, MultiChoice, MultiSelect, NumberFormatter, Panel, Paragraph, Range1d, RangeSlider, Select, Spacer, Spinner, Tabs, TextAreaInput, TextInput
 from bokeh.models.filters import IndexFilter, GroupFilter
 from bokeh.models.widgets import DataTable, TableColumn
 from bokeh.palettes import Blues, Dark2, Magma256, Reds
@@ -371,13 +371,18 @@ The table contain the following fixed columns:
 - **DECONTAM**: Final contamination output from DECONTAM method
 
 Widgets can filter entries of the table. "Obs. name or id" filters the lineage of the entries, if taxonomy is provided. With that is possible to, for example, filter a certain genus and the table will show only children species.
+
+The export button will save entries of the table into a tab-separated file. That can be done for all lines (of all taxonomic ranks if available) or only selected lines of one rank. To select multiple items hold the Ctrl-key and select the desired lines.
     """
+
+    export_dropdown = Dropdown(label="Export", button_type="success", width=100, height=32, menu=[("all", "all"), ("selected", "selected")])
 
     return {"frequency_spinner": frequency_spinner,
             "counts_perc_avg_spinner": counts_perc_avg_spinner,
             "total_counts_spinner": total_counts_spinner,
             "name_multichoice": name_multichoice,
-            "help_button": help_button(title="Observation table", text=help_text, align="start")}
+            "help_button": help_button(title="Observation table", text=help_text, align="start"),
+            "export_dropdown": export_dropdown}
 
 
 def plot_sampletable(cds_p_sampletable, sizes, ranks):
@@ -434,12 +439,17 @@ Summary of samples. Entries selected in the table are shown in the barplot below
 Widgets can select batches of entries in the table by multiple criteria.
 
 Multiple metadata fields/values can be chosen and the union of the matching results will be selected in the table.
+
+The export button will save entries of the table into a tab-separated file. That can be done for all lines or only selected lines. To select multiple items hold the Ctrl-key and select the desired lines.
 """
+
+    export_dropdown = Dropdown(label="Export", button_type="success", width=100, height=32, menu=[("all", "all"), ("selected", "selected")])
 
     return {"total_counts_spinner": total_counts_spinner,
             "assigned_spinner": assigned_spinner,
             "metadata_multichoice": metadata_multichoice,
-            "help_button": help_button(title="Sample selection", text=help_text, align="start")}
+            "help_button": help_button(title="Sample selection", text=help_text, align="start"),
+            "export_dropdown": export_dropdown}
 
 
 def plot_infopanel():

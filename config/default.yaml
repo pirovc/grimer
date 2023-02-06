@@ -2,9 +2,12 @@ references:
   "Contaminants": "files/contaminants.yml"
   "Human-related": "files/human-related.yml" 
 
-#controls:
-  # "Positve Controls": "path/file1.tsv"
-  # "Negative Controls": "path/file1.tsv"
+# controls:
+#   "Negative Controls": "path/file1.tsv"
+#   "Positve Controls": 
+#     "Metadata_Field": 
+#       - "Metadata_Value1"
+#       - "Metadata_Value2"
 
 external:
   mgnify: "files/mgnify5989.tsv"
@@ -19,6 +22,9 @@ external:
     #  - "path/file1.txt"
     #  - "path/file2.txt"
     # prevalence_metadata: 
-    #  "Field1": "ValueA"
-    #  "Field2": "ValueB"
+    #  "Field1": 
+    #    - "ValueA"
+    #    - "ValueB"
+    #  "Field2":
+    #    - "ValueC"
 

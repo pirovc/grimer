@@ -801,6 +801,18 @@ def link_obstable_filter(ele, cds_m_obstable, active_ranks):
     ele["obstable"]["wid"]["total_counts_spinner"].js_on_change('value', filter_callback)
     ele["obstable"]["wid"]["name_multichoice"].js_on_change('value', filter_callback)
 
+    export_callback = CustomJS(
+        args=dict(cds_m_obstable=cds_m_obstable,),
+        code='''
+        const filename = 'grimer_obs_export.tsv'
+        const cols = Object.keys(cds_m_obstable.data).filter(k => k.startsWith("col|")).sort();
+        const headers = cols.map(k => k.substring(4));
+        const selected = ((this.item=="selected") ? true : false);
+        const filetext = table_to_tsv(cds_m_obstable, cols, headers, selected)
+        save_file(filename, filetext);
+    ''')
+    ele["obstable"]["wid"]["export_dropdown"].js_on_event("menu_item_click", export_callback)
+
 
 def link_correlation_widgets(ele, cds_p_correlation):
     rank_select_callback = CustomJS(
@@ -1048,3 +1060,17 @@ def link_sampletable_select(ele, cds_p_sampletable, cds_d_metadata):
     ele["sampletable"]["wid"]["assigned_spinner"].js_on_change('value', select_callback)
     if cds_d_metadata:
         ele["sampletable"]["wid"]["metadata_multichoice"].js_on_change('value', select_callback)
+
+    export_callback = CustomJS(
+        args=dict(cds_p_sampletable=cds_p_sampletable,),
+        code='''
+        const filename = 'grimer_sample_export.tsv'
+        const selected = ((this.item=="selected") ? true : false);
+        const filetext = table_to_tsv(cds_p_sampletable,
+                                    ["index", "col|total", "col|assigned", "col|assigned_perc", "col|unassigned", "col|unassigned_perc"],
+                                    ["sample", "total", "assigned", "assigned_perc", "unassigned", "unassigned_perc"],
+                                    selected)
+        save_file(filename, filetext);
+
+    ''')
+    ele["sampletable"]["wid"]["export_dropdown"].js_on_event("menu_item_click", export_callback)

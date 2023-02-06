@@ -57,3 +57,45 @@ function grimer_sort(factors, sort_col, sort_mode="numeric", desc=false, group_c
     for (var i = 0; i < idx.length; ++i) sorted_factors[i] = factors[idx[i]];
     return sorted_factors;
 }
+
+function table_to_tsv(source, cols, headers, selected) {
+
+	var rows_idx = []
+	if(selected==true){
+		//remove undefined from selected if present
+		rows_idx = source.selected.indices.filter(function( element ) {
+		   return element !== undefined;
+		});
+	}
+	else{
+		// include all rows
+		for (let i = 0; i < source.get_length(); i++) {
+			rows_idx.push(i);
+		}
+	}
+
+	const lines = [headers.join('\t')]
+    for (let i = 0; i < rows_idx.length; i++) {
+    	let row = [];
+        for (let j = 0; j < cols.length; j++) {
+            row.push(source.data[cols[j]][rows_idx[i]].toString())
+        }
+        lines.push(row.join('\t'))
+    }
+    return lines.join('\n').concat('\n')
+}
+
+function save_file(filename, filetext){
+    const blob = new Blob([filetext], { type: 'text/csv;charset=utf-8;' })
+    //addresses IE
+    if (navigator.msSaveBlob) {
+        navigator.msSaveBlob(blob, filename)
+    } else {
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = filename
+        link.target = '_blank'
+        link.style.visibility = 'hidden'
+        link.dispatchEvent(new MouseEvent('click'))
+    }
+}

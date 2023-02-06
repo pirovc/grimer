@@ -9,6 +9,7 @@ from pandas.api.types import is_numeric_dtype
 import yaml
 
 #Internal
+from grimer.config import Config
 from grimer.decontam import Decontam
 from grimer.metadata import Metadata
 from grimer.reference import Reference
@@ -44,22 +45,22 @@ def parse_config_file(config):
     return cfg
 
 
-def parse_taxonomy(taxonomy, tax_files):
+def parse_taxonomy(taxonomy, taxonomy_files):
     tax = None
     if taxonomy is not None:
         try:
-            if not tax_files:
+            if not taxonomy_files:
                 print_log("Downloading taxonomy")
             if taxonomy == "ncbi":
-                tax = NcbiTx(files=tax_files, extended_names=True)
+                tax = NcbiTx(files=taxonomy_files, extended_names=True)
             elif taxonomy == "gtdb":
-                tax = GtdbTx(files=tax_files)
+                tax = GtdbTx(files=taxonomy_files)
             elif taxonomy == "silva":
-                tax = SilvaTx(files=tax_files)
+                tax = SilvaTx(files=taxonomy_files)
             elif taxonomy == "greengenes":
-                tax = GreengenesTx(files=tax_files)
+                tax = GreengenesTx(files=taxonomy_files)
             elif taxonomy == "ott":
-                tax = OttTx(files=tax_files, extended_names=True)
+                tax = OttTx(files=taxonomy_files, extended_names=True)
             else:
                 raise
         except Exception as e:
@@ -145,6 +146,7 @@ def parse_metadata(args, samples):
     metadata = None
 
     # Parse metadata as DataFrame (md)
+    md = pd.DataFrame()
     if args.metadata_file:
         # Parse table as dataframe
         md = pd.read_table(args.metadata_file, sep='\t', header=0, skiprows=0, index_col=0, dtype={0: str})
@@ -258,15 +260,28 @@ def parse_references(cfg, tax, taxonomy, ranks):
     return references
 
 
-def parse_controls(cfg, table):
+def parse_controls(cfg, table, metadata):
     controls = None
     control_samples = None
     if cfg is not None and "controls" in cfg:
         controls = {}
         control_samples = {}
-        for desc, cf in cfg["controls"].items():
-            with open(cf, "r") as file:
-                samples = file.read().splitlines()
+        for desc, c in cfg["controls"].items():
+            samples = set()
+            if isinstance(c, str):
+                # If str, it's a file with one sample per line
+                with open(c, "r") as file:
+                    samples = file.read().splitlines()
+            elif isinstance(c, dict):
+                # if a dict, several metadata fields:values can be provided to set control samples
+                for field, val in c.items():
+                    if field not in metadata.get_col_headers():
+                        print_log("Could not find " + field + " in the metadata, skipping for control " + desc)
+                    else:
+                        for v in val:
+                            samples.update(metadata.get_subset(field, v).index)
+
+            if samples:
                 obs = set()
                 valid_samples = set()
                 for rank in table.ranks():
@@ -274,10 +289,13 @@ def parse_controls(cfg, table):
                     control_table = table.get_subtable(rank, samples=samples)
                     obs.update(control_table.columns.to_list())
                     valid_samples.update(control_table.index.to_list())
-
                 # Add control observations as a reference
                 controls[desc] = Reference(ids=obs)
                 control_samples[desc] = list(valid_samples)
+                print_log(desc + ": " + str(len(valid_samples)) + " samples / " + str(len(obs)) + " observations")
+            else:
+                print_log("Could not identify control input " + desc)
+
     else:
         print_log("No controls defined in the configuration file, skipping")
 
@@ -349,7 +367,9 @@ def parse_input_file(input_file, unassigned_header, transpose, sample_replace, c
     else:
         # Default input_file: index=observations, columns=samples
         # table_df should have samples on indices and observations on columns
-        table_df = pd.read_table(input_file, sep='\t', index_col=0).transpose().fillna(0)
+        table_df = pd.read_table(input_file, sep='\t', index_col=0, dtype={0: str}).transpose().fillna(0)
+        # Enforce string observations
+        table_df.columns = table_df.columns.astype(str)
 
     # If user is providing a reverse table, turn back
     if transpose:
@@ -544,6 +564,7 @@ def parse_single_table(table_df, ranks, tax, default_rank_name):
 
     # Update taxids
     if tax is not None:
+        print(table_df)
         updated_nodes = update_tax_nodes(table_df.columns, tax)
         unmatched_nodes = list(updated_nodes.values()).count(tax.undefined_node)
         if unmatched_nodes:
@@ -559,6 +580,7 @@ def parse_single_table(table_df, ranks, tax, default_rank_name):
                 else:
                     table_df.rename(columns={node: upd_node}, inplace=True)
                     print_log("Updated taxonomic node: " + node + " -> " + upd_node)
+
 
     # Generate ranks
     ranked_tables = {}
@@ -579,6 +601,7 @@ def parse_single_table(table_df, ranks, tax, default_rank_name):
 
             if not rank_df.empty:
                 ranked_tables[rank] = rank_df
+
 
     # Generate lineage
     if tax:
@@ -698,11 +721,13 @@ def run_decontam(run_decontam, cfg, table, metadata, control_samples, script_dir
                 else:
                     print_log("File not found " + file)
         elif "prevalence_metadata" in cfg_decontam:
-            for field, value in cfg_decontam["prevalence_metadata"].items():
-                if field in metadata.get_col_headers():
-                    control_list.update(metadata.get_subset(field, value).index)
+            # if a dict, several metadata fields:values can be provided to set control samples
+            for field, val in cfg_decontam["prevalence_metadata"].items():
+                if field not in metadata.get_col_headers():
+                    print_log("Could not find " + field + " in the metadata, skipping for decontam (prevalence)")
                 else:
-                    print_log("Could not find " + field + " in the metadata.")
+                    for v in val:
+                        control_list.update(metadata.get_subset(field, v).index)
         else:
             # Use all samples passed as controls
             for cs in control_samples.values():
