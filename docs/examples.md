@@ -18,7 +18,7 @@ Examples of reports generated with [GRIMER](https://github.com/pirovc/grimer)
 ```bash
 # Download files (table, metadata and config)
 wget https://raw.githubusercontent.com/pirovc/grimer-reports/main/placenta/placenta_files.tar.gz
-tar xf  placenta_files.tar.gz
+tar xf placenta_files.tar.gz
 
 # Run GRIMER
 # AMPLICON
@@ -97,7 +97,7 @@ wget https://raw.githubusercontent.com/pirovc/grimer-reports/main/microbiomedb/m
 tar xf microbiomedb_files.tar.gz
 
 # Run GRIMER
-grimer --config config/default.yaml \
+grimer --config ResistomeAmplicon.16s_DADA2_config.yaml \
        --input-file ResistomeAmplicon.16s_DADA2.taxon_abundance.biom \
        --taxonomy ncbi \
        --ranks superkingdom phylum class order family genus species \
@@ -128,7 +128,7 @@ grimer --config config/default.yaml \
 wget https://raw.githubusercontent.com/pirovc/grimer-reports/main/mgnify/mgnify_files.tar.gz
 tar xf mgnify_files.tar.gz
 # Run GRIMER
-grimer --config config/default.yaml \
+grimer --config MGYS00005180_config.yaml \
        --input-file MGYS00005180_ERP108433_taxonomy_abundances_SSU_v4.1.tsv \
        --metadata-file MGYS00005180_metadata.tsv \
        --obs-replace "^.+__" "" "_" " " \
